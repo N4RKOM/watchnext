@@ -33,6 +33,8 @@ WatchNext is an academic web app that helps couples and friends choose something
 - `_docs/process.md` - how work is organized.
 - `_docs/plan.md` - agreed product scope and unresolved decisions.
 - `_docs/tasks.md` - links to the GitHub backlog issues.
+- Before grooming an issue, read `_docs/team/pm.md` and `_docs/task-template.md`.
+- Before implementing a groomed issue, read `_docs/team/software-engineer.md`.
 - Before writing tests, read `_docs/testing-guidelines.md` when available.
 - For anything touching the UI, read `_docs/design-system.md` when available.
 - Before adding or changing API behavior, read `_docs/api.md` when available.
@@ -86,7 +88,7 @@ The testing guidelines, design system, and API documents are planned and do not 
 
 - The user has authorized committing and pushing project changes to `xiaodlb/watchnext`; continue that workflow unless later instructions change it.
 - Inspect the current branch and remote before committing. Stage only files belonging to the task and never overwrite unrelated work or force-push shared history.
-- Reference the issue number in relevant commits. Use `Fixes #N` only when the issue is fully satisfied, since merging that commit into the default branch may close the issue.
+- Reference the issue number in relevant commits without automatic closing keywords such as `Fixes`, `Closes`, or `Resolves`. Engineers leave issues open and post an implementation summary comment as required by `_docs/team/software-engineer.md`; completing implementation does not authorize closing the issue.
 - Keep `_docs/tasks.md` as the issue index; do not duplicate live issue state or full task descriptions there.
 - For a session handoff, report the issue number, completed work, verification results, commit/push state, and any remaining work. For partial work, make the unfinished scope explicit so the next session can identify what to continue.
 
