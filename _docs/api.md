@@ -28,7 +28,7 @@ Only `SHA-256(token)` as lowercase hex is persisted in `invitations.token_hash`.
 
 Delegated first-release policy: invitation credentials do **not** expire automatically. `revoked_at` is initially NULL. Invitation resolution in [#8](https://github.com/xiaodlb/watchnext/issues/8) validates token shape, hashes it identically, rejects revoked/unknown invitations, and establishes group access under the trust-based model. Revocation/rotation UI, email invites, and accounts remain outside this increment.
 
-The URL format is `<configured origin>/invite/<token>`. Issue #8 implements resolution and a token-free `/group` destination. The destination shows the actual group name and makes clear that profile creation/selection is still coming in #9. A loopback URL still works only on the same computer.
+The URL format is `<configured origin>/invite/<token>`. Issue #8 implements resolution and a token-free `/group` destination; issue #9 adds profile creation and selection there. A loopback URL still works only on the same computer.
 
 ### Returned state and UI behavior
 
@@ -63,7 +63,7 @@ The server session row binds the hash to one group and backing invitation, with 
 
 Opening a valid different-group invitation atomically inserts the new session and removes the browser's prior session row, sets the new cookie and clears active-member context. Invalid invitations leave the old context untouched. Reopening the same group rotates the credential while retaining any real same-group selected member; it never fabricates one or changes personal history. No profile UI is supplied by #8. The additive `0002_group_sessions.sql` migration includes group-consistent invitation/member foreign keys; existing migrations remain immutable. Run `pnpm db:init` after pulling it.
 
-`/group` is dynamically rendered and calls the server guard before rendering any private group name. Missing/stale/forged access renders the generic error content. Valid access shows the real name, explains that anyone with the invite can select a name/profile **without verifying personal identity**, and states that profile selection comes next.
+`/group` is dynamically rendered and calls the server guard before rendering any private group name. Missing/stale/forged access renders the generic error content. Valid access shows the real name and the profile selector, explaining that anyone with the invite can select a name/profile **without verifying personal identity**.
 
 ### Reusable read and mutation guard
 
@@ -82,3 +82,19 @@ Console settings alone do not protect Next's generated `.next/dev/trace`: its de
 `tests/framework-privacy.test.ts` probes the actual pinned tracer in a fresh process and verifies no request span is retained, and checks the startup guard. On a Next upgrade, rerun these tests **and** real dev/production invite requests with stdout/stderr and generated trace-file scanning before accepting the upgrade. The internal hook must be replaced if the framework changes; a passing console-only check is insufficient.
 
 Verify both supported launch modes with isolated fixtures, and scan captured routine stdout/stderr **and generated trace files after shutdown** for generated invite and session values without printing them or saving unredacted captures. This covers framework logging, not just explicit console calls. External reverse proxies, browser history, network inspection tools, and future monitoring need their own equivalent redaction policy; none are introduced here.
+
+## Named profiles — issue #9
+
+`/group` reads only members belonging to the validated browser session's group. `app/group/actions.ts` exposes `profileAction`; it uses the shared request guard and server database before returning a safe profile view. The browser stores no member authority in localStorage. The cookie remains the opaque HttpOnly group-session credential from #8; `group_sessions.active_member_id` stores this browser's selection.
+
+Creation submits `intent=create`, `name`, and `color`. Names must be text: apply Unicode NFKC, trim outer JavaScript Unicode whitespace, collapse internal whitespace to one space, then accept 1–40 Unicode code points without NUL. Display case is retained; JavaScript lowercase becomes `name_key`, unique within the group. Identical names in different groups are valid. Colors must exactly equal one of the six [design-system palette](design-system.md) hex values, including lowercase spelling. These implement the existing delegated D14 profile decision; no new account or identity policy is introduced.
+
+Selection submits `intent=select` and `memberId`. The server looks up the member's actual ownership; neither that ID nor an optional submitted `groupId` grants access. Missing/forged/stale sessions, nonmatching group claims, missing/cross-origin Origin, and other-group member IDs return the same safe access error before writes. The action uses an immediate transaction for member insertion plus current-session activation; any failure rolls back both. Selection updates only the current session, never personal progress, ratings, or notes.
+
+The action returns `success` with `message`, group-scoped `members` (`id`, `name`, `color`), and nullable `activeMemberId`; `invalid` with field-associated `errors.name` or `errors.color`; or `error` with a safe retry/access message. It returns no raw session/invitation credential, SQL, storage path, or exception details. Invalid input remains available. Both forms are disabled during an action, feedback is announced, and a failed action retains the last successful profile view.
+
+Names remain visible beside white initials on the selected palette background; an Active label and `aria-pressed` identify the selection without relying on color. Native labeled radio inputs and buttons support keyboard use. Anyone holding a group invitation can select any profile: these names are trust-based labels, not authenticated identities.
+
+Session reads join the selected member to the same group. A deleted or wrong-group selected reference yields no active profile and a valid group selector, without exposing another group's data or rewriting history. The existing invitation flow retains a real selected member for the same group, clears selection for another group, and preserves context on an invalid invitation. Independent browser contexts keep independent selections. No profile rename/delete, progress editing, account registration, or new migration is added.
+
+Verification uses isolated initialized databases. Service/action/UI tests cover normalization and bounds, group uniqueness, exact palette, rollback/retry, denial without writes, independent sessions, stale references, pending controls and error associations. Real production browser checks cover two contexts at 375px and 1280px, keyboard selection, reload, invitation preservation/switching, duplicate input, storage failure/retry, and routine-output/generated-trace credential exclusion.

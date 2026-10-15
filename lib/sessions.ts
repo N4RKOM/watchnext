@@ -14,9 +14,11 @@ export type GroupSession = { groupId: string; groupName: string; activeMemberId:
 
 export function requireSession(db: DatabaseSync, credential: unknown): GroupSession {
   if (!validCredential(credential)) throw new AccessError();
-  const row = db.prepare(`SELECT s.group_id, g.name, s.active_member_id FROM group_sessions s
+  const row = db.prepare(`SELECT s.group_id, g.name, m.id AS active_member_id FROM group_sessions s
     JOIN invitations i ON i.id = s.invitation_id AND i.group_id = s.group_id AND i.revoked_at IS NULL
-    JOIN groups g ON g.id = s.group_id WHERE s.token_hash = ?`).get(credentialHash(credential));
+    JOIN groups g ON g.id = s.group_id
+    LEFT JOIN members m ON m.id = s.active_member_id AND m.group_id = s.group_id
+    WHERE s.token_hash = ?`).get(credentialHash(credential));
   if (!row) throw new AccessError();
   return { groupId: row.group_id as string, groupName: row.name as string, activeMemberId: row.active_member_id as string | null };
 }

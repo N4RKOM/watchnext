@@ -77,6 +77,18 @@ h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); font-weight: 700; }
 .saved-group-name { white-space: pre-wrap; overflow-wrap: anywhere; }
 .button-secondary { background: var(--color-surface); color: var(--color-accent); }
 .notice { background: var(--color-accent-soft); color: var(--color-text) !important; border-radius: 0.5rem; padding: var(--space-3); }
+.avatar { display: inline-grid; place-items: center; flex: 0 0 2.5rem; width: 2.5rem; height: 2.5rem; border-radius: 50%; color: white; font-weight: 700; }
+.active-profile { display: flex; gap: var(--space-3); align-items: center; margin-top: var(--space-6); }
+.active-profile p { margin: 0; }
+.profile-list { list-style: none; padding: 0; display: grid; gap: var(--space-3); margin-block: var(--space-6) 0; }
+.profile-choice { width: 100%; min-height: 3.5rem; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--color-surface); border: 1px solid var(--color-muted); border-radius: 0.5rem; text-align: left; color: var(--color-text); cursor: pointer; }
+.profile-choice[aria-pressed="true"] { border: 2px solid var(--color-accent); background: var(--color-accent-soft); }
+.profile-name { overflow-wrap: anywhere; white-space: pre-wrap; min-width: 0; }
+.profile-indicator { margin-left: auto; font-size: 0.8rem; font-weight: 700; color: var(--color-accent); }
+.color-palette { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); min-width: 0; }
+.color-choice { display: flex; align-items: center; gap: var(--space-2); min-height: 2.75rem; padding: var(--space-2); border: 1px solid var(--color-border); border-radius: 0.5rem; cursor: pointer; }
+.color-choice:has(input:checked) { border-color: var(--color-accent); background: var(--color-accent-soft); }
+.color-swatch { width: 1rem; height: 1rem; border-radius: 50%; }
 
 @media (max-width: 46rem) {
   .shell { width: calc(100% - 2rem); }
