@@ -49,6 +49,14 @@ The testing guidelines, design system, and API documents are planned and do not 
 3. Identify the task using the rules below, then read its full GitHub issue, relevant comments, and affected files.
 4. State the issue number, intended outcome, and relevant verification briefly before implementation.
 
+## Orchestration
+
+- The main session orchestrates issue work according to `_docs/process.md`; it delegates grooming, implementation, and verification to PM, Engineer, and QA subagents rather than doing those roles itself.
+- For an authorized backlog run, select the next open issue in backlog order and launch the PM first, even if the issue was groomed previously. Pass the issue and relevant document links to each role.
+- Launch the Engineer after PM grooming, then QA after implementation. If QA returns FAIL, send the QA comment to the Engineer and repeat implementation and verification.
+- Close an issue only after QA posts PASS for the current implementation. An older verdict does not cover later implementation changes. The Engineer and QA leave issue closure to the orchestrator.
+- Continue to the next issue until the authorized backlog run is complete. Workflow documentation alone does not start a backlog run or grant approval for pending product decisions or dependencies.
+
 ## Identify the intended task
 
 - An issue number or URL in the user's request selects that task. A concrete request without an issue may be handled within its stated scope; find the matching backlog issue when one exists.
