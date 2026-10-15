@@ -6,6 +6,20 @@ import { fileURLToPath } from "node:url";
 
 export const migrationDirectory = fileURLToPath(new URL("./migrations/", import.meta.url));
 
+/** Read-only guard: normal application access never applies schema changes. */
+export function assertCurrentSchema(db: DatabaseSync): void {
+  const files = readdirSync(migrationDirectory).filter((name) => /^\d{4}_[a-z0-9_]+\.sql$/.test(name)).sort();
+  const previous = db.prepare("SELECT filename, checksum FROM schema_migrations ORDER BY version").all();
+  if (previous.length !== files.length) throw new Error("Pending or unknown database migrations");
+  for (const [index, filename] of files.entries()) {
+    const sql = readFileSync(join(migrationDirectory, filename), "utf8");
+    const checksum = createHash("sha256").update(sql.replace(/\r\n/g, "\n")).digest("hex");
+    if (previous[index].filename !== filename || previous[index].checksum !== checksum) {
+      throw new Error(`Database migration history mismatch: ${filename}`);
+    }
+  }
+}
+
 /** Apply immutable ordered SQL files. The caller owns connection lifetime. */
 export function migrate(db: DatabaseSync, directory = migrationDirectory): string[] {
   db.exec("PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");

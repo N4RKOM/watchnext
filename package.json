@@ -12,6 +12,8 @@
     "test:watch": "vitest",
     "db:migrate:temp": "node scripts/db/migrate.mjs",
     "db:verify": "node scripts/db/verify.mjs",
+    "db:init": "node --env-file-if-exists=.env.local scripts/db/init.mjs",
+    "db:verify:persistence": "node scripts/db/persistence-check.mjs",
     "typecheck": "tsc --noEmit"
   },
   "engines": {

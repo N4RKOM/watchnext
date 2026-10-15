@@ -1,6 +1,6 @@
 # SQLite schema and migrations
 
-Issue: [#4](https://github.com/xiaodlb/watchnext/issues/4). The foundation uses Node.js **24.15+ within 24.x**, TypeScript, built-in **`node:sqlite` / `DatabaseSync`**, and one ordered SQL migration. No ORM, driver, or dependency was added. Synchronous local access is sufficient for this academic app's initial schema verification; request-time connection lifecycle and contention handling belong to [#5](https://github.com/xiaodlb/watchnext/issues/5). `db/migrate.ts` uses syntax that Node 24 can strip directly, without a TypeScript runtime package. [Node SQLite documentation](https://nodejs.org/api/sqlite.html)
+Issues: [#4](https://github.com/xiaodlb/watchnext/issues/4) supplies the schema; [#5](https://github.com/xiaodlb/watchnext/issues/5) supplies persistent local access. The foundation uses Node.js **24.15+ within 24.x**, TypeScript, built-in **`node:sqlite` / `DatabaseSync`**, and ordered SQL migrations. No ORM, driver, or dependency was added. Synchronous access suits this small local academic app; connections use a bounded five-second busy timeout. Node 24 strips the source TypeScript directly for CLI use. [Node SQLite documentation](https://nodejs.org/api/sqlite.html)
 
 ## Decisions and scope
 
@@ -8,7 +8,57 @@ Read [the schema-affecting decision gate](decisions.md#schema-affecting-approval
 
 In particular, D08/D09 define manual/provider identities; D03 defines stored position as **next to watch**; D04–D07 define unknown progress, numbering bounds, transitions, and completed-series rewatches; D11–D13 define one title-level rating/note per member; D14 defines group-unique normalized names. D17 uses whole seconds, and D23–D25 separate manual timestamp from completion while retaining old timestamps when duration is corrected.
 
-This issue supplies storage and isolated verification only. It does not implement sessions, edit authorization, duplicate-confirmation UI, progress controls, automatic archive/restore, providers, or a picker. Non-schema D18–D22, D26, and D28 remain for their owning tasks. [Provider research](metadata-providers.md) establishes documented routes, not authenticated access. Imported-data provenance/refresh fields may be added by a later migration when [#16–#19](https://github.com/xiaodlb/watchnext/issues/16) implement retention and provider handling; no data is imported here.
+These foundations do not implement sessions, edit authorization, duplicate-confirmation UI, progress controls, automatic archive/restore, providers, or a picker. Non-schema D18–D22, D26, and D28 remain for their owning tasks. [Provider research](metadata-providers.md) establishes documented routes, not authenticated access. Imported-data provenance/refresh fields may be added by a later migration when [#16–#19](https://github.com/xiaodlb/watchnext/issues/16) implement retention and provider handling; no data is imported here.
+
+## Normal persistent database setup
+
+Run this **explicit setup command** before the app first needs database access, and again after pulling new migrations:
+
+```text
+pnpm db:init
+```
+
+It creates the parent directory and database if missing, applies committed migrations through `db/migrate.ts`, closes the setup connection, and prints the selected path/applied versions. Repeating it preserves existing user rows. It never seeds, resets, deletes, or silently switches databases. Normal access requires an initialized current schema and does **not** automatically migrate or create a missing database; it reports `run pnpm db:init` instead. Initialization is the only normal command that creates/migrates a file.
+
+The server-only environment variable is **`WATCHNEXT_DATABASE_PATH`**. An unset variable uses the stable OS-user-data default:
+
+| OS | Default file |
+| --- | --- |
+| Windows | `%LOCALAPPDATA%\WatchNext\watchnext.sqlite`; if LOCALAPPDATA is unset, `<home>\AppData\Local\WatchNext\watchnext.sqlite` |
+| macOS | `<home>/Library/Application Support/WatchNext/watchnext.sqlite` |
+| Linux/other | `$XDG_DATA_HOME/WatchNext/watchnext.sqlite` when set, otherwise `<home>/.local/share/WatchNext/watchnext.sqlite` |
+
+The local-user-data base must be absolute. An override may be an absolute filename or a relative filename resolved against the **process working directory**; launch commands from the repository root for consistent relative paths. Spaces are supported and should be quoted by the shell. Blank/whitespace-only values, NUL, `:memory:`, SQLite `file:` URIs, directory destinations, and inaccessible/unwritable paths fail clearly without falling back. Use a dedicated file owned by the current user; errors include the chosen path on the server to help diagnose setup/permissions.
+
+Example PowerShell override for a **local** drive:
+
+```powershell
+$env:WATCHNEXT_DATABASE_PATH = 'C:\Users\your-name\AppData\Local\WatchNext Demo\watchnext.sqlite'
+pnpm db:init
+pnpm dev
+```
+
+Alternatively put `WATCHNEXT_DATABASE_PATH="C:/Users/your-name/AppData/Local/WatchNext Demo/watchnext.sqlite"` in untracked `.env.local`. The initialization command loads `.env.local` with Node's built-in environment-file option; Next loads it for dev/start. Shell environment values take precedence. Do not use `NEXT_PUBLIC_` for configuration. Remove the override to use the default; this does not move or merge data.
+
+Use reliable local storage, **not a shared/network drive or a cloud-sync folder**. The repository may be on `M:`, but the default deliberately follows local user storage instead of that repository location. SQLite locking and journals depend on filesystem behavior; an override to a network location is an operator choice, not a supported sharing solution. Keep database, journal, `.env.local`, and generated outputs out of Git.
+
+## Shared server entry and connection lifecycle
+
+Next server components/actions import **`getDatabase` and `closeDatabase` from `db/server.ts`**. Its `import "server-only"` marker produces a clear framework build error if imported from a Client Component. The Node-only connection core also rejects browser execution and imports native Node filesystem/SQLite APIs. Paths and the driver are never passed as client props or imported through UI utilities. Next supplies the server-only marker internally, so no package was added. [Next server-only boundary](https://nextjs.org/docs/app/getting-started/server-and-client-components#preventing-environment-poisoning)
+
+Standalone Node setup/check scripts use `db/connection.ts`, the same connection/configuration implementation behind that wrapper. `getDatabase(environment?)` resolves configuration, opens only an existing writable file, enables foreign keys and a 5000ms busy timeout, verifies committed migration history **without writing it**, and caches one connection per process through `globalThis` so development module reloads reuse it. A changed path while open throws; call `closeDatabase()` before switching. Do not close after every request. A process exit releases its handles; an explicit server shutdown hook or tests should call `closeDatabase()`, which safely closes/resets even when called repeatedly. Do not pass per-request untrusted environment/path values to this interface.
+
+The setup function `initializeDatabase(environment?)` creates/migrates a file using its own connection and always closes it. A corrupt database, read-only file, permission error, pending schema, or invalid history is surfaced; no catch creates a replacement database. The five-second timeout bounds lock waits rather than retrying forever. This is one local process connection, not a distributed pool or concurrent-write retry framework.
+
+## Verify persistence without touching normal user data
+
+```text
+pnpm db:verify:persistence
+```
+
+This command accepts no database arguments and always creates its own `watchnext-persistence-*` directory under the OS temporary directory. It overrides configuration for three separate Node processes through the shared `db/connection.ts` entry: one initializes/writes `Unchanged restart example`, a fresh one reads the unchanged record, and another initializes an independent file and confirms the record is absent. It prints three `PASS` results and an isolation summary, exits nonzero on failure, and removes only its verified temporary directory. The worker refuses to run without an explicit fixture path under that directory. It never uses the normal configured/default database or reads a `.env.local` file.
+
+`tests/db/persistence.test.ts` also exercises close/reopen, repeat initialization, connection reuse/close/reset, foreign keys/timeout, default paths using an isolated user-data base, alternate paths with spaces, relative-path rules, explicit initialization requirements, corrupt destinations, and invalid/unwritable paths. `tests/db/server-boundary.test.ts` creates an isolated minimal Next fixture and confirms a client import fails with the server-only boundary message. It uses Webpack because the temporary dependency junction is outside Turbopack's filesystem root; the normal app still builds with its existing Turbopack setup. All fixture directories are checked before recursive cleanup.
 
 ## Run from the repository root
 
@@ -93,4 +143,4 @@ History-sensitive content type/numbering changes are blocked by a trigger once p
 
 Every pending migration and its ledger record run inside one `BEGIN IMMEDIATE` batch transaction. A failed SQL statement or history check rolls back the batch. The empty ledger table may exist after a first failed attempt, but none of the new schema/data/versions survive. Correct the unapplied file and retry. Already-applied files must never be rewritten; add a new numbered migration instead. Missing, changed, or reordered applied history causes a clear failure rather than reapplication. Repeat migration with unchanged files returns an empty list and preserves all fixtures.
 
-There are no down migrations, migration framework, automatic destructive resets, or production data-path selection. Normal initialization, persistent location, connection lifetime, and operational backups belong to #5/#30. The repository ignores `.db`, `.sqlite`, `.sqlite3`, their sidecars, environment files, and logs; no database or usable credential is committed.
+There are no down migrations, migration framework, or automatic destructive resets. Issue #5's explicit initializer and read-only normal-access check reuse this mechanism; operational backup/restore remains in #30. The repository ignores `.db`, `.sqlite`, `.sqlite3`, their sidecars, environment files, and logs; no database or usable credential is committed.

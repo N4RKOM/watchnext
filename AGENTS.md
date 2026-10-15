@@ -10,6 +10,8 @@
 - `pnpm build` - create a production build
 - `pnpm db:migrate:temp` - create and inspect an isolated temporary schema database
 - `pnpm db:verify` - run isolated SQLite migration and constraint acceptance checks
+- `pnpm db:init` - explicitly initialize/migrate the configured normal local database (not a test command)
+- `pnpm db:verify:persistence` - verify fresh-process persistence using isolated temporary files
 - `pnpm start` - serve the production build locally
 
 Use Node.js 24.15.0 or newer within the 24.x release line and pnpm 11.25.0. This is a Next.js and TypeScript project; Python/uv/pytest commands do not apply.
