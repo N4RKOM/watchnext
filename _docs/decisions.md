@@ -337,12 +337,11 @@ Each entry states its own status. D01/D02 retain the exact recommendations expli
 ### U01. Exact metadata access and available fields
 
 - **Status:** Unresolved.
-- **Question:** Which verified YouTube API method and exact official/third-party Кинопоиск provider can this project use, under what access conditions, and which fields do they actually supply?
-- **Rationale:** No provider research or credentials have been verified yet; selecting a product source did not prove a particular API is available.
+- **Question:** Can the documented routes in [metadata-providers.md](metadata-providers.md) be used with the project's actual credentials/allowances, what are the unofficial provider's runtime units and episodic semantics, and what cover-display rights apply?
+- **Rationale:** Issue #3 established official YouTube v3 and third-party Kinopoisk API Unofficial documentation, but neither was live-tested. Public documentation does not prove authenticated availability or settle all semantics/rights.
 - **Observable example:** If the chosen provider lacks typical episode duration, its lookup result must request manual duration rather than inventing 22 minutes.
-- **Affected/blocking:** [#3](https://github.com/xiaodlb/watchnext/issues/3) resolves the question; [#16](https://github.com/xiaodlb/watchnext/issues/16), [#17](https://github.com/xiaodlb/watchnext/issues/17), [#18](https://github.com/xiaodlb/watchnext/issues/18), and [#19](https://github.com/xiaodlb/watchnext/issues/19) depend on the verified provider contract. Manual entry remains available independently.
+- **Affected/blocking:** Research in [#3](https://github.com/xiaodlb/watchnext/issues/3) is complete. [#16](https://github.com/xiaodlb/watchnext/issues/16) defines incomplete/unavailable results; [#17](https://github.com/xiaodlb/watchnext/issues/17) and [#18](https://github.com/xiaodlb/watchnext/issues/18) verify their respective provider routes; [#19](https://github.com/xiaodlb/watchnext/issues/19) handles fallback. Manual entry remains available independently.
 
 ## Completion and handoff
 
 The original issue #2 deliverable was the decision record and prerequisite links. Issue #4 subsequently recorded explicit D01/D02 approval and resolved its schema subset through delegated authority. Non-schema feature tasks still record the choices they rely on. Provider research is complete in [metadata-providers.md](metadata-providers.md); U01 remains unresolved only for authenticated access, runtime semantics, and rights checks owned by #17/#18, not for the existence of documented routes. No provider API is claimed live-tested.
-

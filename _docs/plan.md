@@ -159,7 +159,7 @@ The exact fallback ranking, maximum allowed time overrun, and priority between r
 - Everyone in the group can see each person’s ratings and notes.
 - Ratings form a shared record only; they do not influence picks or exclude disliked content.
 - Ratings and notes survive archiving and restoration.
-- Whether ratings and notes attach only to a title or also to individual episodes remains undecided.
+- Delegated D11–D13 specify one title-level integer rating and plain-text note per member; episode-specific feedback is deferred.
 
 ## Deferred: “Fill my time” sessions
 
@@ -199,7 +199,7 @@ Anna saves a title, then Max saves the same title. There is one entry listing bo
 - Initial hosting: run locally on the demonstration computer, with a planned address of `http://localhost:3000`.
 - Public hosting is not required for the initial setup. Any later online deployment will need hosting that supports persistent SQLite storage or a separate database strategy.
 - YouTube and Кинопоиск lookups require internet access; manual entries and existing local data do not depend on those lookup services.
-- Initial package versions are recorded in `package.json` and `pnpm-lock.yaml`; use Node.js 24 LTS and pnpm. The database access library and styling tools remain undecided.
+- Initial package versions are recorded in `package.json` and `pnpm-lock.yaml`; use Node.js 24 LTS and pnpm. Issue #4 selects built-in `node:sqlite` with plain versioned SQL migrations; see [the database guide](database.md). Styling tools remain undecided.
 
 The user authorized the backlog run on October 15, 2026. During that run, the user directed: “do not ask me.do all by yourself with the answers that you do will be best suitble”. This authorizes agents to choose suitable remaining product defaults and necessary dependencies without further approval questions within the agreed academic-project scope; it does not authorize purchases or unrelated scope expansion. D01 and D02 were explicitly approved separately. Record the rationale and source when resolving other proposed decisions before relying on them; this authorization does not silently change every untouched proposal's status.
 
@@ -218,7 +218,7 @@ Read [the first-release decision record](decisions.md) before implementing edge-
 - Define external-link handling for individual episodes and entries without playable links.
 - Implement the resolved profile validation/session/group-switching contracts; invitation workflows remain in their owning tasks.
 - Design screens and layout.
-- Choose the database access library and styling tools for the selected stack when required by their backlog tasks.
+- Choose styling tools when required by their backlog tasks. Database access uses built-in `node:sqlite`, with normal connection lifecycle implemented in #5.
 
 ## First-release completion checklist
 

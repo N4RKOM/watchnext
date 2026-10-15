@@ -8,6 +8,8 @@
 - `pnpm test tests/home.test.tsx` - run one test file
 - `pnpm typecheck` - check TypeScript types
 - `pnpm build` - create a production build
+- `pnpm db:migrate:temp` - create and inspect an isolated temporary schema database
+- `pnpm db:verify` - run isolated SQLite migration and constraint acceptance checks
 - `pnpm start` - serve the production build locally
 
 Use Node.js 24.15.0 or newer within the 24.x release line and pnpm 11.25.0. This is a Next.js and TypeScript project; Python/uv/pytest commands do not apply.
@@ -33,6 +35,7 @@ WatchNext is an academic web app that helps couples and friends choose something
 - `_docs/process.md` - how work is organized.
 - `_docs/plan.md` - agreed product scope and unresolved decisions.
 - `_docs/tasks.md` - links to the GitHub backlog issues.
+- `_docs/database.md` - SQLite schema, migrations, validation boundaries, and isolated verification commands.
 - Before grooming an issue, read `_docs/team/pm.md` and `_docs/task-template.md`.
 - Before implementing a groomed issue, read `_docs/team/software-engineer.md`.
 - Before checking finished work against an issue, read `_docs/team/qa-engineer.md`.
@@ -104,4 +107,3 @@ The testing guidelines, design system, and API documents are planned and do not 
 ## Communication
 
 Keep updates short and use plain language. Ask one question at a time when user input is needed, and distinguish verified results from assumptions or proposed decisions.
-
