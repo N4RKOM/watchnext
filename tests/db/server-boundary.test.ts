@@ -16,7 +16,9 @@ it("Next rejects a client component importing the database server entry point", 
     cpSync(join(repository, "db"), join(root, "db"), { recursive: true });
     symlinkSync(join(repository, "node_modules"), join(root, "node_modules"), "junction");
     writeFileSync(join(root, "package.json"), JSON.stringify({ name: "watchnext-boundary-fixture", private: true }));
-    writeFileSync(join(root, "next.config.mjs"), "export default { turbopack: { root: process.cwd() } };");
+    // Keep compiler diagnostics on the captured process stream. Next's separate
+    // build worker can exit before its forwarded diagnostic output is flushed.
+    writeFileSync(join(root, "next.config.mjs"), "export default { experimental: { webpackBuildWorker: false } };");
     writeFileSync(join(root, "app", "layout.js"), "export default function Layout({children}) { return <html><body>{children}</body></html>; }");
     writeFileSync(join(root, "app", "page.js"), '"use client"; import { getDatabase } from "../db/server"; export default function Page() { return <div>{typeof getDatabase}</div>; }');
     // Webpack can resolve the shared dependency junction outside this isolated root.
@@ -25,7 +27,8 @@ it("Next rejects a client component importing the database server entry point", 
       env: { ...process.env, NEXT_TELEMETRY_DISABLED: "1", WATCHNEXT_DATABASE_PATH: join(root, "unused.sqlite") },
     });
     const output = result.stdout + result.stderr;
-    expect(result.status, output).not.toBe(0);
+    expect(result.error, output).toBeUndefined();
+    expect(result.status, output).toBe(1);
     expect(output).toContain("server-only");
     expect(output).toMatch(/Client Component|client component|Server Component|server component/);
   } finally {
