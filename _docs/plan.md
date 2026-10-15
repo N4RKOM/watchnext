@@ -190,6 +190,19 @@ A 90-minute movie paused at minute 70 still counts as 90 minutes for the time fi
 
 Anna saves a title, then Max saves the same title. There is one entry listing both contributors. If Anna removes her contribution, Max remains. If Max also removes his contribution, the entry is archived. Saving the title again restores its existing history.
 
+## Selected technology and hosting
+
+- Purpose: an academic project.
+- Framework: Next.js for the web interface and server logic.
+- Language: TypeScript.
+- Database: SQLite, stored locally and accessed through the application server.
+- Initial hosting: run locally on the demonstration computer, with a planned address of `http://localhost:3000`.
+- Public hosting is not required for the initial setup. Any later online deployment will need hosting that supports persistent SQLite storage or a separate database strategy.
+- YouTube and Кинопоиск lookups require internet access; manual entries and existing local data do not depend on those lookup services.
+- Package versions, database access library, and styling tools remain undecided.
+
+Application implementation has not started. The current authorization is to plan the project, without writing application code yet.
+
 ## Remaining decisions before implementation
 
 - Confirm integration feasibility and metadata fields for YouTube and Кинопоиск.
@@ -204,7 +217,7 @@ Anna saves a title, then Max saves the same title. There is one entry listing bo
 - Define profile creation, returning-member selection, and invite-link management.
 - Define whether one person can belong to multiple groups and how they switch groups.
 - Design screens and layout.
-- Choose implementation stack, storage, and hosting.
+- Choose package versions, database access library, and styling tools for the selected stack.
 
 ## First-release completion checklist
 
