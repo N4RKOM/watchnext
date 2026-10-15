@@ -60,7 +60,7 @@ Entries include a title or link, content type, duration, genre, and mood. Manual
 - Кинопоиск as the second database for title lookup and details.
 - Users can enter or correct details manually.
 
-The exact integration methods, accessible fields, cover retrieval, API availability, and any costs or restrictions have not been verified. These require investigation before implementation. Support for automatic metadata from every streaming service is outside the agreed first release.
+The [metadata provider research](metadata-providers.md) records the documented routes: official YouTube Data API v3 and the third-party Kinopoisk API Unofficial service. Both are documented but not live-tested; credentials, actual access allowances, uncertain runtime semantics, and image permissions still require verification in the linked implementation tasks. This research does not claim official Кинопоиск API access. Support for automatic metadata from every streaming service is outside the agreed first release.
 
 ### Moods and genres
 
@@ -201,7 +201,7 @@ Anna saves a title, then Max saves the same title. There is one entry listing bo
 - YouTube and Кинопоиск lookups require internet access; manual entries and existing local data do not depend on those lookup services.
 - Initial package versions are recorded in `package.json` and `pnpm-lock.yaml`; use Node.js 24 LTS and pnpm. The database access library and styling tools remain undecided.
 
-The user authorized issue #1 and its setup dependencies, followed by the documentation deliverable in issue #2. Other backlog features require their own implementation request; creating or proposing a decision does not approve it.
+The user authorized the backlog run on October 15, 2026. During that run, the user directed: “do not ask me.do all by yourself with the answers that you do will be best suitble”. This authorizes agents to choose suitable remaining product defaults and necessary dependencies without further approval questions within the agreed academic-project scope; it does not authorize purchases or unrelated scope expansion. D01 and D02 were explicitly approved separately. Record the rationale and source when resolving other proposed decisions before relying on them; this authorization does not silently change every untouched proposal's status.
 
 ## Decision record and implementation gates
 
@@ -211,7 +211,7 @@ Read [the first-release decision record](decisions.md) before implementing edge-
 
 ## Remaining decisions before implementation
 
-- Confirm integration feasibility and metadata fields for YouTube and Кинопоиск.
+- Complete the authenticated and field-semantics verification linked from [metadata provider research](metadata-providers.md); both documented provider routes remain untested with credentials.
 - Define the final mood list and genre handling.
 - Define manual timestamp and completion controls.
 - Define whether “current episode” means next to watch or currently in progress.
