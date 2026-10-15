@@ -14,9 +14,9 @@ Use Node.js 24.15.0 or newer within the 24.x release line and pnpm 11.25.0. This
 
 ## Rules
 
-- Dependencies are added in `package.json`. Do not add one without asking.
+- Dependencies are added in `package.json`. During the authorized backlog run, suitable necessary dependencies may be chosen under the user's delegated authority; document the choice and rationale, prefer built-in tools when suitable, and do not purchase services.
 
-The user approved the initial Next.js, React, TypeScript, type definitions, Vitest, jsdom, and React Testing Library dependencies for issue #1. Ask before adding further dependencies.
+The user approved the initial Next.js, React, TypeScript, type definitions, Vitest, jsdom, and React Testing Library dependencies for issue #1. On October 15, 2026 the user delegated remaining suitable product and dependency choices without further questions; see the source quote in `_docs/plan.md`.
 
 ## Project context
 
@@ -55,7 +55,7 @@ The testing guidelines, design system, and API documents are planned and do not 
 - For an authorized backlog run, select the next open issue in backlog order and launch the PM first, even if the issue was groomed previously. Pass the issue and relevant document links to each role.
 - Launch the Engineer after PM grooming, then QA after implementation. If QA returns FAIL, send the QA comment to the Engineer and repeat implementation and verification.
 - Close an issue only after QA posts PASS for the current implementation. An older verdict does not cover later implementation changes. The Engineer and QA leave issue closure to the orchestrator.
-- Continue to the next issue until the authorized backlog run is complete. Workflow documentation alone does not start a backlog run or grant approval for pending product decisions or dependencies.
+- Continue to the next issue until the authorized backlog run is complete. Workflow documentation alone does not start a backlog run. The current run and suitable remaining product/dependency choices are explicitly authorized as recorded in `_docs/plan.md`; record reasoned delegated decisions before using them.
 
 ## Identify the intended task
 
@@ -71,7 +71,7 @@ The testing guidelines, design system, and API documents are planned and do not 
 
 - Complete one selected issue at a time unless the user explicitly requests a broader scope.
 - Each issue is designed for one focused session. Document unmet prerequisites and use fixtures or stubs when appropriate instead of silently implementing other issues.
-- `_docs/plan.md` records agreed requirements. Treat unresolved product decisions as proposals and make them visible before relying on them.
+- `_docs/plan.md` records agreed requirements. Record suitable resolutions of unresolved product decisions with rationale and the delegated-authority source before relying on them. Distinguish delegated choices from explicit user answers.
 - Do not introduce mixed watch sessions, embedded playback, automatic progress tracking, separate account signup, or public hosting as part of the first release without a scope change from the user.
 
 ## Product rules to preserve
@@ -87,7 +87,7 @@ The testing guidelines, design system, and API documents are planned and do not 
 
 ## Implementation and verification
 
-- Use the selected stack and existing repository conventions. Propose missing libraries only when required by the selected task, document material choices, and follow the dependency approval rule above before adding them.
+- Use the selected stack and existing repository conventions. Propose missing libraries only when required by the selected task, document material choices, and follow the dependency authorization rule above before adding them.
 - Keep SQLite access and provider credentials on the server. Never commit secrets, local databases, journals, or generated dependency folders.
 - Use the commands defined in `package.json` and documented above; do not claim checks passed without running them.
 - Run verification appropriate to the change and the issue's acceptance criteria. Isolate tests from normal user databases and mock external metadata providers where appropriate.
@@ -104,3 +104,4 @@ The testing guidelines, design system, and API documents are planned and do not 
 ## Communication
 
 Keep updates short and use plain language. Ask one question at a time when user input is needed, and distinguish verified results from assumptions or proposed decisions.
+

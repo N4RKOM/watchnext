@@ -3,15 +3,16 @@
 Source: [issue #2](https://github.com/xiaodlb/watchnext/issues/2) and the [project scope](plan.md).
 Recorded: October 15, 2026.
 
-This record makes behavior reviewable without chat history. It does not implement features or approve new product choices.
+This record makes behavior reviewable without chat history. It does not implement features. The schema decisions below now record explicit approval or resolution under delegated authority.
 
 ## Status and approval rules
 
-- **Approved** means the user already selected this behavior in project planning; the source is the linked project scope.
-- **Proposed** means a concrete recommendation awaiting user agreement. Its approval question identifies what downstream implementers must resolve first.
+- **Approved** means the user explicitly selected this behavior; the source is the linked project scope or the recorded October 15, 2026 answer.
+- **Delegated decision** means the agent selected the documented recommendation under the user's October 15, 2026 directive: “do not ask me.do all by yourself with the answers that you do will be best suitble”. It does not claim a separate explicit answer to that decision.
+- **Proposed** means not yet resolved in the relevant feature task. The user has authorized suitable defaults; record a reasoned delegated resolution before relying on one.
 - **Unresolved** means there is no reliable recommendation yet. The exact question and affected issues are recorded below.
 
-Implementers must not treat proposals as defaults that are already approved. Record future approvals against the relevant decision ID, including their source; update the plan and affected issue prerequisites if the decision changes. Issue #2 can be complete with accurately labeled proposals, while implementation that depends on them remains blocked.
+Implementers must distinguish explicit approval from delegated choice. Record future resolutions against their decision IDs with source and rationale. Issue #4 resolves only its schema-affecting subset; remaining proposals are resolved by their owning feature tasks without further approval questions under the documented delegation.
 
 ## Approved baseline
 
@@ -34,7 +35,7 @@ All rows in this table have status **Approved**, based on the corresponding sect
 
 ## Schema-affecting approval gate
 
-[Issue #4](https://github.com/xiaodlb/watchnext/issues/4) must link here and obtain agreement on the applicable proposals before implementing their schema assumptions. This is a data-contract gate, not a requirement to implement feature UIs first.
+[Issue #4](https://github.com/xiaodlb/watchnext/issues/4) resolves the following data contracts before schema implementation. D01/D02 were explicitly approved on October 15, 2026; D03–D17, D23–D25, and D27 are delegated decisions recorded below with their original rationale/examples retained.
 
 | Decision | Schema question | Affected issues |
 | --- | --- | --- |
@@ -47,13 +48,13 @@ All rows in this table have status **Approved**, based on the corresponding sect
 
 The remaining picker and external-link proposals gate their feature issues rather than the initial schema. Provider research U01 must not prevent manual-entry storage; nullable provider fields can be represented without claiming a particular API is usable.
 
-## Proposed behavior
+## Detailed behavior decisions
 
-Each D entry below has status **Proposed**, not approved. Each includes a concrete recommendation, rationale, observable example, exact approval question, and affected issue links.
+Each entry states its own status. D01/D02 retain the exact recommendations explicitly approved in the planning answers on October 15, 2026. The schema-affecting delegated entries adopt their existing recommendations because their recorded rationale suits a small manual-entry academic app; their original approval questions remain as historical context, not pending requests. Non-schema D18–D22, D26, and D28 remain Proposed until their owning tasks record a delegated choice.
 
 ### D01. Fixed moods
 
-- **Status:** Proposed.
+- **Status:** Approved — explicit user answer, October 15, 2026.
 
 - **Recommendation:** Use Funny, Relaxing, Exciting, Dark, and Emotional as the first-release list. Require at least one mood per title; permit several. The picker selects one mood.
 - **Rationale:** These are the five examples already discussed and support predictable matching without custom tags.
@@ -63,7 +64,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D02. Genres and metadata input
 
-- **Status:** Proposed.
+- **Status:** Approved — explicit user answer, October 15, 2026.
 
 - **Recommendation:** Store an optional list of genre labels, editable after import, without a genre picker filter in the first release. Trim and deduplicate labels ignoring case; allow up to 10 labels of 40 characters each. Require a trimmed title of 1–200 characters and one of the four supported content types. Links and covers remain optional.
 - **Rationale:** Provider vocabularies may differ; optional labels avoid blocking YouTube/manual entries that have no useful genre.
@@ -73,7 +74,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D03. Episode position means next to watch
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Persist the next episode to watch, not the last completed episode. Label controls “Next episode.” Marking an episode watched advances the position only when the member provides the next valid coordinate or explicitly confirms the next continuous episode.
 - **Rationale:** It maps directly to the agreed picker examples and avoids off-by-one ambiguity.
@@ -83,7 +84,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D04. Valid episode coordinates
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Accept whole-number seasons and episodes from 1 to 9999. Season/episode titles require both coordinates; continuous titles require only the episode. Unknown progress uses absent coordinates, never episode 0. Specials/season 0 are not automatically represented by this convention.
 - **Rationale:** Validate inputs without inventing catalog limits that the app does not know.
@@ -93,7 +94,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D05. Season transitions
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Order season/episode positions lexicographically, but never infer a season's episode count. A member enters the new season and episode manually. Continuous numbering increments within its numeric bound without inventing a final episode.
 - **Rationale:** The first release has no dependable episode catalog.
@@ -103,7 +104,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D06. Unknown and unstarted progress
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Keep Unknown distinct from explicitly Not started. Not started maps to S1E1 or episode 1; Unknown has no target episode and excludes that series from group picks even when rewatches are enabled. Ask that viewer to set a position. For movies/videos, absent progress means not marked completed, with no fabricated timestamp.
 - **Rationale:** Unknown episodic progress cannot safely establish spoiler eligibility.
@@ -113,7 +114,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D07. Completed-series rewatches
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Store completion separately from the retained last-entered position. With rewatches off, any completed selected viewer excludes the series. With rewatches on, completed viewers can rewatch the least advanced unfinished viewer's next episode; if all selected viewers completed the series, target S1E1 or episode 1 and label it a restart. Do not alter anyone's progress by suggesting a rewatch.
 - **Rationale:** Define the all-finished case without erasing completion or inventing a next episode.
@@ -123,7 +124,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D08. Manual duplicate candidates and ambiguity
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Compare title plus content type using a title key formed by Unicode NFKC normalization, trimming, collapsing internal whitespace to one space, and locale-independent lowercasing. This finds manual duplicate candidates, not proof of identity. Ask the saver to select an existing match or distinguish a genuinely different work by editing its displayed title, for example adding its year. Never silently merge ambiguous candidates. Confirmed matches, including archived ones, retain their entry ID/history.
 - **Rationale:** Identical names can describe remakes or different works; one shared entry still needs deliberate identity matching.
@@ -133,7 +134,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D09. Provider identity and collisions
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Match a known provider namespace plus its external ID uniquely within a group, including archived records. Different namespaces' IDs do not imply equality; missing identifiers remain absent. Linking an import to an existing manual entry requires confirmation and an unoccupied identity. If that provider identity already belongs to another group entry, show the existing entry instead of merging histories automatically.
 - **Rationale:** Preserve provider identity and prevent accidental cross-provider or cross-group merges.
@@ -143,7 +144,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D10. History-sensitive title edits
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Ordinary metadata edits preserve all member history. Reject changes of content type or episode-numbering style once any progress, rating, or note exists; allow them before history exists with valid fields. Identity changes require collision checks and explicit confirmation. Do not auto-convert episode coordinates or merge histories.
 - **Rationale:** A small first release cannot reliably translate arbitrary histories between title meanings.
@@ -153,7 +154,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D11. Feedback target
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Store one rating and one note per member per title for the first release, including series/anime. Episode-specific feedback is not implemented by this proposal.
 - **Rationale:** Title-level feedback keeps cardinality and UI consistent across the four content types.
@@ -163,7 +164,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D12. Rating precision and clearing
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Use whole-number scores 1–10. Clearing a score removes that member's rating; absence displays “Not rated,” never 0. No rating is required to mark something completed.
 - **Rationale:** Clarify the approved scale without introducing fractional precision or mandatory feedback.
@@ -173,7 +174,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D13. Note limits and empty text
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Accept plain-text notes up to 2000 Unicode code points, with line breaks preserved. Trim outside whitespace; saving a blank note clears it after explicit UI feedback. Escape text on display; no rich text or attachments.
 - **Rationale:** Bound input while preserving useful personal comments safely.
@@ -183,7 +184,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D14. Profile names and colors
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Trim names, apply Unicode NFKC normalization, collapse internal whitespace to one space, require 1–40 Unicode code points, and enforce uniqueness within a group using a locale-independent lowercase key. Preserve display casing and permit the same name in another group. Colors must come from the UI's fixed accessible palette; exact palette values belong to the design system, not this decision record.
 - **Rationale:** Avoid indistinguishable selectable profiles and arbitrary unreadable colors.
@@ -193,7 +194,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D15. Profile/session persistence
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Remember group access and the active member for the browser session using server-controlled session context. Reloads retain the choice; a separate browser context starts independently. No guaranteed persistence after browser-session end. Missing/stale member references return to the selector without changing history; reject wrong-group IDs on the server.
 - **Rationale:** Match the planned session behavior without claiming durable authenticated identity.
@@ -203,7 +204,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D16. Group switching
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Support one active group per browser session. Opening another valid invite replaces active group context and clears active-member selection; existing groups' records remain unchanged. Do not introduce a cross-group account or group dashboard. Invalid invites do not replace valid active context.
 - **Rationale:** Define switching without adding personal accounts or membership discovery.
@@ -213,7 +214,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D17. Duration and time input
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Store durations/timestamps in whole seconds. Enter manual duration as minutes and optional seconds, and available time as whole minutes from 1 to 1440. Permit title durations from 1 second to 86400 seconds; compare exact seconds, display minutes plus seconds when needed. Positive fractional minute inputs must use the seconds control instead of silent rounding.
 - **Rationale:** Preserve video precision while keeping the time budget easy to enter.
@@ -273,7 +274,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D23. Manual timestamps
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Accept M:SS or H:MM:SS with valid minute/second components and whole seconds, from 0 through full duration inclusive. Display H:MM:SS for at least one hour and M:SS otherwise. Blank means no timestamp, distinct from zero. Permit correction backward and explicit clearing.
 - **Rationale:** Support familiar resume positions without pretending to observe external playback.
@@ -283,7 +284,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D24. Completion and corrections
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Completion is an explicit member action, independent of timestamp. Reaching full duration does not mark complete automatically; marking complete does not rewrite a timestamp. Undo completion preserves the timestamp and the retained episodic position; users then correct progress manually if needed.
 - **Rationale:** External viewing is not observed, and guessing completion could incorrectly exclude content.
@@ -293,7 +294,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D25. Duration edits below stored timestamps
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** Allow a valid duration correction without silently altering personal timestamps. Display existing out-of-range timestamps with a correction warning; newly entered timestamps must satisfy the new duration. Do not use a cross-record constraint that prevents correcting shared metadata. Completion remains unchanged.
 - **Rationale:** A contributor's correction should not erase another member's historical input.
@@ -313,7 +314,7 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D27. Additional saves do not overwrite metadata
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
 - **Recommendation:** A duplicate save adds only the contributor. Existing title metadata and all personal history take precedence over a new import. Present changed metadata for explicit contributor editing; never apply it as a side effect of adding a name.
 - **Rationale:** Preserve intentional group edits and keep save/merge distinct from edit permission.
@@ -343,4 +344,5 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ## Completion and handoff
 
-The issue #2 deliverable is this decision record plus its links from the plan and relevant issue prerequisites. No D proposal has been approved by creating this document. Schema implementation must wait for agreement on the listed schema-affecting subset; other features must resolve the D entries they rely on. Provider research remains in #3, and runtime/schema/feature implementation remains in its existing backlog tasks.
+The original issue #2 deliverable was the decision record and prerequisite links. Issue #4 subsequently recorded explicit D01/D02 approval and resolved its schema subset through delegated authority. Non-schema feature tasks still record the choices they rely on. Provider research is complete in [metadata-providers.md](metadata-providers.md); U01 remains unresolved only for authenticated access, runtime semantics, and rights checks owned by #17/#18, not for the existence of documented routes. No provider API is claimed live-tested.
+

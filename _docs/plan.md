@@ -67,8 +67,8 @@ The [metadata provider research](metadata-providers.md) records the documented r
 - Moods come from a fixed list, rather than custom tags.
 - A title can have multiple moods.
 - Example moods discussed: funny, relaxing, exciting, dark, emotional.
-- The final mood list remains to be confirmed.
-- Genre is part of the saved metadata; its vocabulary and whether it appears as a picker filter remain undecided.
+- D01 explicitly confirms Funny, Relaxing, Exciting, Dark, and Emotional; require at least one per title.
+- D02 explicitly confirms optional editable genre labels (up to 10, each 40 characters), with no first-release genre picker filter.
 
 ## One entry, multiple contributors
 
@@ -83,7 +83,7 @@ The [metadata provider research](metadata-providers.md) records the documented r
 - Archiving removes the title from picks and preserves everyone’s progress, ratings, and notes.
 - Adding an archived title again restores the same entry with its history intact.
 
-The exact method for recognizing duplicate titles is still to be defined.
+Delegated D08–D10/D27 define confirmed manual matching, provider identities scoped to group and provider, history-sensitive edits, and metadata preservation. See [the decision record](decisions.md).
 
 ## Personal progress
 
@@ -102,7 +102,7 @@ Progress belongs to each member individually, even though the content entry is s
 ### Movies and videos
 
 - Track personal completion and video timestamp progress.
-- The mechanism for updating timestamps remains undecided.
+- Delegated D23–D25 define manual timestamp entry, correction, independent completion, and preservation of older out-of-range timestamps after duration edits.
 - Automatic playback tracking was discussed as a more complex feature and was not approved for the first release.
 
 ### Duration used for picks
@@ -205,23 +205,18 @@ The user authorized the backlog run on October 15, 2026. During that run, the us
 
 ## Decision record and implementation gates
 
-Read [the first-release decision record](decisions.md) before implementing edge-case behavior. Its Approved baseline preserves the choices in this plan; D01–D28 are proposals awaiting user agreement, and U01 is unresolved provider research. The detailed recommendations do not silently replace the unresolved choices below.
+Read [the first-release decision record](decisions.md) before implementing edge-case behavior. Its Approved baseline preserves the choices in this plan. D01/D02 are explicitly approved; D03–D17, D23–D25, and D27 are resolved delegated choices for issue #4's schema foundation. Other D entries remain proposals for their owning feature tasks to resolve using delegated authority. U01 now identifies the remaining live access, semantics, and rights checks following provider research.
 
-[Issue #4](https://github.com/xiaodlb/watchnext/issues/4) must resolve the [schema-affecting approval gate](decisions.md#schema-affecting-approval-gate) before relying on proposed data contracts. Each decision identifies affected feature issues and an exact approval question; follow the relevant issue prerequisite links to its decision IDs. Issue #2's documentation can be complete while those downstream approvals are pending.
+[Issue #4](https://github.com/xiaodlb/watchnext/issues/4) records the [schema-affecting resolutions](decisions.md#schema-affecting-approval-gate) before implementing those contracts. Each entry retains its rationale/example and distinguishes explicit approval from delegated resolution. Historical approval questions are not requests to ask again. Follow the relevant issue prerequisite links to its decision IDs.
 
 ## Remaining decisions before implementation
 
 - Complete the authenticated and field-semantics verification linked from [metadata provider research](metadata-providers.md); both documented provider routes remain untested with credentials.
-- Define the final mood list and genre handling.
-- Define manual timestamp and completion controls.
-- Define whether “current episode” means next to watch or currently in progress.
-- Define episode completion, season boundaries, and series completion behavior.
-- Define duplicate detection for imported and manually entered titles.
+- Implement the resolved fixed moods, genre handling, manual timestamps/completion, next-episode semantics, numbering boundaries, and duplicate identity rules in their owning feature tasks; issue #4 supplies storage only.
 - Define ranking ties, fallback tolerance, and suggestion-cycle reset behavior.
-- Define title-level versus episode-level ratings and notes.
+- Implement the resolved title-level integer ratings and plain-text notes in their owning tasks.
 - Define external-link handling for individual episodes and entries without playable links.
-- Define profile creation, returning-member selection, and invite-link management.
-- Define whether one person can belong to multiple groups and how they switch groups.
+- Implement the resolved profile validation/session/group-switching contracts; invitation workflows remain in their owning tasks.
 - Design screens and layout.
 - Choose the database access library and styling tools for the selected stack when required by their backlog tasks.
 
