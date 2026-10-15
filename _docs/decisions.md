@@ -53,6 +53,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D01. Fixed moods
 
+- **Status:** Proposed.
+
 - **Recommendation:** Use Funny, Relaxing, Exciting, Dark, and Emotional as the first-release list. Require at least one mood per title; permit several. The picker selects one mood.
 - **Rationale:** These are the five examples already discussed and support predictable matching without custom tags.
 - **Example:** A title tagged Funny and Relaxing appears for either selection; saving with no mood shows “Choose at least one mood.”
@@ -60,6 +62,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 - **Affected:** [#4](https://github.com/xiaodlb/watchnext/issues/4), [#10](https://github.com/xiaodlb/watchnext/issues/10), [#25](https://github.com/xiaodlb/watchnext/issues/25), [#26](https://github.com/xiaodlb/watchnext/issues/26).
 
 ### D02. Genres and metadata input
+
+- **Status:** Proposed.
 
 - **Recommendation:** Store an optional list of genre labels, editable after import, without a genre picker filter in the first release. Trim and deduplicate labels ignoring case; allow up to 10 labels of 40 characters each. Require a trimmed title of 1–200 characters and one of the four supported content types. Links and covers remain optional.
 - **Rationale:** Provider vocabularies may differ; optional labels avoid blocking YouTube/manual entries that have no useful genre.
@@ -69,6 +73,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D03. Episode position means next to watch
 
+- **Status:** Proposed.
+
 - **Recommendation:** Persist the next episode to watch, not the last completed episode. Label controls “Next episode.” Marking an episode watched advances the position only when the member provides the next valid coordinate or explicitly confirms the next continuous episode.
 - **Rationale:** It maps directly to the agreed picker examples and avoids off-by-one ambiguity.
 - **Example:** Next episode 3 means the picker targets episode 3; after finishing it, the member sets next episode 4.
@@ -76,6 +82,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 - **Affected:** [#4](https://github.com/xiaodlb/watchnext/issues/4), [#20](https://github.com/xiaodlb/watchnext/issues/20), [#24](https://github.com/xiaodlb/watchnext/issues/24).
 
 ### D04. Valid episode coordinates
+
+- **Status:** Proposed.
 
 - **Recommendation:** Accept whole-number seasons and episodes from 1 to 9999. Season/episode titles require both coordinates; continuous titles require only the episode. Unknown progress uses absent coordinates, never episode 0. Specials/season 0 are not automatically represented by this convention.
 - **Rationale:** Validate inputs without inventing catalog limits that the app does not know.
@@ -85,6 +93,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D05. Season transitions
 
+- **Status:** Proposed.
+
 - **Recommendation:** Order season/episode positions lexicographically, but never infer a season's episode count. A member enters the new season and episode manually. Continuous numbering increments within its numeric bound without inventing a final episode.
 - **Rationale:** The first release has no dependable episode catalog.
 - **Example:** After S1E12, the member explicitly sets S2E1; the app does not guess whether S1E13 exists. S1E12 sorts before S2E1.
@@ -92,6 +102,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 - **Affected:** [#4](https://github.com/xiaodlb/watchnext/issues/4), [#20](https://github.com/xiaodlb/watchnext/issues/20), [#24](https://github.com/xiaodlb/watchnext/issues/24).
 
 ### D06. Unknown and unstarted progress
+
+- **Status:** Proposed.
 
 - **Recommendation:** Keep Unknown distinct from explicitly Not started. Not started maps to S1E1 or episode 1; Unknown has no target episode and excludes that series from group picks even when rewatches are enabled. Ask that viewer to set a position. For movies/videos, absent progress means not marked completed, with no fabricated timestamp.
 - **Rationale:** Unknown episodic progress cannot safely establish spoiler eligibility.
@@ -101,6 +113,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D07. Completed-series rewatches
 
+- **Status:** Proposed.
+
 - **Recommendation:** Store completion separately from the retained last-entered position. With rewatches off, any completed selected viewer excludes the series. With rewatches on, completed viewers can rewatch the least advanced unfinished viewer's next episode; if all selected viewers completed the series, target S1E1 or episode 1 and label it a restart. Do not alter anyone's progress by suggesting a rewatch.
 - **Rationale:** Define the all-finished case without erasing completion or inventing a next episode.
 - **Example:** Anna completed and Max next 7 yields episode 7 with rewatches on; both completed yields episode 1.
@@ -109,13 +123,17 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D08. Manual duplicate candidates and ambiguity
 
-- **Recommendation:** Use trimmed, Unicode-normalized, case-insensitive title plus content type to find manual duplicate candidates, not to prove identity. Ask the saver to select an existing match or distinguish a genuinely different work by editing its displayed title, for example adding its year. Never silently merge ambiguous candidates. Confirmed matches, including archived ones, retain their entry ID/history.
+- **Status:** Proposed.
+
+- **Recommendation:** Compare title plus content type using a title key formed by Unicode NFKC normalization, trimming, collapsing internal whitespace to one space, and locale-independent lowercasing. This finds manual duplicate candidates, not proof of identity. Ask the saver to select an existing match or distinguish a genuinely different work by editing its displayed title, for example adding its year. Never silently merge ambiguous candidates. Confirmed matches, including archived ones, retain their entry ID/history.
 - **Rationale:** Identical names can describe remakes or different works; one shared entry still needs deliberate identity matching.
 - **Example:** Entering “ dune ” as a movie finds Dune; the saver selects it or changes the title to Dune (1984) for a different work.
 - **Approval question:** Should manual matching require confirmation and ambiguous new works require a distinguishable title rather than silent merging?
 - **Affected:** [#4](https://github.com/xiaodlb/watchnext/issues/4), [#10](https://github.com/xiaodlb/watchnext/issues/10), [#13](https://github.com/xiaodlb/watchnext/issues/13), [#15](https://github.com/xiaodlb/watchnext/issues/15).
 
 ### D09. Provider identity and collisions
+
+- **Status:** Proposed.
 
 - **Recommendation:** Match a known provider namespace plus its external ID uniquely within a group, including archived records. Different namespaces' IDs do not imply equality; missing identifiers remain absent. Linking an import to an existing manual entry requires confirmation and an unoccupied identity. If that provider identity already belongs to another group entry, show the existing entry instead of merging histories automatically.
 - **Rationale:** Preserve provider identity and prevent accidental cross-provider or cross-group merges.
@@ -125,6 +143,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D10. History-sensitive title edits
 
+- **Status:** Proposed.
+
 - **Recommendation:** Ordinary metadata edits preserve all member history. Reject changes of content type or episode-numbering style once any progress, rating, or note exists; allow them before history exists with valid fields. Identity changes require collision checks and explicit confirmation. Do not auto-convert episode coordinates or merge histories.
 - **Rationale:** A small first release cannot reliably translate arbitrary histories between title meanings.
 - **Example:** A contributor cannot change a season/episode series to continuous numbering when Max has S2E3 saved; Max's history remains intact after the rejected edit.
@@ -132,6 +152,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 - **Affected:** [#4](https://github.com/xiaodlb/watchnext/issues/4), [#14](https://github.com/xiaodlb/watchnext/issues/14).
 
 ### D11. Feedback target
+
+- **Status:** Proposed.
 
 - **Recommendation:** Store one rating and one note per member per title for the first release, including series/anime. Episode-specific feedback is not implemented by this proposal.
 - **Rationale:** Title-level feedback keeps cardinality and UI consistent across the four content types.
@@ -141,6 +163,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D12. Rating precision and clearing
 
+- **Status:** Proposed.
+
 - **Recommendation:** Use whole-number scores 1–10. Clearing a score removes that member's rating; absence displays “Not rated,” never 0. No rating is required to mark something completed.
 - **Rationale:** Clarify the approved scale without introducing fractional precision or mandatory feedback.
 - **Example:** 1 and 10 save; 7.5 does not; clearing 7 displays Not rated and leaves Max's score unchanged.
@@ -148,6 +172,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 - **Affected:** [#4](https://github.com/xiaodlb/watchnext/issues/4), [#22](https://github.com/xiaodlb/watchnext/issues/22).
 
 ### D13. Note limits and empty text
+
+- **Status:** Proposed.
 
 - **Recommendation:** Accept plain-text notes up to 2000 Unicode code points, with line breaks preserved. Trim outside whitespace; saving a blank note clears it after explicit UI feedback. Escape text on display; no rich text or attachments.
 - **Rationale:** Bound input while preserving useful personal comments safely.
@@ -157,13 +183,17 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D14. Profile names and colors
 
-- **Recommendation:** Trim and normalize names, require 1–40 Unicode code points, and enforce case-insensitive uniqueness within a group. Permit the same name in another group. Colors must come from the UI's fixed accessible palette; exact palette values belong to the design system, not this decision record.
+- **Status:** Proposed.
+
+- **Recommendation:** Trim names, apply Unicode NFKC normalization, collapse internal whitespace to one space, require 1–40 Unicode code points, and enforce uniqueness within a group using a locale-independent lowercase key. Preserve display casing and permit the same name in another group. Colors must come from the UI's fixed accessible palette; exact palette values belong to the design system, not this decision record.
 - **Rationale:** Avoid indistinguishable selectable profiles and arbitrary unreadable colors.
 - **Example:** Creating “ anna ” when Anna exists in that group shows “Name already used”; Anna can exist independently in another group.
 - **Approval question:** Should names be unique ignoring case within each group with these bounds, and colors restricted to the shared palette?
 - **Affected:** [#4](https://github.com/xiaodlb/watchnext/issues/4), [#6](https://github.com/xiaodlb/watchnext/issues/6), [#9](https://github.com/xiaodlb/watchnext/issues/9).
 
 ### D15. Profile/session persistence
+
+- **Status:** Proposed.
 
 - **Recommendation:** Remember group access and the active member for the browser session using server-controlled session context. Reloads retain the choice; a separate browser context starts independently. No guaranteed persistence after browser-session end. Missing/stale member references return to the selector without changing history; reject wrong-group IDs on the server.
 - **Rationale:** Match the planned session behavior without claiming durable authenticated identity.
@@ -173,6 +203,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D16. Group switching
 
+- **Status:** Proposed.
+
 - **Recommendation:** Support one active group per browser session. Opening another valid invite replaces active group context and clears active-member selection; existing groups' records remain unchanged. Do not introduce a cross-group account or group dashboard. Invalid invites do not replace valid active context.
 - **Rationale:** Define switching without adding personal accounts or membership discovery.
 - **Example:** Anna in group A opens group B's valid invite and selects a B profile; A's progress remains unchanged. An invalid invite shows an error without silently switching groups.
@@ -180,6 +212,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 - **Affected:** [#4](https://github.com/xiaodlb/watchnext/issues/4), [#8](https://github.com/xiaodlb/watchnext/issues/8), [#9](https://github.com/xiaodlb/watchnext/issues/9).
 
 ### D17. Duration and time input
+
+- **Status:** Proposed.
 
 - **Recommendation:** Store durations/timestamps in whole seconds. Enter manual duration as minutes and optional seconds, and available time as whole minutes from 1 to 1440. Permit title durations from 1 second to 86400 seconds; compare exact seconds, display minutes plus seconds when needed. Positive fractional minute inputs must use the seconds control instead of silent rounding.
 - **Rationale:** Preserve video precision while keeping the time budget easy to enter.
@@ -189,6 +223,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D18. Exact-match ties
 
+- **Status:** Proposed.
+
 - **Recommendation:** Sort exact matches by duration descending, then original title-entry creation time ascending, then stable entry ID ascending. Additional contributors or restoration do not reset creation time.
 - **Rationale:** Deterministic ties make Pick again understandable and give older saved entries priority.
 - **Example:** Two 22-minute matches show the older entry first; identical creation times are broken by ID consistently.
@@ -196,6 +232,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 - **Affected:** [#25](https://github.com/xiaodlb/watchnext/issues/25), [#27](https://github.com/xiaodlb/watchnext/issues/27).
 
 ### D19. Near-match fallback
+
+- **Status:** Proposed.
 
 - **Recommendation:** Use fallback only if there are no exact mood-and-time matches. First offer same-mood viewer-eligible items up to 5 minutes over budget, smallest overrun first. If none exist, offer different-mood viewer-eligible items within budget, longest first. Apply D18 ties after the primary order. Do not relax both mood and time together or relax viewer eligibility.
 - **Rationale:** Preserve the requested mood first while bounding the cost of an overrun.
@@ -205,6 +243,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D20. No result
 
+- **Status:** Proposed.
+
 - **Recommendation:** Return an explicit no-match state when exact and permitted fallback sets are empty. Explain whether viewers need progress, the list is empty, or filters exclude known eligible titles; provide relevant actions without silently changing inputs.
 - **Rationale:** A near match is useful only when it remains within the agreed relaxation policy.
 - **Example:** A lone 90-minute movie with 25 minutes available produces No match and an edit-time/add-title action, not an unexplained 65-minute overrun.
@@ -212,6 +252,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 - **Affected:** [#24](https://github.com/xiaodlb/watchnext/issues/24), [#25](https://github.com/xiaodlb/watchnext/issues/25), [#26](https://github.com/xiaodlb/watchnext/issues/26).
 
 ### D21. Pick again and exhaustion
+
+- **Status:** Proposed.
 
 - **Recommendation:** Keep an ordered candidate list for the current picking context. Advance through all exact matches, or through only the selected fallback tier if no exact matches exist. After its last item, show “All matches shown” with an explicit Start again action; do not repeat automatically. Keep cycle state local to the picking page, not permanent history.
 - **Rationale:** Enforce no early repeats and disclose restarts clearly.
@@ -221,6 +263,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D22. Reset and invalidation
 
+- **Status:** Proposed.
+
 - **Recommendation:** Changing viewers, time, mood, or rewatch permission discards the old cycle. Revalidate relevant title/progress/contribution state before showing another result; archive/restoration, addition/removal, duration/mood/type/identity edits, or selected-viewer progress changes reset and recompute. Inform the user when list changes reset a cycle. Rating/note changes alone do not reset it. Ignore stale responses and serialize advance actions.
 - **Rationale:** Prevent stale spoiler-ineligible results while keeping unrelated feedback out of selection.
 - **Example:** After A is shown, B becomes archived; Pick again recomputes without B and shows “List changed; picks refreshed.” Max changing his rating alone preserves the current sequence.
@@ -228,6 +272,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 - **Affected:** [#24](https://github.com/xiaodlb/watchnext/issues/24), [#26](https://github.com/xiaodlb/watchnext/issues/26), [#27](https://github.com/xiaodlb/watchnext/issues/27).
 
 ### D23. Manual timestamps
+
+- **Status:** Proposed.
 
 - **Recommendation:** Accept M:SS or H:MM:SS with valid minute/second components and whole seconds, from 0 through full duration inclusive. Display H:MM:SS for at least one hour and M:SS otherwise. Blank means no timestamp, distinct from zero. Permit correction backward and explicit clearing.
 - **Rationale:** Support familiar resume positions without pretending to observe external playback.
@@ -237,6 +283,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D24. Completion and corrections
 
+- **Status:** Proposed.
+
 - **Recommendation:** Completion is an explicit member action, independent of timestamp. Reaching full duration does not mark complete automatically; marking complete does not rewrite a timestamp. Undo completion preserves the timestamp and the retained episodic position; users then correct progress manually if needed.
 - **Rationale:** External viewing is not observed, and guessing completion could incorrectly exclude content.
 - **Example:** Saving 1:30:00 on a 90-minute movie leaves it unfinished until Mark complete; Undo complete restores eligibility without changing 1:30:00.
@@ -244,6 +292,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 - **Affected:** [#4](https://github.com/xiaodlb/watchnext/issues/4), [#20](https://github.com/xiaodlb/watchnext/issues/20), [#21](https://github.com/xiaodlb/watchnext/issues/21), [#24](https://github.com/xiaodlb/watchnext/issues/24).
 
 ### D25. Duration edits below stored timestamps
+
+- **Status:** Proposed.
 
 - **Recommendation:** Allow a valid duration correction without silently altering personal timestamps. Display existing out-of-range timestamps with a correction warning; newly entered timestamps must satisfy the new duration. Do not use a cross-record constraint that prevents correcting shared metadata. Completion remains unchanged.
 - **Rationale:** A contributor's correction should not erase another member's historical input.
@@ -253,6 +303,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D26. Missing and series-level viewing links
 
+- **Status:** Proposed.
+
 - **Recommendation:** Permit absent viewing links; show No viewing link saved with an edit action only when the selected member can edit. Accept HTTP/HTTPS destinations only. Label a series-level destination “Open series”; show the suggested episode separately without fabricating an episode-specific URL. Opening externally never changes progress.
 - **Rationale:** Metadata/source pages are not guaranteed playable episode destinations.
 - **Example:** A manual movie without a link can be picked but has no active Watch button; S2E3 can accompany Open series without claiming the link opens S2E3.
@@ -261,6 +313,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 
 ### D27. Additional saves do not overwrite metadata
 
+- **Status:** Proposed.
+
 - **Recommendation:** A duplicate save adds only the contributor. Existing title metadata and all personal history take precedence over a new import. Present changed metadata for explicit contributor editing; never apply it as a side effect of adding a name.
 - **Rationale:** Preserve intentional group edits and keep save/merge distinct from edit permission.
 - **Example:** Max imports a 23-minute runtime for Anna's existing 22-minute title; the shared entry remains 22 minutes after Max is added, until a contributor explicitly edits it.
@@ -268,6 +322,8 @@ Each D entry below has status **Proposed**, not approved. Each includes a concre
 - **Affected:** [#4](https://github.com/xiaodlb/watchnext/issues/4), [#13](https://github.com/xiaodlb/watchnext/issues/13), [#14](https://github.com/xiaodlb/watchnext/issues/14), [#19](https://github.com/xiaodlb/watchnext/issues/19).
 
 ### D28. Stale and archived detail destinations
+
+- **Status:** Proposed.
 
 - **Recommendation:** A group-authorized archived title retains a readable detail page with an Archived banner and restore-by-saving action. It remains excluded from active list/picks. Unknown IDs show Not found; wrong-group IDs reveal no private title data. A stale active-list click may reach the archived view without pretending it is still active.
 - **Rationale:** Preserve readable history while handling links that outlive list membership.

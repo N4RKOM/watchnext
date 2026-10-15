@@ -1,7 +1,7 @@
 # WatchNext — Project Scope
 
 Date: October 15, 2026
-Status: Implementation started with issue #1, the empty Next.js project and its first test. Product features remain in the backlog.
+Status: Issue #1 provides the empty Next.js project and its first test. Issue #2 records approved behavior, proposed edge-case decisions, and unresolved integration questions in [decisions.md](decisions.md). Product features remain in the backlog.
 
 ## Concept
 
@@ -201,7 +201,13 @@ Anna saves a title, then Max saves the same title. There is one entry listing bo
 - YouTube and Кинопоиск lookups require internet access; manual entries and existing local data do not depend on those lookup services.
 - Initial package versions are recorded in `package.json` and `pnpm-lock.yaml`; use Node.js 24 LTS and pnpm. The database access library and styling tools remain undecided.
 
-The user authorized implementation of issue #1 and approved its setup dependencies. That task does not authorize implementation of other backlog features.
+The user authorized issue #1 and its setup dependencies, followed by the documentation deliverable in issue #2. Other backlog features require their own implementation request; creating or proposing a decision does not approve it.
+
+## Decision record and implementation gates
+
+Read [the first-release decision record](decisions.md) before implementing edge-case behavior. Its Approved baseline preserves the choices in this plan; D01–D28 are proposals awaiting user agreement, and U01 is unresolved provider research. The detailed recommendations do not silently replace the unresolved choices below.
+
+[Issue #4](https://github.com/xiaodlb/watchnext/issues/4) must resolve the [schema-affecting approval gate](decisions.md#schema-affecting-approval-gate) before relying on proposed data contracts. Each decision identifies affected feature issues and an exact approval question; follow the relevant issue prerequisite links to its decision IDs. Issue #2's documentation can be complete while those downstream approvals are pending.
 
 ## Remaining decisions before implementation
 
