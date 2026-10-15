@@ -24,6 +24,17 @@ WatchNext is an academic web app that helps couples and friends choose something
 - Repository: https://github.com/xiaodlb/watchnext.
 - Task descriptions and live task state: GitHub issues linked from the backlog index.
 
+## Documents
+
+- `_docs/process.md` - how work is organized.
+- `_docs/plan.md` - agreed product scope and unresolved decisions.
+- `_docs/tasks.md` - links to the GitHub backlog issues.
+- Before writing tests, read `_docs/testing-guidelines.md` when available.
+- For anything touching the UI, read `_docs/design-system.md` when available.
+- Before adding or changing API behavior, read `_docs/api.md` when available.
+
+The testing guidelines, design system, and API documents are planned and do not exist yet. Check whether they have been created in the current checkout; do not invent their contents or treat them as existing requirements. Once added, follow them for the relevant work and keep them consistent with approved project decisions.
+
 ## Start each session
 
 1. Read this file, `_docs/process.md`, `_docs/plan.md`, and `_docs/tasks.md`.
