@@ -35,11 +35,13 @@ To serve a production build locally, run `pnpm build` followed by `pnpm start`, 
 
 ## Current scope
 
-The shared shell now supports creating a named group and receiving a private invitation URL. SQLite migrations and persistent server access are available. Invitation resolution/sessions, profiles, watchlists, and metadata clients remain in later issues; the creation page honestly marks joining as unavailable until its resolver exists. No provider API credentials are needed for current features or database checks.
+The shared shell supports creating a named group, receiving a private invitation URL, and opening it into a protected browser-session group context. The token-free group page shows the real group name and explains the trust model. Profiles, watchlists, and metadata clients remain in later issues. No provider API credentials are needed for current features or database checks. Re-run `pnpm db:init` after pulling new numbered migrations.
 
 Before a feature uses persistent storage, run `pnpm db:init`. It initializes/migrates the local user-data database and preserves rows on repeat runs; normal server access requires initialization and never silently creates another file. Set server-only `WATCHNEXT_DATABASE_PATH` in the shell or untracked `.env.local` to override the OS-local default. Relative paths resolve against the working directory; spaces work when quoted. Use a local disk rather than the repository's possibly shared drive. Exact platform paths and lifecycle/error handling are in [the database guide](_docs/database.md).
 
 Invitation links use server-only `WATCHNEXT_APP_ORIGIN`, default `http://127.0.0.1:3000`; set it to the exact origin/port used for your demonstration. It must have no credentials, path, query, or fragment. Loopback links work only on the same computer. See [the server operation guide](_docs/api.md) and optional [.env.example](.env.example). Keep actual invitation links and environment files private.
+
+Use `pnpm dev` / `pnpm start` to serve the app. Their privacy preload suppresses credential-bearing framework request traces before Next initializes; direct unprotected Next startup is rejected. The pinned-runtime hook and upgrade checks are documented in the server operation guide.
 
 Run `pnpm db:migrate:temp` to create a temporary database and inspect its tables, or `pnpm db:verify` for synthetic acceptance fixtures with automatic cleanup. Both commands protect normal user databases by accepting no path arguments. See [the database guide](_docs/database.md) for schema details, decision links, exact commands, and recovery behavior.
 

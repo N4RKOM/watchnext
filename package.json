@@ -5,9 +5,9 @@
   "type": "module",
   "packageManager": "pnpm@11.25.0",
   "scripts": {
-    "dev": "next dev --hostname 127.0.0.1",
+    "dev": "node --import ./scripts/framework-privacy.mjs node_modules/next/dist/bin/next dev --hostname 127.0.0.1",
     "build": "next build",
-    "start": "next start --hostname 127.0.0.1",
+    "start": "node --import ./scripts/framework-privacy.mjs node_modules/next/dist/bin/next start --hostname 127.0.0.1",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate:temp": "node scripts/db/migrate.mjs",

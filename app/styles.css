@@ -74,7 +74,7 @@ h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); font-weight: 700; }
 .group-result { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: clamp(1.5rem, 5vw, 3rem); overflow-wrap: anywhere; }
 .group-result > p { color: var(--color-muted); margin-block: var(--space-3); }
 .group-result .button { margin-top: var(--space-3); }
-.saved-group-name { white-space: pre-wrap; }
+.saved-group-name { white-space: pre-wrap; overflow-wrap: anywhere; }
 .button-secondary { background: var(--color-surface); color: var(--color-accent); }
 .notice { background: var(--color-accent-soft); color: var(--color-text) !important; border-radius: 0.5rem; padding: var(--space-3); }
 

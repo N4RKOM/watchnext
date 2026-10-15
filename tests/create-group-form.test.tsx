@@ -33,7 +33,7 @@ it("indicates saving, disables submission in flight, then permits a deliberate n
   expect(screen.getByRole("status").textContent).toContain("Saving");
   finish(syntheticSuccess);
   await screen.findByRole("button", { name: "Create another group" });
-  expect(screen.getByText(/Joining by invite isn’t available yet/)).toBeTruthy();
+  expect(screen.getByText(/Open it to enter your group/)).toBeTruthy();
 });
 
 it("preserves input and offers retry without a URL after a save error", async () => {

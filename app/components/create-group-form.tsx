@@ -24,14 +24,14 @@ function InvitationResult({ state }: { state: Extract<CreateGroupState, { kind: 
     <section className="group-result" aria-labelledby="created-heading">
       <p className="eyebrow">Group created</p>
       <h2 id="created-heading" className="saved-group-name">{state.name}</h2>
-      <p>Keep your invitation link safe. Joining by invite isn’t available yet.</p>
+      <p>Keep your invitation link safe. Open it to enter your group, or share it with people you trust.</p>
       <label className="field-label" htmlFor="invite-link">Invite link</label>
       <input id="invite-link" className="field" readOnly value={state.inviteUrl} onFocus={(event) => event.currentTarget.select()} />
       <button className="button button-secondary" type="button" onClick={copyLink} disabled={copying}>
         {copying ? "Copying…" : "Copy invite link"}
       </button>
       <p className="form-feedback" role="status" aria-live="polite">
-        {copyState === "copied" ? "Invite link copied." : copyState === "manual" ? "Copying wasn’t available. Select the invite link above and copy it manually, then share it when joining is available." : "Anyone with this link will be able to access the group. Share it only with people you trust."}
+        {copyState === "copied" ? "Invite link copied." : copyState === "manual" ? "Copying wasn’t available. Select the invite link above and copy it manually." : "Anyone with this link can access the group. Share it only with people you trust."}
       </p>
       {state.loopback && <p className="notice">This link points to this computer. Friends can’t open it on their own computers.</p>}
     </section>
