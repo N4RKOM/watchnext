@@ -43,7 +43,7 @@ describe("persistent server database access", () => {
   });
   it("initializes parent directories and preserves rows after reinitialization and close/reopen", () => {
     const env = environment();
-    expect(initializeDatabase(env).applied).toEqual(["0001_initial.sql"]);
+    expect(initializeDatabase(env).applied).toEqual(["0001_initial.sql", "0002_group_sessions.sql"]);
     const db = getDatabase(env);
     expect(getDatabase(env)).toBe(db);
     expect(db.prepare("PRAGMA foreign_keys").get()?.foreign_keys).toBe(1);

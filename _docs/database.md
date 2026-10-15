@@ -113,8 +113,11 @@ All tables use SQLite `STRICT` typing. Integer storage rejects fractional values
 | `progress` | Group ID, title/member composite primary key, numbering style, position state, optional next season/episode/timestamp, independent completion boolean | Same-group member/title and matching numbering style required. See state rules below. |
 | `ratings` | Group ID, title/member composite primary key, integer score | Same group; 1–10 only; clearing deletes a row rather than storing zero. |
 | `notes` | Group ID, title/member composite primary key, plain-text body | Same group; 1–2000 Unicode code points; clearing deletes a row. Embedded NUL is rejected so SQLite length cannot undercount text. |
+| `group_sessions` | SHA-256 session hash primary key, group ID, backing invitation ID, nullable active member ID, UTC creation time | Added by immutable `0002_group_sessions.sql`; composite foreign keys ensure invitation/member belong to the session group. No raw cookie/invite credentials stored. |
 
 Identifiers are stable across archive and restore. `archived = 1` means excluded from the active list/picker by future queries; `0` means active. Updating this flag has no side effects. There are no contributor-removal/archive automation triggers and no cascade deletion of personal history. Future workflows in #15 must update archive state transactionally while preserving IDs and history.
+
+Issue #8 adds only the sessions migration and an invitation ID/group unique index. Re-run `pnpm db:init` to apply it to an existing local database. Session validity is checked against the current invitation revocation state on every access; browser cookie lifetime and server invalidation policy are documented in [api.md](api.md). Session rows do not supply verified personal identity and are not profile records.
 
 Composite foreign keys reference `(title_id, group_id)` and `(member_id, group_id)` in every contributor/progress/feedback table. Progress also references the title's numbering style. Consequently a valid member ID from the wrong group fails even when both records exist. This provides data consistency, not request authorization or proof of a profile's identity.
 
