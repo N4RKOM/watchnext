@@ -19,13 +19,14 @@ The `pyproject.toml` location applies to Python dependencies. For the selected N
 WatchNext is an academic web app that helps couples and friends choose something from their shared saved watchlist. The selected stack is Next.js, TypeScript, and SQLite, initially running locally at `http://localhost:3000`.
 
 - Product requirements: `_docs/plan.md`.
+- Work process: `_docs/process.md`.
 - Backlog index: `_docs/tasks.md`.
 - Repository: https://github.com/xiaodlb/watchnext.
 - Task descriptions and live task state: GitHub issues linked from the backlog index.
 
 ## Start each session
 
-1. Read this file, `_docs/plan.md`, and `_docs/tasks.md`.
+1. Read this file, `_docs/process.md`, `_docs/plan.md`, and `_docs/tasks.md`.
 2. Inspect the working tree and recent commits before making changes. Preserve existing work.
 3. Identify the task using the rules below, then read its full GitHub issue, relevant comments, and affected files.
 4. State the issue number, intended outcome, and relevant verification briefly before implementation.
