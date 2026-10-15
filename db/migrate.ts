@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 
-export const migrationDirectory = fileURLToPath(new URL("./migrations/", import.meta.url));
+// Resolve a filesystem sibling without asking Next's bundler to import a directory asset.
+export const migrationDirectory = join(dirname(fileURLToPath(import.meta.url)), "migrations");
 
 /** Read-only guard: normal application access never applies schema changes. */
 export function assertCurrentSchema(db: DatabaseSync): void {
