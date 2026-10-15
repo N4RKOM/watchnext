@@ -1,6 +1,6 @@
 # WatchNext backlog
 
-Task descriptions have moved to GitHub issues. Each issue is intended for one focused session and includes its goal and scope. Creating these issues does not authorize application implementation yet.
+Task descriptions have moved to GitHub issues. Each issue is intended for one focused session and includes its goal and scope. Implement only the task selected by the user; creating the backlog does not authorize every issue.
 
 Project context: an academic Next.js and TypeScript web app with local SQLite storage. See [the project scope](plan.md) for agreed behavior; mixed watch sessions, embedded playback, and automatic playback tracking remain outside the first release.
 

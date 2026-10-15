@@ -1,7 +1,7 @@
 # WatchNext — Project Scope
 
 Date: October 15, 2026
-Status: Brainstorming decisions collected; implementation has not started.
+Status: Implementation started with issue #1, the empty Next.js project and its first test. Product features remain in the backlog.
 
 ## Concept
 
@@ -199,9 +199,9 @@ Anna saves a title, then Max saves the same title. There is one entry listing bo
 - Initial hosting: run locally on the demonstration computer, with a planned address of `http://localhost:3000`.
 - Public hosting is not required for the initial setup. Any later online deployment will need hosting that supports persistent SQLite storage or a separate database strategy.
 - YouTube and Кинопоиск lookups require internet access; manual entries and existing local data do not depend on those lookup services.
-- Package versions, database access library, and styling tools remain undecided.
+- Initial package versions are recorded in `package.json` and `pnpm-lock.yaml`; use Node.js 24 LTS and pnpm. The database access library and styling tools remain undecided.
 
-Application implementation has not started. The current authorization is to plan the project, without writing application code yet.
+The user authorized implementation of issue #1 and approved its setup dependencies. That task does not authorize implementation of other backlog features.
 
 ## Remaining decisions before implementation
 
@@ -217,7 +217,7 @@ Application implementation has not started. The current authorization is to plan
 - Define profile creation, returning-member selection, and invite-link management.
 - Define whether one person can belong to multiple groups and how they switch groups.
 - Design screens and layout.
-- Choose package versions, database access library, and styling tools for the selected stack.
+- Choose the database access library and styling tools for the selected stack when required by their backlog tasks.
 
 ## First-release completion checklist
 

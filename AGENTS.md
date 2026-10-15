@@ -2,17 +2,21 @@
 
 ## Commands
 
-- `uv sync` - install dependencies
-- `uv run pytest` - the whole suite
-- `uv run pytest tests/test_home.py` - one test file
+- `pnpm install --frozen-lockfile` - install dependencies
+- `pnpm dev` - start the local development server
+- `pnpm test` - run the whole suite once
+- `pnpm test tests/home.test.tsx` - run one test file
+- `pnpm typecheck` - check TypeScript types
+- `pnpm build` - create a production build
+- `pnpm start` - serve the production build locally
 
-These user-supplied commands describe a Python toolchain. This repository currently has no `pyproject.toml` or Python test suite, and its selected application stack remains Next.js, TypeScript, and SQLite. Do not treat these commands as verified or introduce a Python implementation merely to make them work; document the actual application commands when setup is authorized.
+Use Node.js 24.15.0 or newer within the 24.x release line and pnpm 11.25.0. This is a Next.js and TypeScript project; Python/uv/pytest commands do not apply.
 
 ## Rules
 
-- Dependencies are added in `pyproject.toml`. Do not add one without asking.
+- Dependencies are added in `package.json`. Do not add one without asking.
 
-The `pyproject.toml` location applies to Python dependencies. For the selected Next.js stack, dependencies belong in `package.json`; ask before adding dependencies there as well.
+The user approved the initial Next.js, React, TypeScript, type definitions, Vitest, jsdom, and React Testing Library dependencies for issue #1. Ask before adding further dependencies.
 
 ## Project context
 
@@ -74,7 +78,7 @@ The testing guidelines, design system, and API documents are planned and do not 
 
 - Use the selected stack and existing repository conventions. Propose missing libraries only when required by the selected task, document material choices, and follow the dependency approval rule above before adding them.
 - Keep SQLite access and provider credentials on the server. Never commit secrets, local databases, journals, or generated dependency folders.
-- Application commands and a test runner do not exist until the setup task is completed. Use the commands actually defined in the repository; do not claim checks passed without running them.
+- Use the commands defined in `package.json` and documented above; do not claim checks passed without running them.
 - Run verification appropriate to the change and the issue's acceptance criteria. Isolate tests from normal user databases and mock external metadata providers where appropriate.
 - Documentation-only changes require content, link, and diff checks rather than application tests.
 
