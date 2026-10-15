@@ -35,6 +35,7 @@ WatchNext is an academic web app that helps couples and friends choose something
 - `_docs/tasks.md` - links to the GitHub backlog issues.
 - Before grooming an issue, read `_docs/team/pm.md` and `_docs/task-template.md`.
 - Before implementing a groomed issue, read `_docs/team/software-engineer.md`.
+- Before checking finished work against an issue, read `_docs/team/qa-engineer.md`.
 - Before writing tests, read `_docs/testing-guidelines.md` when available.
 - For anything touching the UI, read `_docs/design-system.md` when available.
 - Before adding or changing API behavior, read `_docs/api.md` when available.
