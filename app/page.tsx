@@ -1,12 +1,15 @@
-import { Placeholder } from "./components/placeholder";
+import { createGroupAction } from "./actions/create-group";
+import { CreateGroupForm } from "./components/create-group-form";
 
 export default function HomePage() {
   return (
-    <Placeholder
-      title="WatchNext"
-      introduction="Less deciding, more watching. Bring the things you want to watch together in one shared list."
-      heading="Your next movie night starts here"
-      description="You’ll be able to create a group or join friends through an invite link here. Group setup is coming soon."
-    />
+    <div className="page-content">
+      <div className="page-heading">
+        <p className="eyebrow">Good company. Great watching.</p>
+        <h1>WatchNext</h1>
+        <p className="page-introduction">Less deciding, more watching. Bring the things you want to watch together in one shared list.</p>
+      </div>
+      <CreateGroupForm action={createGroupAction} />
+    </div>
   );
 }

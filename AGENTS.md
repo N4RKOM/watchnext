@@ -45,7 +45,7 @@ WatchNext is an academic web app that helps couples and friends choose something
 - For anything touching the UI, read `_docs/design-system.md` when available.
 - Before adding or changing API behavior, read `_docs/api.md` when available.
 
-The design system is available at `_docs/design-system.md` and applies to UI work. The testing guidelines and API documents are planned and do not exist yet; check the current checkout rather than inventing their contents. Once added, follow them for relevant work and keep them consistent with approved or delegated project decisions.
+The design system and API guide are available at `_docs/design-system.md` and `_docs/api.md`; follow them for relevant work. Testing guidelines remain planned; check the current checkout rather than inventing their contents. Keep these guides consistent with approved or delegated project decisions.
 
 ## Start each session
 
