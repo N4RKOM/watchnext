@@ -3,6 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { authorizeRequest } from "./request-access";
 import { AccessError } from "./sessions";
 import { contentTypes, fixedMoods, type SavedTitle, type TitleField } from "./title-state";
+import { safeExternalUrl } from "./urls";
 
 export class TitleFieldError extends Error {
   constructor(public field: TitleField, message: string) { super(message); }
@@ -45,12 +46,8 @@ export function validateManualTitle(input: ManualTitleInput) {
   const rawUrl = text(input.watchUrl, "watchUrl");
   let watchUrl: string | null = null;
   if (rawUrl) {
-    try {
-      if (/[\u0000-\u0020\u007f]/.test(rawUrl)) throw new Error();
-      const url = new URL(rawUrl);
-      if (!["https:", "http:"].includes(url.protocol) || url.username || url.password || !/^https?:\/\//i.test(rawUrl)) throw new Error();
-      watchUrl = url.href;
-    } catch { fail("watchUrl", "Enter a complete HTTP or HTTPS link without a username or password, or leave it blank."); }
+    watchUrl = safeExternalUrl(rawUrl);
+    if (!watchUrl) fail("watchUrl", "Enter a complete HTTP or HTTPS link without a username or password, or leave it blank.");
   }
   return { title, titleKey, contentType, durationSeconds, numberingStyle, moods, genres, watchUrl };
 }
@@ -90,7 +87,7 @@ export function readSavedTitle(db: DatabaseSync, request: Request, id: string): 
   const row = db.prepare("SELECT id,title,content_type,duration_seconds,numbering_style,watch_url FROM titles WHERE id=? AND archived=0").get(id);
   if (!row) throw new AccessError();
   return { id: row.id as string, title: row.title as string, contentType: row.content_type as string, durationSeconds: row.duration_seconds as number,
-    numberingStyle: row.numbering_style as string, watchUrl: row.watch_url as string | null,
+    numberingStyle: row.numbering_style as string, watchUrl: safeExternalUrl(row.watch_url),
     moods: db.prepare("SELECT m.label FROM title_moods tm JOIN moods m ON m.code=tm.mood_code WHERE tm.title_id=? ORDER BY m.rowid").all(id).map((r) => r.label as string),
     genres: db.prepare("SELECT label FROM title_genres WHERE title_id=? ORDER BY genre_key").all(id).map((r) => r.label as string),
     contributors: db.prepare("SELECT m.name FROM contributors c JOIN members m ON m.id=c.member_id AND m.group_id=c.group_id WHERE c.title_id=? ORDER BY c.created_at,m.id").all(id).map((r) => r.name as string) };

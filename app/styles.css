@@ -120,3 +120,13 @@ h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); font-weight: 700; }
 .contributor-list { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .contributor-list li { display: flex; align-items: center; gap: var(--space-2); min-width: 0; max-width: 100%; }
 @media (max-width: 30rem) { .watchlist-card { grid-template-columns: 4rem minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3); } .cover-fallback { font-size: 0.75rem; } }
+
+.detail-title, .detail-metadata dd { overflow-wrap: anywhere; }
+.detail-metadata { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: var(--space-6); }
+.detail-metadata h2 { margin-top: 0; }
+.detail-metadata dt { font-weight: 700; }
+.detail-metadata dd { margin: 0 0 var(--space-3); }
+.history-list { list-style: none; display: grid; gap: var(--space-6); padding: 0; }
+.personal-note { white-space: pre-wrap; overflow-wrap: anywhere; }
+.archive-notice, .timestamp-warning { padding: var(--space-3); background: var(--color-accent-soft); border-left: 3px solid var(--color-accent); }
+@media (max-width: 30rem) { .detail-metadata { grid-template-columns: minmax(0, 1fr); } .detail-metadata > .title-cover { width: 6rem; } }

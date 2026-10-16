@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { safeExternalUrl } from "../../lib/urls";
 
 export function safeCoverUrl(value: string | null) {
-  if (!value || /[\u0000-\u0020\u007f]/.test(value)) return null;
-  try { const url = new URL(value); return ["http:", "https:"].includes(url.protocol) && !url.username && !url.password && /^https?:\/\//i.test(value) ? url.href : null; } catch { return null; }
+  return safeExternalUrl(value);
 }
 export function Cover({ url, title }: { url: string | null; title: string }) {
   const [failed, setFailed] = useState(false), safe = safeCoverUrl(url);

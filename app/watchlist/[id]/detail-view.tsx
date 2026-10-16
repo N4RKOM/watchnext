@@ -1,0 +1,36 @@
+import Link from "next/link";
+import type { TitleDetails, MemberHistory } from "../../../lib/title-details";
+import { contentTypes, durationLabel } from "../../../lib/title-state";
+import { initials } from "../../../lib/profile-state";
+import { Cover } from "../cover";
+
+function position(history: MemberHistory, episodic: boolean) {
+  if (!episodic) return history.timestampSeconds === null ? "Manual timestamp: Not recorded" : `Manual timestamp: ${durationLabel(history.timestampSeconds)}`;
+  if (history.positionState === null) return "Next episode: Not recorded";
+  if (history.positionState === "unknown") return "Next episode: Unknown";
+  const next = history.nextSeason === null ? `Episode ${history.nextEpisode}` : `Season ${history.nextSeason}, episode ${history.nextEpisode}`;
+  return `${history.positionState === "not_started" ? "Not started — " : "Next: "}${next}`;
+}
+export function DetailView({ detail }: { detail: TitleDetails }) {
+  const episodic = detail.numberingStyle !== "none";
+  return <div className="page-content"><div className="page-heading"><Link href="/watchlist">Back to watchlist</Link><h1 className="detail-title">{detail.title}</h1>
+    {detail.archived && <div className="archive-notice"><strong>Archived</strong><p>This title is outside the active watchlist. Restoration is not available yet. Your group’s history is preserved.</p></div>}
+  </div>
+    <section className="placeholder detail-metadata" aria-labelledby="metadata-heading"><Cover key={detail.coverUrl} url={detail.coverUrl} title={detail.title} /><div><h2 id="metadata-heading">Title information</h2><dl>
+      <dt>Content type</dt><dd>{contentTypes.find((type) => type.value === detail.contentType)?.label}</dd><dt>{episodic ? "Typical episode duration" : "Full duration"}</dt><dd>{durationLabel(detail.durationSeconds)}</dd>
+      {episodic && <><dt>Episode numbering</dt><dd>{detail.numberingStyle === "continuous" ? "Continuous numbering" : "Season + episode"}</dd></>}
+      <dt>Genres</dt><dd>{detail.genres.join(", ") || "Not specified"}</dd><dt>Moods</dt><dd>{detail.moods.join(", ") || "Not specified"}</dd>
+      <dt>Added by</dt><dd>{detail.contributors.length ? <ul className="contributor-list">{detail.contributors.map((member) => <li key={member.id}><span className="avatar" style={{ backgroundColor: member.color }} aria-hidden="true">{initials(member.name)}</span><span className="profile-name">{member.name}</span></li>)}</ul> : "No current contributors"}</dd>
+      <dt>Source</dt><dd>{detail.sourceUrl ? <a href={detail.sourceUrl} target="_blank" rel="noopener noreferrer">Source (external)</a> : "No source saved"}</dd>
+      <dt>Provider metadata</dt><dd>{detail.providerNamespace && detail.providerId ? `${detail.providerNamespace}: ${detail.providerId}` : "Not provided"}</dd></dl>
+      {detail.watchUrl ? <a className="button" href={detail.watchUrl} target="_blank" rel="noopener noreferrer">{episodic ? "Open series (external)" : "Watch externally"}</a> : <p>No viewing link saved</p>}
+      <p>Watching externally does not update your progress. Record changes manually when progress controls are available.</p>
+    </div></section>
+    <section aria-labelledby="history-heading"><h2 id="history-heading">Member history</h2>{detail.history.length === 0 ? <p>No member history recorded.</p> : <ul className="history-list">{detail.history.map((member) => <li key={member.id}><article className="placeholder" aria-labelledby={`history-${member.id}`}>
+      <div className="active-profile"><span className="avatar" style={{ backgroundColor: member.color }} aria-hidden="true">{initials(member.name)}</span><h3 className="profile-name" id={`history-${member.id}`}>{member.name}</h3></div>
+      <p>{position(member, episodic)}</p>{member.timestampSeconds !== null && member.timestampSeconds > detail.durationSeconds && <p className="timestamp-warning">This saved timestamp exceeds the current duration. It has been preserved and needs correction.</p>}
+      <p>Completion: {member.completed === null ? "Not recorded" : member.completed ? "Finished" : "Not finished"}</p><p>Rating: {member.rating === null ? "Not rated" : `${member.rating}/10`}</p>
+      <p className="personal-note">{member.note ?? "No notes"}</p>
+    </article></li>)}</ul>}</section>
+  </div>;
+}

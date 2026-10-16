@@ -50,7 +50,7 @@ The remaining picker and external-link proposals gate their feature issues rathe
 
 ## Detailed behavior decisions
 
-Each entry states its own status. D01/D02 retain the exact recommendations explicitly approved in the planning answers on October 15, 2026. The schema-affecting delegated entries adopt their existing recommendations because their recorded rationale suits a small manual-entry academic app; their original approval questions remain as historical context, not pending requests. Non-schema D18–D22, D26, and D28 remain Proposed until their owning tasks record a delegated choice.
+Each entry states its own status. D01/D02 retain the exact recommendations explicitly approved in the planning answers on October 15, 2026. The schema-affecting delegated entries adopt their existing recommendations because their recorded rationale suits a small manual-entry academic app; their original approval questions remain as historical context, not pending requests. D26/D28 are resolved in issue #12 below. Non-schema D18–D22 remain Proposed until their owning tasks record a delegated choice.
 
 ### D01. Fixed moods
 
@@ -304,7 +304,8 @@ Each entry states its own status. D01/D02 retain the exact recommendations expli
 
 ### D26. Missing and series-level viewing links
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — bounded resolution adopted in issue #12 under the October 15, 2026 autonomy directive quoted above; not a separate explicit user answer.
+- **Delivery boundary:** Missing links, HTTP/HTTPS validation, external/series labeling and no automatic progress changes are implemented by #12. Contributor-only missing-link edit actions remain in [#14](https://github.com/xiaodlb/watchnext/issues/14); no inert edit action is shown. Picker eligibility is implemented by #26, not this detail increment. The rationale/example below are retained.
 
 - **Recommendation:** Permit absent viewing links; show No viewing link saved with an edit action only when the selected member can edit. Accept HTTP/HTTPS destinations only. Label a series-level destination “Open series”; show the suggested episode separately without fabricating an episode-specific URL. Opening externally never changes progress.
 - **Rationale:** Metadata/source pages are not guaranteed playable episode destinations.
@@ -324,7 +325,8 @@ Each entry states its own status. D01/D02 retain the exact recommendations expli
 
 ### D28. Stale and archived detail destinations
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — bounded resolution adopted in issue #12 under the October 15, 2026 autonomy directive quoted above; not a separate explicit user answer.
+- **Delivery boundary:** Group-authorized archived details remain readable with an Archived banner and preserved history in #12. Unknown/deleted/wrong-group IDs share safe unavailable content. Restore-by-saving remains in [#15](https://github.com/xiaodlb/watchnext/issues/15); the detail view explicitly says restoration is not yet available. The rationale/example below are retained.
 
 - **Recommendation:** A group-authorized archived title retains a readable detail page with an Archived banner and restore-by-saving action. It remains excluded from active list/picks. Unknown IDs show Not found; wrong-group IDs reveal no private title data. A stale active-list click may reach the archived view without pretending it is still active.
 - **Rationale:** Preserve readable history while handling links that outlive list membership.

@@ -150,7 +150,8 @@ The exact fallback ranking, maximum allowed time overrun, and priority between r
 - Content opens through an external link.
 - Embedded YouTube playback is outside the first-release scope.
 - External viewing does not imply automatic progress synchronization.
-- How to handle entries without a playable link, and how a series links to a particular episode, remain to be defined.
+- Delegated D26 in issue #12 permits missing links (No viewing link saved), accepts only safe HTTP/HTTPS destinations, and labels series/anime destinations Open series without inventing an episode-specific URL. Contributor edit actions remain #14; picker eligibility remains #26.
+- Delegated D28 in issue #12 keeps group-authorized archived detail readable with an Archived banner and preserved history. Restore-by-saving remains #15; current details explicitly state restoration is not available yet. These choices use the recorded autonomy directive, not a separate explicit user answer; rationale/examples remain in [decisions.md](decisions.md).
 
 ## Ratings and notes
 
