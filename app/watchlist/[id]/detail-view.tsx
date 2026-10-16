@@ -13,8 +13,10 @@ function position(history: MemberHistory, episodic: boolean) {
 }
 export function DetailView({ detail }: { detail: TitleDetails }) {
   const episodic = detail.numberingStyle !== "none";
+  const editable = detail.canEdit && !detail.archived;
   return <div className="page-content"><div className="page-heading"><Link href="/watchlist">Back to watchlist</Link><h1 className="detail-title">{detail.title}</h1>
-    {detail.archived && <div className="archive-notice"><strong>Archived</strong><p>This title is outside the active watchlist. Restoration is not available yet. Your group’s history is preserved.</p></div>}
+    {editable && <Link className="button" href={`/watchlist/${encodeURIComponent(detail.id)}/edit`}>Edit title</Link>}
+    {detail.archived && <div className="archive-notice"><strong>Archived</strong><p>This title is outside the active watchlist. Restore it before editing. Restoration is not available yet. Your group’s history is preserved.</p></div>}
   </div>
     <section className="placeholder detail-metadata" aria-labelledby="metadata-heading"><Cover key={detail.coverUrl} url={detail.coverUrl} title={detail.title} /><div><h2 id="metadata-heading">Title information</h2><dl>
       <dt>Content type</dt><dd>{contentTypes.find((type) => type.value === detail.contentType)?.label}</dd><dt>{episodic ? "Typical episode duration" : "Full duration"}</dt><dd>{durationLabel(detail.durationSeconds)}</dd>
@@ -23,7 +25,7 @@ export function DetailView({ detail }: { detail: TitleDetails }) {
       <dt>Added by</dt><dd>{detail.contributors.length ? <ul className="contributor-list">{detail.contributors.map((member) => <li key={member.id}><span className="avatar" style={{ backgroundColor: member.color }} aria-hidden="true">{initials(member.name)}</span><span className="profile-name">{member.name}</span></li>)}</ul> : "No current contributors"}</dd>
       <dt>Source</dt><dd>{detail.sourceUrl ? <a href={detail.sourceUrl} target="_blank" rel="noopener noreferrer">Source (external)</a> : "No source saved"}</dd>
       <dt>Provider metadata</dt><dd>{detail.providerNamespace && detail.providerId ? `${detail.providerNamespace}: ${detail.providerId}` : "Not provided"}</dd></dl>
-      {detail.watchUrl ? <a className="button" href={detail.watchUrl} target="_blank" rel="noopener noreferrer">{episodic ? "Open series (external)" : "Watch externally"}</a> : <p>No viewing link saved</p>}
+      {detail.watchUrl ? <a className="button" href={detail.watchUrl} target="_blank" rel="noopener noreferrer">{episodic ? "Open series (external)" : "Watch externally"}</a> : <><p>No viewing link saved</p>{editable && <Link href={`/watchlist/${encodeURIComponent(detail.id)}/edit`}>Add viewing link</Link>}</>}
       <p>Watching externally does not update your progress. Record changes manually when progress controls are available.</p>
     </div></section>
     <section aria-labelledby="history-heading"><h2 id="history-heading">Member history</h2>{detail.history.length === 0 ? <p>No member history recorded.</p> : <ul className="history-list">{detail.history.map((member) => <li key={member.id}><article className="placeholder" aria-labelledby={`history-${member.id}`}>

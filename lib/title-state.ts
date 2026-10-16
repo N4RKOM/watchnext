@@ -6,3 +6,5 @@ export type TitleFormState = { kind: "idle" } | { kind: "invalid"; errors: Parti
   | { kind: "conflict"; id?: string; title?: string; message: string };
 export type SavedTitle = { id: string; title: string; contentType: string; durationSeconds: number; numberingStyle: string; genres: string[]; moods: string[]; watchUrl: string | null; contributors: string[] };
 export function durationLabel(seconds: number) { return `${Math.floor(seconds / 60)} min${seconds % 60 ? ` ${seconds % 60} sec` : ""}`; }
+export type MetadataValues = { title: string; contentType: string; minutes: string; seconds: string; numberingStyle: string; genres: string; watchUrl: string; sourceUrl: string; coverUrl: string };
+export type MetadataField = keyof MetadataValues | "moods";

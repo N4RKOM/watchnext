@@ -7,7 +7,7 @@ import type { TitleDetails, MemberHistory } from "../lib/title-details";
 const refresh = vi.hoisted(() => vi.fn());vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 const member: MemberHistory = { id: "anna", name: "Anna", color: "#1d4ed8", positionState: null, nextSeason: null, nextEpisode: null, timestampSeconds: null, completed: null, rating: null, note: null };
-const fixture: TitleDetails = { id: "film", title: "Saved film", contentType: "movie", durationSeconds: 60, numberingStyle: "none", archived: false, coverUrl: null, sourceUrl: null, watchUrl: null, providerNamespace: null, providerId: null, genres: [], moods: ["Funny"], contributors: [member], history: [member] };
+const fixture: TitleDetails = { id: "film", title: "Saved film", contentType: "movie", durationSeconds: 60, numberingStyle: "none", archived: false, canEdit: false, coverUrl: null, sourceUrl: null, watchUrl: null, providerNamespace: null, providerId: null, genres: [], moods: ["Funny"], contributors: [member], history: [member] };
 it("shows honest absence and attributed escaped notes with independent history and a preserved timestamp warning", () => {
   render(<DetailView detail={{ ...fixture, history: [{ ...member, timestampSeconds: 120, completed: true, rating: 9, note: "<script>fixture</script>\nSecond line" }, { ...member, id: "max", name: "Max", color: "#0f766e" }] }} />);
   expect(screen.getByText("No viewing link saved")).toBeTruthy(); expect(screen.queryByRole("link", { name: /Watch externally/ })).toBeNull();
