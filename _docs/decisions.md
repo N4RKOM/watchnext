@@ -165,6 +165,7 @@ Each entry states its own status. D01/D02 retain the exact recommendations expli
 ### D12. Rating precision and clearing
 
 - **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
+- **Delivery clarification (#22):** Under the same delegated authority, a selected member may rate an active whole title before marking it complete, regardless of contribution. No completion prerequisite was agreed; keeping independent feedback entry avoids inventing one and preserves completion/progress. Ratings remain visible to the group and never influence picks. This is a delegated implementation choice, not an individually explicit user answer.
 
 - **Recommendation:** Use whole-number scores 1–10. Clearing a score removes that member's rating; absence displays “Not rated,” never 0. No rating is required to mark something completed.
 - **Rationale:** Clarify the approved scale without introducing fractional precision or mandatory feedback.
