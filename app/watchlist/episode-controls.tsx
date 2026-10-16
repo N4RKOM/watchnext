@@ -18,8 +18,8 @@ export function EpisodeControls({ initial, name, unavailable, action }: { initia
         <p id="episode-state-error" className="field-error">{errors.positionState}</p>
         {position === "in_progress" && <>{initial.numberingStyle === "season_episode" && <><label htmlFor="next-season">Next season to watch</label><input className="field" id="next-season" name="nextSeason" inputMode="numeric" value={season} onChange={event => setSeason(event.target.value)} aria-invalid={Boolean(errors.nextSeason)} aria-describedby="episode-coordinate-hint next-season-error" /><p id="next-season-error" className="field-error">{errors.nextSeason}</p></>}
           <label htmlFor="next-episode">Next episode to watch</label><input className="field" id="next-episode" name="nextEpisode" inputMode="numeric" value={episode} onChange={event => setEpisode(event.target.value)} aria-invalid={Boolean(errors.nextEpisode)} aria-describedby="episode-coordinate-hint next-episode-error" /><p id="next-episode-error" className="field-error">{errors.nextEpisode}</p><p id="episode-coordinate-hint">Whole numbers from 1 to 9999. This is the next episode, not the last watched.</p></>}
-        <button className="button" type="submit" name="intent" value="save_position">Save episode progress</button>
-        <button className="button button-secondary" type="submit" name="intent" value={stored.completed ? "undo_completion" : "complete"}>{stored.completed ? "Undo completion" : "Mark complete"}</button>
+        <div className="progress-actions"><button className="button" type="submit" name="intent" value="save_position">Save episode progress</button>
+        <button className="button button-secondary" type="submit" name="intent" value={stored.completed ? "undo_completion" : "complete"}>{stored.completed ? "Undo completion" : "Mark complete"}</button></div>
       </fieldset>
       <p role={state.kind === "error" || state.kind === "invalid" ? "alert" : "status"}>{pending ? "Saving episode progress…" : state.message}</p>
     </form>

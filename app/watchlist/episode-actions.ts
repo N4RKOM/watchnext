@@ -7,7 +7,7 @@ import type { EpisodeState } from "../../lib/episode-progress-state";
 import { AccessError } from "../../lib/sessions";
 export async function episodeProgressAction(id: string, _previous: EpisodeState, form: FormData): Promise<EpisodeState> {
   try {
-    const input: Record<string, unknown> = {};
+    const input: Record<string, unknown> = Object.create(null);
     for (const [key, value] of form) if (!key.startsWith("$ACTION_")) {
       if (Object.hasOwn(input, key)) throw new EpisodeFieldError("positionState", "Submit one value for each progress field.");
       input[key] = value;

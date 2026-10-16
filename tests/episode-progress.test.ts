@@ -88,6 +88,14 @@ it("denies switched/revoked/missing sessions, wrong origin, and archive-at-submi
   expect(readOwnEpisodeProgress(db, req(max), seasonId).recorded).toBe(false);
   db.exec("DELETE FROM group_sessions"); before = all(); expect(() => updateEpisodeProgress(db, req(max), seasonId, stale, origin)).toThrow(); expect(all()).toBe(before);
 });
+it("rechecks a numbering change after form load and rejects season bounds/nontext without writes", () => {
+  for (const nextSeason of ["0", "1e2", "10000", 2]) {
+    const before = all(); expect(() => write({ nextSeason })).toThrow(EpisodeFieldError); expect(all()).toBe(before);
+  }
+  const displayed = input(anna, "continuous", { nextSeason: "" });
+  db.prepare("UPDATE titles SET numbering_style='season_episode' WHERE id=?").run(continuousId);
+  const before = all(); expect(() => updateEpisodeProgress(db, req(), continuousId, displayed, origin)).toThrow(); expect(all()).toBe(before);
+});
 it("retained episodic structure remains writable after actual provider metadata expiry without reconstructing fields", () => {
   write(); const context = requireSession(db, anna);
   db.prepare("UPDATE titles SET provider_namespace='kinopoisk_unofficial',provider_id='1001' WHERE id=?").run(seasonId);
