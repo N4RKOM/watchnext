@@ -87,7 +87,8 @@ export function saveNewManualTitle(db: DatabaseSync, request: Request, input: Ma
 export function readSavedTitle(db: DatabaseSync, request: Request, id: string): SavedTitle {
   requireTitleMember(db, request);
   authorizeRequest(db, request, { kind: "title", id });
-  const row = db.prepare("SELECT id,title,content_type,duration_seconds,numbering_style,watch_url FROM titles WHERE id=?").get(id)!;
+  const row = db.prepare("SELECT id,title,content_type,duration_seconds,numbering_style,watch_url FROM titles WHERE id=? AND archived=0").get(id);
+  if (!row) throw new AccessError();
   return { id: row.id as string, title: row.title as string, contentType: row.content_type as string, durationSeconds: row.duration_seconds as number,
     numberingStyle: row.numbering_style as string, watchUrl: row.watch_url as string | null,
     moods: db.prepare("SELECT m.label FROM title_moods tm JOIN moods m ON m.code=tm.mood_code WHERE tm.title_id=? ORDER BY m.rowid").all(id).map((r) => r.label as string),

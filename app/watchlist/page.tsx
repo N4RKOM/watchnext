@@ -1,11 +1,13 @@
-import { Placeholder } from "../components/placeholder";
-import Link from "next/link";
+import { getDatabase } from "../../db/server";
+import { getGroupRequest } from "../../lib/access";
+import { readWatchlist } from "../../lib/watchlist";
+import { AccessError } from "../../lib/sessions";
+import { AccessErrorMessage } from "../components/access-error";
+import { WatchlistContent } from "./watchlist-view";
+import { WatchlistLoadError } from "./load-error";
+export const dynamic = "force-dynamic";
 
-export default function WatchlistPage() {
-  return <><Placeholder
-    title="Your watchlist"
-    introduction="All the things you’ve been meaning to watch, in one place."
-    heading="Make room for your next favorites"
-    description="Your group’s movies, series, anime, and YouTube videos will live here. You can add titles now; browsing the shared list is coming soon."
-  /><Link className="button" href="/watchlist/add">Add title</Link></>;
+export default async function WatchlistPage() {
+  try { return <WatchlistContent view={readWatchlist(getDatabase(), await getGroupRequest())} />; }
+  catch (error) { return error instanceof AccessError ? <AccessErrorMessage /> : <WatchlistLoadError />; }
 }

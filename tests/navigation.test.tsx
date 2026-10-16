@@ -1,7 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Navigation } from "../app/components/navigation";
-import WatchlistPage from "../app/watchlist/page";
 import PickPage from "../app/pick/page";
 import ArchivePage from "../app/archive/page";
 
@@ -26,7 +25,7 @@ describe("shared navigation", () => {
 });
 
 describe("honest destination placeholders", () => {
-  for (const [Page, heading] of [[WatchlistPage, "Your watchlist"], [PickPage, "Pick for me"], [ArchivePage, "Archive"]] as const) {
+  for (const [Page, heading] of [[PickPage, "Pick for me"], [ArchivePage, "Archive"]] as const) {
     it(`${heading} has one heading and an unavailable state without simulated controls`, () => {
       render(<Page />);
       expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);

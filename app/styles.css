@@ -108,3 +108,15 @@ h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); font-weight: 700; }
 .saved-summary dd { margin: 0 0 var(--space-3); overflow-wrap: anywhere; }
 .saved-summary dt { font-weight: 700; }
 .saved-title-name { font-size: 1.25rem; font-weight: 700; overflow-wrap: anywhere; }
+
+.watchlist-items { list-style: none; padding: 0; display: grid; gap: var(--space-6); }
+.watchlist-card { padding: var(--space-6); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 1rem; display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: var(--space-6); }
+.watchlist-metadata { min-width: 0; overflow-wrap: anywhere; }
+.watchlist-metadata h2 { margin-top: 0; }
+.title-cover { width: 100%; aspect-ratio: 2 / 3; align-self: start; background: var(--color-accent-soft); border-radius: 0.5rem; overflow: hidden; }
+.title-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cover-fallback { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: var(--space-2); color: var(--color-muted); }
+.cover-fallback > span { font-size: 2rem; }
+.contributor-list { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.contributor-list li { display: flex; align-items: center; gap: var(--space-2); min-width: 0; max-width: 100%; }
+@media (max-width: 30rem) { .watchlist-card { grid-template-columns: 4rem minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3); } .cover-fallback { font-size: 0.75rem; } }
