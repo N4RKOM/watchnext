@@ -31,7 +31,7 @@ Show attribution/linking consistent with Google's branding rules when displaying
 
 ### YouTube input and failure handling
 
-The following are proposed adapter behaviors for implementation in [#17](https://github.com/xiaodlb/watchnext/issues/17), not claims that a client already exists:
+The table records research expectations. The delivered [#17 YouTube adapter](youtube-adapter.md), documented/mocked on October 16, 2026, specifies the exact implemented parsing, header-only key transport, live semantics and error mappings. Actual configured access remains unverified:
 
 | Case | Expected handling |
 | --- | --- |

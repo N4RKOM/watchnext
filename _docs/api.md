@@ -214,3 +214,5 @@ D28's restoration delivery is now complete under the existing delegated decision
 ## Metadata lookup interface
 
 The offline [normalized metadata contract](metadata-contract.md) defines the shared TypeScript provider interface, safe result/error categories, strict identity/runtime/URL validation, provenance/freshness requirements and explicit review-to-shared-save handoff. It adds no endpoint or save behavior. Provider adapters (#17/#18) and review/persistence (#19) consume this boundary; manual entry remains independent.
+
+The [YouTube server adapter](youtube-adapter.md) now implements #17's fixed official API transport, strict single-video parsing, safe runtime/live/error handling and optional server-only configuration. Verification is synthetic/mocked, not authenticated. There is no durable metadata cache or save/UI integration; #19 owns persisted provenance and actual refresh/delete enforcement.
