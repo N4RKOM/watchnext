@@ -7,6 +7,7 @@ export const storedFields: StoredField[] = ["title", "contentType", "duration", 
 
 /** Local bounded maintenance, also used before metadata reads. Never accesses a provider. */
 export function expireMetadata(db: DatabaseSync, now = new Date(), limit = 250) {
+  db.exec("PRAGMA secure_delete=ON;");
   const time = now.toISOString(), own = !db.isTransaction;
   if (own) db.exec("BEGIN IMMEDIATE");
   try {

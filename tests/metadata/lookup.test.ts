@@ -76,6 +76,7 @@ describe("offline normalized metadata contract", () => {
     expect(await detail({ ...youtube, watchUrl: null })).toMatchObject({ kind: "available", item: { manualFields: [], watchUrl: null, sourceUrl: null, coverUrl: null } });
   });
   it("genres are optional, trimmed/deduplicated and bounded without silent truncation", async () => {
+    expect(await detail({ ...youtube, genres: ["Drama, Comedy"] })).toMatchObject({ kind: "incomplete", item: { genres: [], issues: [{ field: "genres", reason: "invalid" }] } });
     expect(await detail({ ...youtube, genres: [" Comedy ", "comedy", "Drama"] })).toMatchObject({ item: { genres: ["Comedy", "Drama"] } });
     expect(await detail({ ...youtube, genres: Array(11).fill("Comedy") })).toMatchObject({ kind: "incomplete", item: { genres: [] } });
     expect(await detail({ ...youtube, genres: ["x".repeat(41), "Drama"] })).toMatchObject({ kind: "incomplete", item: { genres: ["Drama"] } });

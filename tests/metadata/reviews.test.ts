@@ -8,11 +8,13 @@ import { changeProfile } from "../../lib/profiles";
 import { beginReview, saveReview, selectReviewCandidate, refreshTitleMetadata, type Providers } from "../../lib/metadata/reviews";
 import { expireMetadata } from "../../lib/metadata/lifecycle";
 import { readTitleDetails } from "../../lib/title-details";
+import { readSavedTitle } from "../../lib/manual-titles";
 import { readWatchlist } from "../../lib/watchlist";
 import { readEditableTitle, editTitle } from "../../lib/edit-title";
 import { saveTitle } from "../../lib/shared-save";
 import type { ManualTitleInput } from "../../lib/title-validation";
 import type { MetadataProvider } from "../../lib/metadata/types";
+import type { FailureCode } from "../../lib/metadata/types";
 
 let db: DatabaseSync, anna: string, max: string, other: string, time: Date, title: string, seconds: number, failure: boolean, providers: Providers;
 const origin = "https://watch.example";
@@ -60,7 +62,7 @@ it("ambiguous candidates require separate selected details and manual typical ru
   const detail = await selectReviewCandidate(db, req(), search.handle, "1002", providers, origin, now);
   expect(detail).toMatchObject({ kind: "incomplete", item: { duration: { seconds: null }, contentType: "series" } });
   expect(detail).toMatchObject({ item: { provenance: { freshness: { policy: "academic_local_snapshot_30_days", action: "refresh_or_delete" } } } });
-  const input = fields({ title: "Same name", contentType: "series", minutes: "24", numberingStyle: "continuous", genres: "Drama", watchUrl: "" });
+  const input = { ...fields({ title: "Same name", contentType: "series", minutes: "24", numberingStyle: "continuous", genres: "Drama", watchUrl: "" }), typicalDurationConfirmed: "yes" };
   const saved = saveReview(db, req(), detail.handle, input, "https://www.kinopoisk.ru/film/1001/", "", undefined, origin, now);
   expect(saved.kind).toBe("created");
   expect(db.prepare("SELECT provider_namespace,provider_id,cover_url,duration_seconds FROM titles").get()).toMatchObject({ provider_namespace: "kinopoisk_unofficial", provider_id: "1002", cover_url: null, duration_seconds: 1440 });
@@ -95,6 +97,22 @@ it("provenance failure rolls back title/contribution and preserves the review fo
   expect(db.prepare("SELECT * FROM titles").all()).toEqual([]); expect(db.prepare("SELECT * FROM contributors").all()).toEqual([]);
   expect(db.prepare("SELECT count(*) n FROM metadata_reviews").get()?.n).toBe(1);
   db.exec("DROP TRIGGER fail_provenance"); expect(save(handle).kind).toBe("created");
+});
+it("same-provider repeat is idempotent and a conflicting normalized name does not merge or consume the review", async () => {
+  const id = await imported(), before = histories(), metadata = db.prepare("SELECT * FROM metadata_fields").all();
+  expect(save(await review())).toMatchObject({ kind: "existing", id, alreadyAdded: true });
+  expect(histories()).toBe(before); expect(db.prepare("SELECT * FROM metadata_fields").all()).toEqual(metadata);
+  db.prepare("UPDATE titles SET provider_id='OtherFilm01' WHERE id=?").run(id);
+  const handle = await review(); expect(save(handle)).toMatchObject({ kind: "identity_conflict", id });
+  expect(histories()).toBe(before); expect(db.prepare("SELECT count(*) n FROM metadata_reviews").get()?.n).toBe(1);
+});
+it("a profile switch while lookup is pending cannot produce a review for the wrong member", async () => {
+  let release!: () => void;
+  providers.youtube = { namespace: "youtube", lookup: async () => { await new Promise<void>(done => { release = done; }); return youtube.lookup({ kind: "detail", externalId: "YtFixture01" }, {}); } };
+  const pending = review();
+  changeProfile(db, req(), { intent: "select", memberId: requireSession(db, max).activeMemberId! }, origin);
+  release(); await expect(pending).rejects.toThrow();
+  expect(db.prepare("SELECT * FROM metadata_reviews").all()).toEqual([]);
 });
 it("before/at/after expiry really deletes acquired values and copies while both histories/user corrections survive", async () => {
   const id = await imported(fields({ title: "User correction" })); history(id); const prior = histories();
@@ -134,4 +152,62 @@ it("manual correction after expiry needs contributor revision/identity confirmat
   expect(editTitle(db, req(), id, { ...input, confirmation: confirmation.confirmation }, origin).kind).toBe("saved");
   expect(histories()).toBe(prior); expect(db.prepare("SELECT origin FROM metadata_fields WHERE field='title'").get()?.origin).toBe("user");
   expect(editTitle(db, req(), id, input, origin).kind).toBe("stale");
+});
+it("changing full-item lookup to episodes requires explicit typical-runtime confirmation and user origin", async () => {
+  const handle = await review(), input = { ...fields({ contentType: "series", numberingStyle: "continuous" }), typicalDurationConfirmed: "no" };
+  expect(() => saveReview(db, req(), handle, input, "", "", undefined, origin, now)).toThrow("typical episode");
+  input.typicalDurationConfirmed = "yes";
+  expect(saveReview(db, req(), handle, input, "", "", undefined, origin, now).kind).toBe("created");
+  expect(db.prepare("SELECT origin FROM metadata_fields WHERE field='duration'").get()?.origin).toBe("user");
+});
+it("expired type recovery rejects noncontributors, other groups and incompatible numbering without history changes", async () => {
+  const id = await imported(); history(id); const prior = histories();
+  time = new Date(time.getTime() + 31 * 86400000); expireMetadata(db, now());
+  const editable = readEditableTitle(db, req(), id);
+  const input = { fields: fields({ title: "Corrected title" }), sourceUrl: "", coverUrl: "", revision: editable.revision };
+  for (const cookie of [max, other]) expect(() => editTitle(db, req(cookie), id, input, origin)).toThrow();
+  expect(() => editTitle(db, req(), id, { ...input, fields: fields({ contentType: "series", numberingStyle: "continuous" }) }, origin)).toThrow("cannot change");
+  expect(histories()).toBe(prior);
+  expect(db.prepare("SELECT title,content_type,numbering_style FROM titles").get()).toMatchObject({ title: null, content_type: null, numbering_style: "none" });
+});
+it("review expiry is enforced for the original owner at the exact deadline", async () => {
+  const handle = await review(); time = new Date(time.getTime() + 10 * 60000);
+  expect(() => save(handle)).toThrow(); expect(db.prepare("SELECT * FROM metadata_reviews").all()).toEqual([]);
+  expect(db.prepare("SELECT * FROM titles").all()).toEqual([]);
+});
+it.each(["not_configured", "not_found_or_inaccessible", "quota_exhausted", "timeout"] as FailureCode[])("failed %s refresh cannot retain expired metadata or renew its deadline", async code => {
+  const id = await imported(), deadline = db.prepare("SELECT expires_at FROM metadata_fields WHERE field='title'").get()?.expires_at;
+  time = new Date(time.getTime() + 31 * 86400000);
+  providers.youtube = { namespace: "youtube", lookup: async () => ({ kind: "failure", code }) };
+  expect(await refreshTitleMetadata(db, req(), id, providers, origin, now)).toMatchObject({ code });
+  expect(db.prepare("SELECT title,title_key,duration_seconds FROM titles").get()).toMatchObject({ title: null, title_key: null, duration_seconds: null });
+  expect(db.prepare("SELECT expires_at FROM metadata_fields WHERE field='title'").get()?.expires_at).toBe(deadline);
+});
+it("refresh storage failure rolls back every refreshed field/deadline after expired values were cleared", async () => {
+  const id = await imported(); history(id); const prior = histories(); time = new Date(time.getTime() + 31 * 86400000);
+  db.exec("CREATE TRIGGER fail_refresh BEFORE UPDATE OF content_type ON titles WHEN NEW.content_type IS NOT NULL BEGIN SELECT RAISE(ABORT,'synthetic refresh failure'); END");
+  const deadline = db.prepare("SELECT expires_at FROM metadata_fields WHERE field='title'").get()?.expires_at;
+  await expect(refreshTitleMetadata(db, req(), id, providers, origin, now)).rejects.toThrow();
+  expect(db.prepare("SELECT title,duration_seconds FROM titles").get()).toMatchObject({ title: null, duration_seconds: null });
+  expect(db.prepare("SELECT expires_at FROM metadata_fields WHERE field='title'").get()?.expires_at).toBe(deadline); expect(histories()).toBe(prior);
+});
+it("correction during a delayed refresh wins over provider suggestions", async () => {
+  const id = await imported(); let release!: () => void;
+  providers.youtube = { namespace: "youtube", lookup: async () => { await new Promise<void>(done => { release = done; }); return youtube.lookup({ kind: "detail", externalId: "YtFixture01" }, {}); } };
+  const pending = refreshTitleMetadata(db, req(), id, providers, origin, now);
+  const editable = readEditableTitle(db, req(), id), input = { fields: fields({ title: "Concurrent correction" }), sourceUrl: "", coverUrl: "", revision: editable.revision };
+  const confirm = editTitle(db, req(), id, input, origin); if (confirm.kind !== "confirmation") throw new Error();
+  editTitle(db, req(), id, { ...input, confirmation: confirm.confirmation }, origin);
+  title = "Provider replacement"; release(); await pending;
+  expect(db.prepare("SELECT title FROM titles").get()?.title).toBe("Concurrent correction");
+});
+it.each(["active", "archive", "detail", "summary", "edit", "shared-save"])("%s read boundary really clears expired acquired values before returning", async consumer => {
+  const id = await imported(); db.exec("UPDATE metadata_fields SET expires_at='2000-01-01T00:00:00.000Z' WHERE origin='provider'");
+  if (consumer === "active") expect(readWatchlist(db, req()).items[0].title).toBeNull();
+  if (consumer === "archive") { db.exec("UPDATE titles SET archived=1"); expect(readWatchlist(db, req(), true).items[0].title).toBeNull(); }
+  if (consumer === "detail") expect(readTitleDetails(db, req(), id).title).toBeNull();
+  if (consumer === "summary") expect(readSavedTitle(db, req(), id).title).toBeNull();
+  if (consumer === "edit") expect(readEditableTitle(db, req(), id).values.title).toBe("");
+  if (consumer === "shared-save") saveTitle(db, req(), { kind: "provider", fields: fields(), provider: { namespace: "youtube", externalId: "YtFixture01" } }, origin);
+  expect(db.prepare("SELECT title,title_key,duration_seconds FROM titles WHERE id=?").get(id)).toMatchObject({ title: null, title_key: null, duration_seconds: null });
 });

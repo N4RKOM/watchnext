@@ -217,7 +217,7 @@ The offline [normalized metadata contract](metadata-contract.md) defines the sha
 
 The [YouTube server adapter](youtube-adapter.md) now implements #17's fixed official API transport, strict single-video parsing, safe runtime/live/error handling and optional server-only configuration. Verification is synthetic/mocked, not authenticated. There is no durable metadata cache or save/UI integration; #19 owns persisted provenance and actual refresh/delete enforcement.
 
-The [third-party Kinopoisk API Unofficial adapter](kinopoisk-adapter.md) implements #18's first-page search/explicit detail selection, fixed server transport, strict endpoint IDs and safe conservative mapping/errors. Runtime units and image/persistence rights remain unverified: durations are manual, covers absent and provenance requires verification before persistence. Mock verification is not authenticated account access; #19 retains UI/correction/save/policy gates.
+The [third-party Kinopoisk API Unofficial adapter](kinopoisk-adapter.md) implements #18's first-page search/explicit detail selection, fixed server transport, strict endpoint IDs and safe conservative mapping/errors. Runtime units and external image/persistence rights remain unverified: durations are manual and covers absent. The #19 integration records a bounded delegated local academic text-snapshot policy, rather than claiming verified rights or imposing an invented permanent save ban; see metadata-lifecycle.md. Mock verification is not authenticated account access.
 
 ## Lookup review, shared save and retention — issue #19
 

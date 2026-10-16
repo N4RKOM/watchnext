@@ -12,19 +12,21 @@ export function TitleForm({ action, lookup, select }: { action: (previous: Title
   const [values, setValues] = useState<MetadataValues>({ title: "", contentType: "movie", minutes: "", seconds: "", numberingStyle: "", genres: "", watchUrl: "", sourceUrl: "", coverUrl: "" });
   const [moods, setMoods] = useState<string[]>([]);
   const [reviewHandle, setReviewHandle] = useState<string | null>(null);
+  const [typicalConfirmed, setTypicalConfirmed] = useState(false);
   const [dismissed, setDismissed] = useState<TitleFormState | null>(null);
   const confirming = (state.kind === "confirmation" || state.kind === "restore_confirmation") && state !== dismissed;
   const errors = state.kind === "invalid" ? state.errors : {};
-  const update = (field: keyof typeof values, value: string) => setValues((previous) => ({ ...previous, [field]: value }));
+  const update = (field: keyof typeof values, value: string) => { if (field === "contentType" || field === "minutes" || field === "seconds") setTypicalConfirmed(false); setValues((previous) => ({ ...previous, ...(reviewHandle && field === "contentType" && ["series", "anime"].includes(previous.contentType) !== ["series", "anime"].includes(value) ? { minutes: "", seconds: "", numberingStyle: "" } : {}), [field]: value })); };
   // React resets action forms after returned validation/error states too. Keep every
   // entered value (including checkbox defaults) until a successful navigation.
-  return <>{lookup && select && <fieldset className="form-fields" disabled={pending}><legend className="visually-hidden">Optional metadata lookup</legend><LookupPanel lookup={lookup} select={select} apply={(handle, item) => { setValues(reviewValues(item)); setReviewHandle(handle); setDismissed(state); }} /></fieldset>}
+  return <>{lookup && select && <fieldset className="form-fields" disabled={pending}><legend className="visually-hidden">Optional metadata lookup</legend><LookupPanel lookup={lookup} select={select} apply={(handle, item) => { setValues(reviewValues(item)); setReviewHandle(handle); setTypicalConfirmed(false); setDismissed(state); }} /></fieldset>}
     {reviewHandle && <div><p role="status">A lookup review is active for 10 minutes. Unchanged suggestions keep their provider origin; only your actual corrections become yours.</p><button className="button button-secondary" type="button" disabled={pending} onClick={() => { setValues({ title: "", contentType: "movie", minutes: "", seconds: "", numberingStyle: "", genres: "", watchUrl: "", sourceUrl: "", coverUrl: "" }); setMoods([]); setReviewHandle(null); setDismissed(state); }}>Start a fresh manual entry (clear details)</button></div>}
     <form action={submit} onReset={(event) => event.preventDefault()} noValidate aria-busy={pending}>
     {reviewHandle && <input type="hidden" name="reviewHandle" value={reviewHandle} />}
     <fieldset className="form-fields" disabled={pending}>
       <legend className="visually-hidden">Manual title details</legend>
       <MetadataFields values={values} moods={moods} update={update} setMoods={setMoods} errors={errors} sourceFields={Boolean(reviewHandle)} />
+      {reviewHandle && ["series", "anime"].includes(values.contentType) && <label className="color-choice"><input type="checkbox" name="typicalDurationConfirmed" value="yes" checked={typicalConfirmed} onChange={event => setTypicalConfirmed(event.target.checked)} />I confirm this is a typical episode duration</label>}
       {confirming && <section className="save-confirmation" aria-labelledby="confirmation-heading"><h3 id="confirmation-heading">{state.kind === "restore_confirmation" ? "Restore this saved title?" : "Is this the title you meant?"}</h3><p className="saved-title-name">{state.title}</p><p>{state.message}</p>
         <input type="hidden" name="confirmationId" value={state.id} />
         <button className="button" type="submit" name="intent" value="confirm">{state.kind === "restore_confirmation" ? "Restore to watchlist" : "Add my name to this title"}</button>{" "}<button className="button button-secondary" type="button" onClick={() => setDismissed(state)}>Return to editing</button>

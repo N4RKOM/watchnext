@@ -10,6 +10,16 @@ async function proposal(title = "Provider video"): Promise<ReviewResult> {
 }
 const save = async (): Promise<TitleFormState> => ({ kind: "error", message: "Synthetic storage failure; details kept." });
 function source(value: string) { fireEvent.change(screen.getByLabelText("Entry method"), { target: { value } }); }
+it("changing an imported full duration to episodes clears it and requires an explicit typical-duration choice", async () => {
+  render(<TitleForm action={save} lookup={() => proposal()} select={vi.fn()} />);
+  source("youtube"); fireEvent.click(screen.getByText("Look up video"));
+  await screen.findByText("Apply proposal and replace details"); fireEvent.click(screen.getByText("Apply proposal and replace details"));
+  fireEvent.change(screen.getByLabelText("Content type"), { target: { value: "series" } });
+  expect((screen.getByLabelText("Minutes") as HTMLInputElement).value).toBe("");
+  const confirmation = screen.getByLabelText("I confirm this is a typical episode duration") as HTMLInputElement;
+  expect(confirmation.checked).toBe(false); fireEvent.click(confirmation); expect(confirmation.checked).toBe(true);
+  fireEvent.change(screen.getByLabelText("Minutes"), { target: { value: "24" } }); expect(confirmation.checked).toBe(false);
+});
 it("stages lookup until explicit replacement and preserves edits/moods made while waiting", async () => {
   let resolve!: (result: ReviewResult) => void;
   render(<TitleForm action={save} lookup={() => new Promise(done => { resolve = done; })} select={vi.fn()} />);

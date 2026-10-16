@@ -3,7 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { requireTitleMember } from "../title-access";
 import { authorizeRequest } from "../request-access";
 import { AccessError, credentialHash, readSessionCookie } from "../sessions";
-import { validateManualTitle, type ManualTitleInput } from "../title-validation";
+import { TitleFieldError, validateManualTitle, type ManualTitleInput } from "../title-validation";
 import { saveTitle } from "../shared-save";
 import { safeExternalUrl } from "../urls";
 import { ensureFreshMetadata, metadataColumns, storedFields, type StoredField } from "./lifecycle";
@@ -77,18 +77,20 @@ function reviewedValues(fields: ManualTitleInput, source: unknown, cover: unknow
   };
   return { title: value.title, contentType: value.contentType, duration: value.durationSeconds, genres: [...value.genres.values()], watchUrl: value.watchUrl, sourceUrl: optional(source, "sourceUrl"), coverUrl: optional(cover, "coverUrl") };
 }
-export function saveReview(db: DatabaseSync, request: Request, handle: unknown, fields: ManualTitleInput, source: unknown, cover: unknown, confirmationId?: unknown, origin?: string, now = () => new Date()) {
+export function saveReview(db: DatabaseSync, request: Request, handle: unknown, fields: ManualTitleInput & { typicalDurationConfirmed?: unknown }, source: unknown, cover: unknown, confirmationId?: unknown, origin?: string, now = () => new Date()) {
   const current = snapshot(db, request, handle, now(), origin);
   if (current.kind !== "item") throw new AccessError();
   const item = current.item;
   if (item.provenance.freshness.refreshBy && item.provenance.freshness.refreshBy <= now().toISOString()) throw new AccessError();
   const original = values(item), reviewed = reviewedValues(fields, source, cover);
+  const episodic = reviewed.contentType === "series" || reviewed.contentType === "anime";
+  if (episodic && fields.typicalDurationConfirmed !== "yes") throw new TitleFieldError("minutes", "Confirm that this is a typical episode duration before saving.");
   const expires = item.provenance.freshness.refreshBy ?? new Date(new Date(item.provenance.retrievedAt).getTime() + 30 * 86400000).toISOString();
   return saveTitle(db, request, { kind: "provider", fields, provider: { ...item.identity, sourceUrl: reviewed.sourceUrl, coverUrl: reviewed.coverUrl }, ...(confirmationId === undefined ? {} : { confirmationId }) }, origin, { beforeCommit(result) {
     snapshot(db, request, handle, now(), origin);
     if (result.kind === "created") for (const field of storedFields) {
       const acquired = item.provenance.acquiredFields.includes(field === "duration" ? "duration" : field);
-      const providerOwned = acquired && equal(original[field], reviewed[field]);
+      const providerOwned = acquired && equal(original[field], reviewed[field]) && !(field === "duration" && (episodic ? "typical_episode" : "full_item") !== item.duration.meaning);
       db.prepare("INSERT INTO metadata_fields(title_id,field,origin,retrieved_at,expires_at) VALUES (?,?,?,?,?)")
         .run(result.id, field, providerOwned ? "provider" : "user", providerOwned ? item.provenance.retrievedAt : null, providerOwned ? expires : null);
     }
