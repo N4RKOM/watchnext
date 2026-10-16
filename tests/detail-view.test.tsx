@@ -11,7 +11,7 @@ const fixture: TitleDetails = { id: "film", title: "Saved film", contentType: "m
 it("shows honest absence and attributed escaped notes with independent history and a preserved timestamp warning", () => {
   render(<DetailView detail={{ ...fixture, history: [{ ...member, timestampSeconds: 120, completed: true, rating: 9, note: "<script>fixture</script>\nSecond line" }, { ...member, id: "max", name: "Max", color: "#0f766e" }] }} />);
   expect(screen.getByText("No viewing link saved")).toBeTruthy(); expect(screen.queryByRole("link", { name: /Watch externally/ })).toBeNull();
-  const anna = screen.getByRole("article", { name: "Anna" }); expect(within(anna).getByText("Manual timestamp: 2 min")).toBeTruthy();
+  const anna = screen.getByRole("article", { name: "Anna" }); expect(within(anna).getByText("Manual timestamp: 2:00")).toBeTruthy();
   expect(within(anna).getByText(/needs correction/)).toBeTruthy(); expect(within(anna).getByText("Rating: 9/10")).toBeTruthy();
   expect(anna.querySelector("script")).toBeNull(); expect(anna.querySelector(".personal-note")?.textContent).toBe("<script>fixture</script>\nSecond line");
   const max = screen.getByRole("article", { name: "Max" }); for (const text of ["Manual timestamp: Not recorded", "Completion: Not recorded", "Rating: Not rated", "No notes"]) expect(within(max).getByText(text)).toBeTruthy();
