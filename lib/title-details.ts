@@ -4,7 +4,7 @@ import { safeExternalUrl } from "./urls";
 import type { Profile } from "./profile-state";
 
 export type MemberHistory = Profile & { positionState: string | null; nextSeason: number | null; nextEpisode: number | null; timestampSeconds: number | null; completed: boolean | null; rating: number | null; note: string | null };
-export type TitleDetails = { id: string; title: string; contentType: string; durationSeconds: number; numberingStyle: string; archived: boolean; canEdit: boolean; coverUrl: string | null; sourceUrl: string | null; watchUrl: string | null; providerNamespace: string | null; providerId: string | null; genres: string[]; moods: string[]; contributors: Profile[]; history: MemberHistory[] };
+export type TitleDetails = { id: string; title: string; contentType: string; durationSeconds: number; numberingStyle: string; archived: boolean; canEdit: boolean; activeMemberId: string | null; coverUrl: string | null; sourceUrl: string | null; watchUrl: string | null; providerNamespace: string | null; providerId: string | null; genres: string[]; moods: string[]; contributors: Profile[]; history: MemberHistory[] };
 
 export function readTitleDetails(db: DatabaseSync, request: Request, id: string): TitleDetails {
   const context = authorizeRequest(db, request, { kind: "title", id });
@@ -20,7 +20,7 @@ export function readTitleDetails(db: DatabaseSync, request: Request, id: string)
       positionState: r.position_state as string | null, nextSeason: r.next_season as number | null, nextEpisode: r.next_episode as number | null,
       timestampSeconds: r.timestamp_seconds as number | null, completed: r.completed === null ? null : r.completed === 1, rating: r.score as number | null, note: r.body as string | null }));
   return { id, title: row.title as string, contentType: row.content_type as string, durationSeconds: row.duration_seconds as number, numberingStyle: row.numbering_style as string,
-    archived: row.archived === 1, canEdit: row.archived === 0 && contributors.some((member) => member.id === context.activeMemberId), coverUrl: safeExternalUrl(row.cover_url), sourceUrl: safeExternalUrl(row.source_url), watchUrl: safeExternalUrl(row.watch_url),
+    archived: row.archived === 1, canEdit: row.archived === 0 && contributors.some((member) => member.id === context.activeMemberId), activeMemberId: context.activeMemberId, coverUrl: safeExternalUrl(row.cover_url), sourceUrl: safeExternalUrl(row.source_url), watchUrl: safeExternalUrl(row.watch_url),
     providerNamespace: row.provider_namespace as string | null, providerId: row.provider_id as string | null,
     genres: db.prepare("SELECT label FROM title_genres WHERE title_id=? ORDER BY genre_key").all(id).map((r) => r.label as string),
     moods: db.prepare("SELECT m.label FROM title_moods tm JOIN moods m ON m.code=tm.mood_code WHERE tm.title_id=? ORDER BY m.rowid").all(id).map((r) => r.label as string), contributors, history };

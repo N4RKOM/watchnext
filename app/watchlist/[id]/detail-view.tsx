@@ -3,6 +3,8 @@ import type { TitleDetails, MemberHistory } from "../../../lib/title-details";
 import { contentTypes, durationLabel } from "../../../lib/title-state";
 import { initials } from "../../../lib/profile-state";
 import { Cover } from "../cover";
+import { ContributionControls } from "../contribution-controls";
+import type { ContributionAction } from "../../../lib/contribution-state";
 
 function position(history: MemberHistory, episodic: boolean) {
   if (!episodic) return history.timestampSeconds === null ? "Manual timestamp: Not recorded" : `Manual timestamp: ${durationLabel(history.timestampSeconds)}`;
@@ -11,12 +13,13 @@ function position(history: MemberHistory, episodic: boolean) {
   const next = history.nextSeason === null ? `Episode ${history.nextEpisode}` : `Season ${history.nextSeason}, episode ${history.nextEpisode}`;
   return `${history.positionState === "not_started" ? "Not started — " : "Next: "}${next}`;
 }
-export function DetailView({ detail }: { detail: TitleDetails }) {
+export function DetailView({ detail, contributionAction, contributionSaved = false }: { detail: TitleDetails; contributionAction?: ContributionAction; contributionSaved?: boolean }) {
   const episodic = detail.numberingStyle !== "none";
   const editable = detail.canEdit && !detail.archived;
   return <div className="page-content"><div className="page-heading"><Link href="/watchlist">Back to watchlist</Link><h1 className="detail-title">{detail.title}</h1>
     {editable && <Link className="button" href={`/watchlist/${encodeURIComponent(detail.id)}/edit`}>Edit title</Link>}
-    {detail.archived && <div className="archive-notice"><strong>Archived</strong><p>This title is outside the active watchlist. Restore it before editing. Restoration is not available yet. Your group’s history is preserved.</p></div>}
+    {contributionSaved && editable && <p role="status">Your contribution is saved. This title is on the watchlist.</p>}
+    {detail.archived && <div className="archive-notice"><strong>Archived</strong><p>This title is outside the active watchlist. Restore it before editing. Your group’s history is preserved.</p></div>}
   </div>
     <section className="placeholder detail-metadata" aria-labelledby="metadata-heading"><Cover key={detail.coverUrl} url={detail.coverUrl} title={detail.title} /><div><h2 id="metadata-heading">Title information</h2><dl>
       <dt>Content type</dt><dd>{contentTypes.find((type) => type.value === detail.contentType)?.label}</dd><dt>{episodic ? "Typical episode duration" : "Full duration"}</dt><dd>{durationLabel(detail.durationSeconds)}</dd>
@@ -28,6 +31,7 @@ export function DetailView({ detail }: { detail: TitleDetails }) {
       {detail.watchUrl ? <a className="button" href={detail.watchUrl} target="_blank" rel="noopener noreferrer">{episodic ? "Open series (external)" : "Watch externally"}</a> : <><p>No viewing link saved</p>{editable && <Link href={`/watchlist/${encodeURIComponent(detail.id)}/edit`}>Add viewing link</Link>}</>}
       <p>Watching externally does not update your progress. Record changes manually when progress controls are available.</p>
     </div></section>
+    {contributionAction && <ContributionControls archived={detail.archived} canRemove={editable} memberId={detail.activeMemberId} action={contributionAction} />}
     <section aria-labelledby="history-heading"><h2 id="history-heading">Member history</h2>{detail.history.length === 0 ? <p>No member history recorded.</p> : <ul className="history-list">{detail.history.map((member) => <li key={member.id}><article className="placeholder" aria-labelledby={`history-${member.id}`}>
       <div className="active-profile"><span className="avatar" style={{ backgroundColor: member.color }} aria-hidden="true">{initials(member.name)}</span><h3 className="profile-name" id={`history-${member.id}`}>{member.name}</h3></div>
       <p>{position(member, episodic)}</p>{member.timestampSeconds !== null && member.timestampSeconds > detail.durationSeconds && <p className="timestamp-warning">This saved timestamp exceeds the current duration. It has been preserved and needs correction.</p>}

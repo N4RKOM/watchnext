@@ -7,7 +7,7 @@ import type { TitleDetails, MemberHistory } from "../lib/title-details";
 const refresh = vi.hoisted(() => vi.fn());vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 const member: MemberHistory = { id: "anna", name: "Anna", color: "#1d4ed8", positionState: null, nextSeason: null, nextEpisode: null, timestampSeconds: null, completed: null, rating: null, note: null };
-const fixture: TitleDetails = { id: "film", title: "Saved film", contentType: "movie", durationSeconds: 60, numberingStyle: "none", archived: false, canEdit: false, coverUrl: null, sourceUrl: null, watchUrl: null, providerNamespace: null, providerId: null, genres: [], moods: ["Funny"], contributors: [member], history: [member] };
+const fixture: TitleDetails = { id: "film", title: "Saved film", contentType: "movie", durationSeconds: 60, numberingStyle: "none", archived: false, canEdit: false, activeMemberId: null, coverUrl: null, sourceUrl: null, watchUrl: null, providerNamespace: null, providerId: null, genres: [], moods: ["Funny"], contributors: [member], history: [member] };
 it("shows honest absence and attributed escaped notes with independent history and a preserved timestamp warning", () => {
   render(<DetailView detail={{ ...fixture, history: [{ ...member, timestampSeconds: 120, completed: true, rating: 9, note: "<script>fixture</script>\nSecond line" }, { ...member, id: "max", name: "Max", color: "#0f766e" }] }} />);
   expect(screen.getByText("No viewing link saved")).toBeTruthy(); expect(screen.queryByRole("link", { name: /Watch externally/ })).toBeNull();
@@ -24,6 +24,6 @@ it("labels safe external destinations and series numbering without implying epis
 });
 it("distinguishes unknown/not-started episodic positions, archived banners, loading and retry states", () => {
   const rendered = render(<DetailView detail={{ ...fixture, archived: true, contentType: "anime", numberingStyle: "continuous", history: [{ ...member, positionState: "unknown" }, { ...member, id: "max", name: "Max", positionState: "not_started", nextEpisode: 1 }] }} />);
-  expect(screen.getByText("Archived", { exact: true })).toBeTruthy(); expect(screen.getByText(/Restoration is not available yet/)).toBeTruthy(); expect(screen.getByText("Next episode: Unknown")).toBeTruthy();expect(screen.getByText("Not started — Episode 1")).toBeTruthy();expect(screen.queryByRole("button")).toBeNull();rendered.unmount();
+  expect(screen.getByText("Archived", { exact: true })).toBeTruthy(); expect(screen.getByText(/history is preserved/)).toBeTruthy(); expect(screen.getByText("Next episode: Unknown")).toBeTruthy();expect(screen.getByText("Not started — Episode 1")).toBeTruthy();expect(screen.queryByRole("button")).toBeNull();rendered.unmount();
   const loading=render(<Loading />);expect(screen.getByRole("status").textContent).toBe("Loading title details…");loading.unmount();render(<DetailError />);fireEvent.click(screen.getByRole("button",{name:"Try again"}));expect(refresh).toHaveBeenCalledTimes(1);
 });

@@ -52,5 +52,5 @@ it("returns a manual candidate and redirects confirmed additions to real details
   await expect(saveTitleAction({ kind: "idle" }, confirm)).rejects.toThrow("FIXTURE_REDIRECT");
   expect(redirect).toHaveBeenLastCalledWith(`/watchlist/${id}`); expect(db.prepare("SELECT count(*) AS n FROM contributors").get()?.n).toBe(2);
   expect(await saveTitleAction({ kind: "idle" }, confirm)).toMatchObject({ kind: "already_added", id });
-  db.prepare("UPDATE titles SET archived=1 WHERE id=?").run(id);expect(await saveTitleAction({ kind: "idle" }, data())).toMatchObject({ kind: "archived", id });
+  db.prepare("UPDATE titles SET archived=1 WHERE id=?").run(id);expect(await saveTitleAction({ kind: "idle" }, data())).toMatchObject({ kind: "restore_confirmation", id });
 });

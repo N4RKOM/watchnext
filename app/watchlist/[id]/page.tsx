@@ -7,9 +7,10 @@ import { AccessError } from "../../../lib/sessions";
 import { AccessErrorMessage } from "../../components/access-error";
 import { DetailView } from "./detail-view";
 import { DetailError } from "./detail-error";
+import { contributionAction } from "../contribution-actions";
 export const dynamic = "force-dynamic";
-export default async function TitleDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  try { return <DetailView detail={readTitleDetails(getDatabase(), await getGroupRequest(), (await params).id)} />; }
+export default async function TitleDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ contribution?: string }> }) {
+  try { const { id } = await params, detail=readTitleDetails(getDatabase(), await getGroupRequest(), id);return <DetailView detail={detail} contributionAction={contributionAction.bind(null, id)} contributionSaved={(await searchParams).contribution === "saved"} />; }
   catch (error) {
     if (!(error instanceof AccessError)) return <DetailError />;
     try { authorizeRequest(getDatabase(), await getGroupRequest()); } catch { return <AccessErrorMessage />; }

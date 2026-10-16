@@ -1,10 +1,14 @@
-import { Placeholder } from "../components/placeholder";
+import { getDatabase } from "../../db/server";
+import { getGroupRequest } from "../../lib/access";
+import { readWatchlist } from "../../lib/watchlist";
+import { AccessError } from "../../lib/sessions";
+import { AccessErrorMessage } from "../components/access-error";
+import { WatchlistContent } from "../watchlist/watchlist-view";
+import { WatchlistLoadError } from "../watchlist/load-error";
+import { contributionAction } from "../watchlist/contribution-actions";
+export const dynamic = "force-dynamic";
 
-export default function ArchivePage() {
-  return <Placeholder
-    title="Archive"
-    introduction="Keep the memories. Make room for what’s next."
-    heading="Past picks, kept close"
-    description="Archived titles will stay here with everyone’s progress, ratings, and notes. You’ll be able to bring them back to your watchlist. The archive is coming soon."
-  />;
+export default async function ArchivePage() {
+  try { return <WatchlistContent view={readWatchlist(getDatabase(), await getGroupRequest(), true)} archived contributionAction={contributionAction} />; }
+  catch (error) { return error instanceof AccessError ? <AccessErrorMessage /> : <WatchlistLoadError archived />; }
 }

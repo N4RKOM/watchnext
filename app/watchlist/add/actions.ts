@@ -21,10 +21,10 @@ export async function saveTitleAction(_previous: TitleFormState, form: FormData)
       ...(intent === "confirm" ? { confirmationId: form.get("confirmationId") } : {}),
     }, process.env.WATCHNEXT_APP_ORIGIN);
     if (result.kind === "confirmation_required") return { ...result, kind: "confirmation" };
-    if (result.kind === "archived_match") return { ...result, kind: "archived" };
+    if (result.kind === "archived_match") return { ...result, kind: "restore_confirmation" };
     if (result.kind === "identity_conflict") return { ...result, kind: "conflict" };
     if (result.kind === "existing" && result.alreadyAdded) return { ...result, kind: "already_added" };
-    destination = result.kind === "created" ? `/watchlist/add?saved=${encodeURIComponent(result.id)}` : `/watchlist/${encodeURIComponent(result.id)}`;
+    destination = result.kind === "created" ? `/watchlist/add?saved=${encodeURIComponent(result.id)}` : `/watchlist/${encodeURIComponent(result.id)}${result.kind === "restored" ? "?contribution=saved" : ""}`;
   } catch (error) {
     if (error instanceof TitleFieldError) return { kind: "invalid", errors: { [error.field]: error.message } };
     return { kind: "error", message: error instanceof AccessError ? "Your group or selected profile is unavailable. Open your group and select a profile before trying again." : "We couldn’t save your title. Your input is still here. Please try again." };

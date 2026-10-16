@@ -3,20 +3,23 @@ import type { WatchlistView } from "../../lib/watchlist";
 import { contentTypes, durationLabel } from "../../lib/title-state";
 import { initials } from "../../lib/profile-state";
 import { Cover } from "./cover";
+import { ContributionControls } from "./contribution-controls";
+import type { ContributionState } from "../../lib/contribution-state";
 
-export function WatchlistContent({ view }: { view: WatchlistView }) {
+export function WatchlistContent({ view, archived = false, contributionAction }: { view: WatchlistView; archived?: boolean; contributionAction?: (id: string, previous: ContributionState, form: FormData) => Promise<ContributionState> }) {
   const selected = Boolean(view.activeMemberId);
-  return <div className="page-content"><div className="page-heading"><h1>Your watchlist</h1><p className="page-introduction">All the things your group has been meaning to watch.</p>
-    {selected ? <Link className="button" href="/watchlist/add">Add title</Link> : <><p>Choose a profile before adding a title.</p><Link className="button" href="/group">Choose profile</Link></>}
+  return <div className="page-content"><div className="page-heading"><h1>{archived ? "Archive" : "Your watchlist"}</h1><p className="page-introduction">{archived ? "Saved history, ready whenever your group wants to return." : "All the things your group has been meaning to watch."}</p>
+    {archived ? <><p>{selected ? "Restore a title to add your name and bring it back to the watchlist." : "Choose a profile before restoring a title."}</p>{!selected && <Link className="button" href="/group">Choose profile</Link>}</> : selected ? <Link className="button" href="/watchlist/add">Add title</Link> : <><p>Choose a profile before adding a title.</p><Link className="button" href="/group">Choose profile</Link></>}
   </div>
-  {view.items.length === 0 ? <section className="placeholder"><h2>Your watchlist is empty</h2><p>Add the first thing your group wants to watch.</p></section> : <ul className="watchlist-items">
+  {view.items.length === 0 ? <section className="placeholder"><h2>{archived ? "Your archive is empty" : "Your watchlist is empty"}</h2><p>{archived ? "Titles appear here when their last contribution is removed." : "Add the first thing your group wants to watch."}</p></section> : <ul className="watchlist-items">
     {view.items.map((item) => <li key={item.id}><article className="watchlist-card" aria-labelledby={`title-${item.id}`}>
       <Cover key={`${item.id}:${item.coverUrl}`} url={item.coverUrl} title={item.title} />
       <div className="watchlist-metadata"><h2 id={`title-${item.id}`}>{item.title}</h2><p>{contentTypes.find((type) => type.value === item.contentType)?.label}</p>
         <p>{item.numberingStyle === "none" ? "Full duration" : "Typical episode duration"}: {durationLabel(item.durationSeconds)}</p>
         <p>Moods: {item.moods.join(", ") || "Not specified"}</p>
-        <p className="field-label">Added by</p><ul className="contributor-list">{item.contributors.map((member) => <li key={member.id}><span className="avatar" style={{ backgroundColor: member.color }} aria-hidden="true">{initials(member.name)}</span><span className="profile-name">{member.name}</span></li>)}</ul>
+        <p className="field-label">Added by</p>{item.contributors.length ? <ul className="contributor-list">{item.contributors.map((member) => <li key={member.id}><span className="avatar" style={{ backgroundColor: member.color }} aria-hidden="true">{initials(member.name)}</span><span className="profile-name">{member.name}</span></li>)}</ul> : <p>No current contributors</p>}
         <Link href={`/watchlist/${encodeURIComponent(item.id)}`} aria-label={`View details: ${item.title}`}>View details</Link>
+        {archived && contributionAction && <ContributionControls archived canRemove={false} memberId={view.activeMemberId} action={contributionAction.bind(null, item.id)} />}
       </div>
     </article></li>)}
   </ul>}

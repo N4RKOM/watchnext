@@ -61,9 +61,11 @@ it("never merges equal-looking IDs across namespaces/groups and reports protecte
   const candidate = save(anna, manual({ title: "Manual target" })); const before = snapshot();
   expect(save(max, provider({ title: "Manual target" }, "youtube", "same-id", candidate.id))).toMatchObject({ kind: "identity_conflict", id: first.id });expect(snapshot()).toBe(before);
 });
-it("returns archived matches unchanged for manual and known provider saves without adding/restoring", () => {
+it("requires manual archived confirmation and restores known provider saves through the same entry", () => {
   const first = save(anna, provider()); if (first.kind !== "created") throw new Error("Expected new fixture");db.prepare("UPDATE titles SET archived=1 WHERE id=?").run(first.id);const before = snapshot();
-  expect(save(max, provider())).toMatchObject({ kind: "archived_match", id: first.id });expect(save(max, manual({}, first.id))).toMatchObject({ kind: "archived_match", id: first.id });expect(snapshot()).toBe(before);
+  expect(save(max, manual())).toMatchObject({ kind: "archived_match", id: first.id });expect(snapshot()).toBe(before);
+  expect(save(max, manual({}, first.id))).toMatchObject({ kind: "restored", id: first.id });db.prepare("UPDATE titles SET archived=1 WHERE id=?").run(first.id);
+  expect(save(max, provider())).toMatchObject({ kind: "restored", id: first.id });expect(db.prepare("SELECT count(*) AS n FROM titles").get()?.n).toBe(1);
 });
 it("revalidates changed input, wrong-group/stale candidates and current ownership/origin before any write", () => {
   const first = save(anna, manual()), foreign = save(other, manual()); const before = snapshot();

@@ -326,7 +326,7 @@ Each entry states its own status. D01/D02 retain the exact recommendations expli
 ### D28. Stale and archived detail destinations
 
 - **Status:** Delegated decision — bounded resolution adopted in issue #12 under the October 15, 2026 autonomy directive quoted above; not a separate explicit user answer.
-- **Delivery boundary:** Group-authorized archived details remain readable with an Archived banner and preserved history in #12. Unknown/deleted/wrong-group IDs share safe unavailable content. Restore-by-saving remains in [#15](https://github.com/xiaodlb/watchnext/issues/15); the detail view explicitly says restoration is not yet available. The rationale/example below are retained.
+- **Delivery boundary:** Group-authorized archived details remain readable with an Archived banner and preserved history in #12. Unknown/deleted/wrong-group IDs share safe unavailable content. [#15](https://github.com/xiaodlb/watchnext/issues/15) completes restore-by-saving through real detail/archive actions, explicit manual confirmation and trusted provider-identity saves, preserving the same identity/history. Final own-contribution removal archives without deletion. The rationale/example below are retained.
 
 - **Recommendation:** A group-authorized archived title retains a readable detail page with an Archived banner and restore-by-saving action. It remains excluded from active list/picks. Unknown IDs show Not found; wrong-group IDs reveal no private title data. A stale active-list click may reach the archived view without pretending it is still active.
 - **Rationale:** Preserve readable history while handling links that outlive list membership.

@@ -5,10 +5,12 @@ import { authorizeRequest } from "./request-access";
 import { AccessError } from "./sessions";
 import { validateManualTitle, type ManualTitleInput } from "./title-validation";
 import { safeExternalUrl } from "./urls";
+import { saveContribution } from "./contributions";
 
 export type SaveResult =
   | { kind: "created"; id: string; title: string; message: string }
   | { kind: "existing"; id: string; title: string; alreadyAdded: boolean; message: string }
+  | { kind: "restored"; id: string; title: string; message: string }
   | { kind: "confirmation_required" | "archived_match"; id: string; title: string; message: string }
   | { kind: "identity_conflict"; id?: string; title?: string; message: string };
 export type SaveInput = { kind: "manual"; fields: ManualTitleInput; confirmationId?: unknown } |
@@ -44,12 +46,11 @@ export function saveTitle(db: DatabaseSync, request: Request, input: SaveInput, 
       if (!manual || manual.id !== input.confirmationId) throw new AccessError();
     }
     const finish = (result: SaveResult) => { db.exec("COMMIT"); return result; };
-    const archived = (match: Match): SaveResult => ({ kind: "archived_match", id: match.id, title: match.title, message: "This title is archived. Restoration is not available yet. Your group’s saved history has not been changed." });
+    const archived = (match: Match): SaveResult => ({ kind: "archived_match", id: match.id, title: match.title, message: "This title is archived. Confirm restoration to add your name and return the same title to the watchlist with everyone’s history preserved." });
     const conflict = (match: Match): SaveResult => ({ kind: "identity_conflict", id: match.id, title: match.title, message: "This identity or title belongs to a different saved entry. Nothing was merged. For a genuinely different work, use a distinguishing title such as its year." });
     const contribute = (match: Match): SaveResult => {
-      if (match.archived) return archived(match);
-      const alreadyAdded = Boolean(db.prepare("SELECT 1 FROM contributors WHERE title_id=? AND member_id=?").get(match.id, context.activeMemberId!));
-      if (!alreadyAdded && db.prepare("INSERT INTO contributors(group_id,title_id,member_id) VALUES (?,?,?)").run(context.groupId, match.id, context.activeMemberId!).changes !== 1) throw new Error("Contribution was not saved");
+      const { restored, alreadyAdded } = saveContribution(db, context, match.id);
+      if (restored) return { kind: "restored", id: match.id, title: match.title, message: "This title was restored to the watchlist. Everyone’s history is preserved." };
       return { kind: "existing", id: match.id, title: match.title, alreadyAdded, message: alreadyAdded ? "You already added this title. Nothing was changed." : "Your name has been added to this title." };
     };
     if (provider) {
@@ -57,8 +58,8 @@ export function saveTitle(db: DatabaseSync, request: Request, input: SaveInput, 
       return finish(contribute(provider));
     }
     if (manual) {
-      if (manual.archived) return finish(archived(manual));
       if (identity && manual.provider_namespace !== null) return finish(conflict(manual));
+      if (manual.archived && input.confirmationId === undefined) return finish(archived(manual));
       const alreadyAdded = Boolean(db.prepare("SELECT 1 FROM contributors WHERE title_id=? AND member_id=?").get(manual.id, context.activeMemberId!));
       if (input.confirmationId === undefined && !(alreadyAdded && !identity)) return finish({ kind: "confirmation_required", id: manual.id, title: manual.title, message: "A title with this name and type is already saved. Confirm it is the same work before adding your name, or return to editing." });
       if (identity && db.prepare("UPDATE titles SET provider_namespace=?,provider_id=? WHERE id=? AND group_id=? AND provider_namespace IS NULL AND provider_id IS NULL").run(identity.namespace, identity.externalId, manual.id, context.groupId).changes !== 1) throw new Error("Provider identity was not attached");
