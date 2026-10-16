@@ -72,7 +72,7 @@ function item(namespace: ProviderNamespace, raw: ItemProjection, now: Date): Loo
     if (!Array.isArray(raw.genres) || raw.genres.length > 10) issue("genres", "invalid");
     else for (const value of raw.genres) {
       const genre = text(value, 40);
-      if (!genre) issue("genres", "invalid");
+      if (!genre || genre.includes(",")) issue("genres", "invalid");
       else if (!genres.some(existing => existing.toLowerCase() === genre.toLowerCase())) genres.push(genre);
     }
   }

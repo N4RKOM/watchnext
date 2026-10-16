@@ -7,6 +7,7 @@
 - `pnpm test` - run the whole suite once
 - `pnpm test tests/home.test.tsx` - run one test file
 - `pnpm typecheck` - check TypeScript types
+- `pnpm metadata:maintain` - explicitly clear expired imported fields/reviews in the initialized configured database; tests must use an isolated path
 - `pnpm build` - create a production build
 - `pnpm db:migrate:temp` - create and inspect an isolated temporary schema database
 - `pnpm db:verify` - run isolated SQLite migration and constraint acceptance checks
@@ -38,6 +39,7 @@ WatchNext is an academic web app that helps couples and friends choose something
 - `_docs/plan.md` - agreed product scope and unresolved decisions.
 - `_docs/tasks.md` - links to the GitHub backlog issues.
 - `_docs/database.md` - SQLite schema, migrations, validation boundaries, and isolated verification commands.
+- `_docs/metadata-lifecycle.md` - trusted review/save, field origins, nullable metadata and refresh/expiry; read before touching metadata consumers.
 - Before grooming an issue, read `_docs/team/pm.md` and `_docs/task-template.md`.
 - Before implementing a groomed issue, read `_docs/team/software-engineer.md`.
 - Before checking finished work against an issue, read `_docs/team/qa-engineer.md`.

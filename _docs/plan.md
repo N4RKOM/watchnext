@@ -238,3 +238,10 @@ Read [the first-release decision record](decisions.md) before implementing edge-
 - Stored group data and history persist between visits.
 
 This document records the agreed product scope. Items explicitly marked undecided are open questions, not finalized requirements.
+## Delegated metadata integration choices — issue #19
+
+Under the October 15, 2026 autonomy directive recorded above, #19 adopts short-lived (10-minute, group/member/session-bound) server review snapshots, explicit proposal replacement, atomic shared-save provenance, per-field provider/user ownership and genuinely nullable expired imported metadata. Unchanged prefill remains provider-owned; independent user corrections/history are preserved. This is delegated implementation/product judgment, not individually explicit user approval.
+
+YouTube fields follow the 30-calendar-day refresh/delete obligation, with real deletion/refresh enforcement at process/startup/read boundaries and an explicit maintenance command. No external scheduler is installed; stopped-app limitations are documented. Кинопоиск Unofficial configured local academic text snapshots remain saveable under a conservative app-chosen 30-day refresh/delete policy; account/terms and image rights remain unverified, covers absent and runtime manual. Missing evidence alone is not an invented permanent save ban or a claim of licensed/free access. See [metadata-lifecycle.md](metadata-lifecycle.md) for rationale, sources and exact constraints.
+
+The PM clarified [compatible NULL-type recovery](https://github.com/xiaodlb/watchnext/issues/19#issuecomment-6212866129): D10 still blocks known type/numbering changes with history; an expired unknown type may be filled by an authorized contributor only through current revision/identity confirmation with unchanged compatible history structure. No expired type copy is retained.

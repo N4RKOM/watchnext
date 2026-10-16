@@ -13,7 +13,7 @@ export type MetadataItem = Candidate & {
   issues: { field: SuggestionField; reason: "missing" | "invalid" | "unsupported" | "uncertain" }[];
   manualFields: ("title" | "contentType" | "duration")[];
   requirements: ("review_metadata" | "choose_moods" | "choose_numbering" | "confirm_typical_episode_duration")[];
-  provenance: { provider: ProviderNamespace; retrievedAt: string; acquiredFields: SuggestionField[]; origin: "provider_suggestions"; freshness: { policy: "youtube_public_30_days" | "provider_policy_unverified"; refreshBy: string | null; action: "refresh_or_delete" | "verify_policy_before_persistence" } };
+  provenance: { provider: ProviderNamespace; retrievedAt: string; acquiredFields: SuggestionField[]; origin: "provider_suggestions"; freshness: { policy: "youtube_public_30_days" | "provider_policy_unverified" | "academic_local_snapshot_30_days"; refreshBy: string | null; action: "refresh_or_delete" | "verify_policy_before_persistence" } };
 };
 export type LookupResult = LookupFailure | { kind: "available" | "incomplete"; item: MetadataItem }
   | { kind: "candidates"; candidates: Candidate[]; requiresSelection: true; omittedInvalidCandidates: boolean }

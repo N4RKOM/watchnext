@@ -6,6 +6,7 @@ import { AccessError } from "./sessions";
 import { validateManualTitle, TitleFieldError, type ManualTitleInput } from "./title-validation";
 import { safeExternalUrl } from "./urls";
 import type { EditableTitle } from "./edit-title-state";
+import { ensureFreshMetadata, recordCorrections } from "./metadata/lifecycle";
 
 export class EditUrlError extends Error { constructor(public field: "sourceUrl" | "coverUrl", message: string) { super(message); } }
 type EditInput = { fields: ManualTitleInput; sourceUrl: unknown; coverUrl: unknown; revision: unknown; confirmation?: unknown; immutableClaims?: string[] };
@@ -13,6 +14,7 @@ const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(valu
 function permitted(db: DatabaseSync, request: Request, id: string, mutation = false, fields?: ManualTitleInput, configuredOrigin?: string) {
   const context = requireTitleMember(db, request, { mutation, groupId: fields?.groupId, memberId: fields?.memberId, configuredOrigin });
   authorizeRequest(db, request, { kind: "title", id }, { mutation, configuredOrigin });
+  ensureFreshMetadata(db);
   const row = db.prepare("SELECT * FROM titles WHERE id=? AND group_id=? AND archived=0").get(id, context.groupId);
   if (!row || !db.prepare("SELECT 1 FROM contributors WHERE title_id=? AND group_id=? AND member_id=?").get(id, context.groupId, context.activeMemberId!)) throw new AccessError();
   return { context, row };
@@ -25,8 +27,8 @@ function snapshot(db: DatabaseSync, row: Record<string, unknown>) {
 }
 export function readEditableTitle(db: DatabaseSync, request: Request, id: string): EditableTitle {
   const { row } = permitted(db, request, id), current = snapshot(db, row);
-  return { id, revision: current.revision, moods: current.moods, values: { title: row.title as string, contentType: row.content_type as string,
-    minutes: String(Math.floor((row.duration_seconds as number) / 60)), seconds: String((row.duration_seconds as number) % 60), numberingStyle: row.numbering_style as string,
+  return { id, revision: current.revision, moods: current.moods, values: { title: row.title as string | null ?? "", contentType: row.content_type as string | null ?? "",
+    minutes: row.duration_seconds === null ? "" : String(Math.floor((row.duration_seconds as number) / 60)), seconds: row.duration_seconds === null ? "" : String((row.duration_seconds as number) % 60), numberingStyle: row.numbering_style as string,
     genres: current.genres.map((g) => g.label as string).join(", "), watchUrl: row.watch_url as string | null ?? "", sourceUrl: row.source_url as string | null ?? "", coverUrl: row.cover_url as string | null ?? "" } };
 }
 function optionalUrl(value: unknown, field: "sourceUrl" | "coverUrl") {
@@ -43,7 +45,7 @@ export function editTitle(db: DatabaseSync, request: Request, id: string, input:
     const { row, context } = permitted(db, request, id, true, input.fields, configuredOrigin), current = snapshot(db, row);
     if (input.revision !== current.revision) { db.exec("COMMIT");return { kind: "stale" as const, message: "This title changed while you were editing. Your attempted changes are still here. Reload current data before saving." }; }
     const value = validateManualTitle(input.fields), sourceUrl = optionalUrl(input.sourceUrl, "sourceUrl"), coverUrl = optionalUrl(input.coverUrl, "coverUrl");
-    if ((value.contentType !== row.content_type || value.numberingStyle !== row.numbering_style) && db.prepare(`SELECT 1 WHERE EXISTS(SELECT 1 FROM progress WHERE title_id=?) OR EXISTS(SELECT 1 FROM ratings WHERE title_id=?) OR EXISTS(SELECT 1 FROM notes WHERE title_id=?)`).get(id, id, id)) {
+    if (((row.content_type !== null && value.contentType !== row.content_type) || value.numberingStyle !== row.numbering_style) && db.prepare(`SELECT 1 WHERE EXISTS(SELECT 1 FROM progress WHERE title_id=?) OR EXISTS(SELECT 1 FROM ratings WHERE title_id=?) OR EXISTS(SELECT 1 FROM notes WHERE title_id=?)`).get(id, id, id)) {
       throw new TitleFieldError(value.contentType !== row.content_type ? "contentType" : "numberingStyle", "Content type and episode numbering cannot change after progress, ratings or notes have been recorded.");
     }
     if (db.prepare("SELECT 1 FROM titles WHERE group_id=? AND content_type=? AND title_key=? AND id<>?").get(context.groupId, value.contentType, value.titleKey, id)) throw new TitleFieldError("title", "Another active or archived title already uses this name and type. Use a distinguishing title. Nothing was changed.");
@@ -55,6 +57,9 @@ export function editTitle(db: DatabaseSync, request: Request, id: string, input:
     db.prepare("DELETE FROM title_moods WHERE title_id=?").run(id);db.prepare("DELETE FROM title_genres WHERE title_id=?").run(id);
     for (const mood of value.moods) db.prepare("INSERT INTO title_moods(title_id,mood_code) VALUES (?,?)").run(id, mood);
     for (const [key, label] of value.genres) db.prepare("INSERT INTO title_genres(title_id,genre_key,label) VALUES (?,?,?)").run(id, key, label);
+    recordCorrections(db, id, { title: row.title, contentType: row.content_type, duration: row.duration_seconds, genres: current.genres.map(g => g.label), sourceUrl: row.source_url, watchUrl: row.watch_url, coverUrl: row.cover_url },
+      { title: value.title, contentType: value.contentType, duration: value.durationSeconds, genres: [...value.genres.values()], sourceUrl, watchUrl: value.watchUrl, coverUrl });
+    db.prepare("UPDATE titles SET metadata_unavailable=0 WHERE id=?").run(id);
     db.exec("COMMIT");return { kind: "saved" as const, id };
   } catch (error) { db.exec("ROLLBACK");throw error; }
 }

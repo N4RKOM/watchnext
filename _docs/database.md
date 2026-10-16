@@ -147,7 +147,7 @@ History-sensitive content type/numbering changes are blocked by a trigger once p
 Every pending migration and its ledger record run inside one `BEGIN IMMEDIATE` batch transaction. A failed SQL statement or history check rolls back the batch. The empty ledger table may exist after a first failed attempt, but none of the new schema/data/versions survive. Correct the unapplied file and retry. Already-applied files must never be rewritten; add a new numbered migration instead. Missing, changed, or reordered applied history causes a clear failure rather than reapplication. Repeat migration with unchanged files returns an empty list and preserves all fixtures.
 
 There are no down migrations, migration framework, or automatic destructive resets. Issue #5's explicit initializer and read-only normal-access check reuse this mechanism; operational backup/restore remains in #30. The repository ignores `.db`, `.sqlite`, `.sqlite3`, their sidecars, environment files, and logs; no database or usable credential is committed.
-# Imported metadata lifecycle foundation — issue #19
+## Imported metadata lifecycle foundation — issue #19
 
 Migration `0003_metadata_lifecycle.sql` rebuilds only `titles` to allow genuinely null acquired title/key/type/duration when `metadata_unavailable=1` and a provider identity exists. Ordinary manual rows still require real title/type/positive runtime; no zero or invented value is stored. Numbering, identity, contributions and history remain intact. `metadata_fields` stores origins/deadlines without duplicate acquired values, and `metadata_reviews` stores short-lived group/member/session-bound review state. Cleared provider fields retain deadline/origin rows for later guarded refresh, with no original-value copy.
 

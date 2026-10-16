@@ -1,3 +1,4 @@
+import { ensureFreshMetadata } from "./metadata/lifecycle";
 import type { DatabaseSync } from "node:sqlite";
 import { authorizeRequest } from "./request-access";
 import { AccessError } from "./sessions";
@@ -18,10 +19,10 @@ export function saveNewManualTitle(db: DatabaseSync, request: Request, input: Ma
 
 export function readSavedTitle(db: DatabaseSync, request: Request, id: string): SavedTitle {
   requireTitleMember(db, request);
-  authorizeRequest(db, request, { kind: "title", id });
+  authorizeRequest(db, request, { kind: "title", id }); ensureFreshMetadata(db);
   const row = db.prepare("SELECT id,title,content_type,duration_seconds,numbering_style,watch_url FROM titles WHERE id=? AND archived=0").get(id);
   if (!row) throw new AccessError();
-  return { id: row.id as string, title: row.title as string, contentType: row.content_type as string, durationSeconds: row.duration_seconds as number,
+  return { id: row.id as string, title: row.title as string | null, contentType: row.content_type as string | null, durationSeconds: row.duration_seconds as number | null,
     numberingStyle: row.numbering_style as string, watchUrl: safeExternalUrl(row.watch_url),
     moods: db.prepare("SELECT m.label FROM title_moods tm JOIN moods m ON m.code=tm.mood_code WHERE tm.title_id=? ORDER BY m.rowid").all(id).map((r) => r.label as string),
     genres: db.prepare("SELECT label FROM title_genres WHERE title_id=? ORDER BY genre_key").all(id).map((r) => r.label as string),

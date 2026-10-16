@@ -14,11 +14,11 @@ export function WatchlistContent({ view, archived = false, contributionAction }:
   {view.items.length === 0 ? <section className="placeholder"><h2>{archived ? "Your archive is empty" : "Your watchlist is empty"}</h2><p>{archived ? "Titles appear here when their last contribution is removed." : "Add the first thing your group wants to watch."}</p></section> : <ul className="watchlist-items">
     {view.items.map((item) => <li key={item.id}><article className="watchlist-card" aria-labelledby={`title-${item.id}`}>
       <Cover key={`${item.id}:${item.coverUrl}`} url={item.coverUrl} title={item.title} />
-      <div className="watchlist-metadata"><h2 id={`title-${item.id}`}>{item.title}</h2><p>{contentTypes.find((type) => type.value === item.contentType)?.label}</p>
+      <div className="watchlist-metadata"><h2 id={`title-${item.id}`}>{item.title ?? "Metadata unavailable"}</h2><p>{contentTypes.find((type) => type.value === item.contentType)?.label ?? "Content type unavailable"}</p>
         <p>{item.numberingStyle === "none" ? "Full duration" : "Typical episode duration"}: {durationLabel(item.durationSeconds)}</p>
         <p>Moods: {item.moods.join(", ") || "Not specified"}</p>
         <p className="field-label">Added by</p>{item.contributors.length ? <ul className="contributor-list">{item.contributors.map((member) => <li key={member.id}><span className="avatar" style={{ backgroundColor: member.color }} aria-hidden="true">{initials(member.name)}</span><span className="profile-name">{member.name}</span></li>)}</ul> : <p>No current contributors</p>}
-        <Link href={`/watchlist/${encodeURIComponent(item.id)}`} aria-label={`View details: ${item.title}`}>View details</Link>
+        <Link href={`/watchlist/${encodeURIComponent(item.id)}`} aria-label={`View details: ${item.title ?? "Metadata unavailable"}`}>View details</Link>
         {archived && contributionAction && <ContributionControls archived canRemove={false} memberId={view.activeMemberId} action={contributionAction.bind(null, item.id)} />}
       </div>
     </article></li>)}

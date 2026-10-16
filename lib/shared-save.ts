@@ -9,15 +9,15 @@ import { saveContribution } from "./contributions";
 import { ensureFreshMetadata } from "./metadata/lifecycle";
 
 export type SaveResult =
-  | { kind: "created"; id: string; title: string; message: string }
-  | { kind: "existing"; id: string; title: string; alreadyAdded: boolean; message: string }
-  | { kind: "restored"; id: string; title: string; message: string }
-  | { kind: "confirmation_required" | "archived_match"; id: string; title: string; message: string }
-  | { kind: "identity_conflict"; id?: string; title?: string; message: string };
+  | { kind: "created"; id: string; title: string | null; message: string }
+  | { kind: "existing"; id: string; title: string | null; alreadyAdded: boolean; message: string }
+  | { kind: "restored"; id: string; title: string | null; message: string }
+  | { kind: "confirmation_required" | "archived_match"; id: string; title: string | null; message: string }
+  | { kind: "identity_conflict"; id?: string; title?: string | null; message: string };
 export type SaveInput = { kind: "manual"; fields: ManualTitleInput; confirmationId?: unknown } |
   { kind: "provider"; fields: ManualTitleInput; provider: { namespace: unknown; externalId: unknown; sourceUrl?: unknown; coverUrl?: unknown }; confirmationId?: unknown };
 type Identity = { namespace: string; externalId: string; sourceUrl: string | null; coverUrl: string | null };
-type Match = { id: string; title: string; archived: number; provider_namespace: string | null; provider_id: string | null };
+type Match = { id: string; title: string | null; archived: number; provider_namespace: string | null; provider_id: string | null };
 export class SaveInputError extends Error { constructor() { super("The provider identity or metadata is invalid. Please check the source and try again."); } }
 function validateIdentity(input: Extract<SaveInput, { kind: "provider" }>["provider"]): Identity {
   if (!input || typeof input.namespace !== "string" || !/^[a-z][a-z0-9_]{0,63}$/.test(input.namespace) || typeof input.externalId !== "string") throw new SaveInputError();

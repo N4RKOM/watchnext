@@ -7,11 +7,11 @@ import { resolveDatabasePath, type DatabaseEnvironment } from "./config.ts";
 // @ts-expect-error Node executes the source .ts file directly; no TypeScript emit is used.
 import { assertCurrentSchema, migrate } from "./migrate.ts";
 // @ts-expect-error Node executes this source directly for maintenance/CLI use.
-import { ensureFreshMetadata } from "../lib/metadata/lifecycle.ts";
+import { ensureFreshMetadata, startMetadataMaintenance } from "../lib/metadata/lifecycle.ts";
 
 if (typeof window !== "undefined") throw new Error("WatchNext database access is server-only and cannot run in a browser");
 
-type ConnectionState = { path: string; connection: DatabaseSync };
+type ConnectionState = { path: string; connection: DatabaseSync; stopMaintenance?: () => void };
 const state = globalThis as typeof globalThis & { __watchNextDatabase?: ConnectionState };
 
 function open(path: string, initialize: boolean): DatabaseSync {
@@ -53,7 +53,7 @@ export function getDatabase(environment: DatabaseEnvironment = process.env): Dat
   const path = resolveDatabasePath(environment);
   if (state.__watchNextDatabase) {
     if (state.__watchNextDatabase.path !== path) throw new Error("Database path changed while a connection is open; closeDatabase() before switching configuration");
-    if (state.__watchNextDatabase.connection.isOpen) { ensureFreshMetadata(state.__watchNextDatabase.connection); return state.__watchNextDatabase.connection; }
+    if (state.__watchNextDatabase.connection.isOpen) { ensureFreshMetadata(state.__watchNextDatabase.connection); state.__watchNextDatabase.stopMaintenance?.(); state.__watchNextDatabase.stopMaintenance = startMetadataMaintenance(state.__watchNextDatabase.connection); return state.__watchNextDatabase.connection; }
     delete state.__watchNextDatabase;
   }
   const connection = open(path, false);
@@ -64,12 +64,13 @@ export function getDatabase(environment: DatabaseEnvironment = process.env): Dat
     connection.close();
     throw new Error(`Database at ${path} needs initialization: run pnpm db:init. ${cause instanceof Error ? cause.message : String(cause)}`, { cause });
   }
-  state.__watchNextDatabase = { path, connection };
+  state.__watchNextDatabase = { path, connection, stopMaintenance: startMetadataMaintenance(connection) };
   return connection;
 }
 
 /** Explicit shutdown/test reset. Safe to call more than once. */
 export function closeDatabase(): void {
+  state.__watchNextDatabase?.stopMaintenance?.();
   if (state.__watchNextDatabase?.connection.isOpen) state.__watchNextDatabase.connection.close();
   delete state.__watchNextDatabase;
 }

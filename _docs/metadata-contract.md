@@ -59,3 +59,8 @@ Review UI, server review state, save/provenance persistence and policy enforceme
 ## Verification
 
 `tests/metadata/fixtures.ts` is explicitly **synthetic/documented-not-live-tested**: invented normalized YouTube detail, episodic Кинопоиск detail and ambiguous Кинопоиск search, not captured API responses or authenticated-access proof. Injected fake providers exercise all result categories and projection/validation boundaries without network, configuration, credentials or database requirements. Run `pnpm exec vitest run tests/metadata/lookup.test.ts --maxWorkers 2`.
+## Integration update — issue #19
+
+The interface above remains pure/offline, while the app now consumes delivered adapters through the [trusted review and lifecycle integration](metadata-lifecycle.md). A short-lived bound snapshot supplies original values/identity; actual shared-save provenance and refresh/deletion enforcement now exist outside this module. Genre labels containing commas cannot be represented by the existing CSV editor and are explicitly incomplete instead of silently becoming different genres.
+
+`provider_policy_unverified` remains truthful adapter-stage Кинопоиск output. The authorized local academic text-snapshot policy adopted in #19 adds `academic_local_snapshot_30_days` at the server review/storage boundary, with an app-chosen refresh/delete deadline and disclosed external-rights/account uncertainty. Thus the provisional #16/#18 verify-before-persistence handoff is satisfied by a recorded project decision rather than an invented permanent save ban; image/streaming rights are not claimed and covers stay absent.

@@ -7,6 +7,7 @@ import { AccessErrorMessage } from "../../components/access-error";
 import { saveTitleAction } from "./actions";
 import { TitleForm } from "./title-form";
 import { authorizeRequest } from "../../../lib/request-access";
+import { lookupTitleAction, selectCandidateAction } from "./lookup-actions";
 export const dynamic = "force-dynamic";
 
 export default async function AddTitlePage({ searchParams }: { searchParams: Promise<{ saved?: string | string[] }> }) {
@@ -24,14 +25,14 @@ export default async function AddTitlePage({ searchParams }: { searchParams: Pro
     return <AccessErrorMessage />;
   }
   return <div className="page-content"><div className="page-heading"><h1>Add a title</h1><p className="page-introduction">Saving as <strong className="profile-name">{memberName}</strong>. Enter the details yourself; no lookup is needed.</p><Link href="/group">Change profile</Link></div>
-    {saved && <section className="placeholder saved-summary" aria-labelledby="saved-heading"><h2 id="saved-heading">Title saved</h2><p className="saved-title-name">{saved.title}</p>
-      <dl><dt>Content type</dt><dd>{contentTypes.find((type) => type.value === saved.contentType)?.label}</dd>
+    {saved && <section className="placeholder saved-summary" aria-labelledby="saved-heading"><h2 id="saved-heading">Title saved</h2><p className="saved-title-name">{saved.title ?? "Metadata unavailable"}</p>
+      <dl><dt>Content type</dt><dd>{contentTypes.find((type) => type.value === saved.contentType)?.label ?? "Content type unavailable"}</dd>
         <dt>{saved.numberingStyle === "none" ? "Full duration" : "Typical episode duration"}</dt><dd>{durationLabel(saved.durationSeconds)}</dd>
         <dt>Numbering</dt><dd>{saved.numberingStyle === "none" ? "None" : saved.numberingStyle === "continuous" ? "Continuous numbering" : "Season + episode"}</dd>
         <dt>Moods</dt><dd>{saved.moods.join(", ")}</dd><dt>Genres</dt><dd>{saved.genres.join(", ") || "None"}</dd>
         <dt>Watch link</dt><dd>{saved.watchUrl ? <a href={saved.watchUrl} rel="noreferrer">{saved.watchUrl}</a> : "Not provided"}</dd>
-        <dt>Added by</dt><dd>{saved.contributors.join(", ")}</dd></dl><Link href={`/watchlist/add?saved=${encodeURIComponent(saved.id)}`}>Reopen saved summary</Link>
+        <dt>Added by</dt><dd>{saved.contributors.join(", ")}</dd></dl><Link href={`/watchlist/add?saved=${encodeURIComponent(saved.id)}`}>Reopen saved summary</Link>{" · "}<Link href={`/watchlist/${encodeURIComponent(saved.id)}`}>Open details, refresh or correct metadata</Link>
     </section>}
-    <section className="placeholder" aria-labelledby="details-heading"><h2 id="details-heading">{saved ? "Add another title" : "Title details"}</h2><TitleForm key={saved?.id ?? "new"} action={saveTitleAction} /></section>
+    <section className="placeholder" aria-labelledby="details-heading"><h2 id="details-heading">{saved ? "Add another title" : "Title details"}</h2><TitleForm key={saved?.id ?? "new"} action={saveTitleAction} lookup={lookupTitleAction} select={selectCandidateAction} /></section>
   </div>;
 }

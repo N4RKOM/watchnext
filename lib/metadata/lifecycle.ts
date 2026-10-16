@@ -1,4 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
+import { clearTimeout, setTimeout } from "node:timers";
 
 export const metadataColumns = { title: "title", contentType: "content_type", duration: "duration_seconds", sourceUrl: "source_url", watchUrl: "watch_url", coverUrl: "cover_url" } as const;
 export type StoredField = keyof typeof metadataColumns | "genres";
@@ -25,6 +26,23 @@ export function expireMetadata(db: DatabaseSync, now = new Date(), limit = 250) 
 }
 export function ensureFreshMetadata(db: DatabaseSync, now = new Date()) {
   if (expireMetadata(db, now).pending) throw new Error("Metadata maintenance is still pending. Retry shortly.");
+}
+/** Process-local wakeups, not an installed external scheduler. Stop with connection close. */
+export function startMetadataMaintenance(db: DatabaseSync) {
+  let timer: ReturnType<typeof setTimeout> | undefined, stopped = false;
+  const schedule = () => {
+    if (stopped || !db.isOpen) return;
+    let delay = 30000;
+    try {
+      const row = db.prepare("SELECT min(expires_at) deadline FROM (SELECT expires_at FROM metadata_fields WHERE origin='provider' AND cleared=0 UNION ALL SELECT expires_at FROM metadata_reviews)").get();
+      const deadline = typeof row?.deadline === "string" ? Date.parse(row.deadline) : NaN;
+      delay = Number.isFinite(deadline) ? Math.max(1, Math.min(60000, deadline - Date.now())) : 60000;
+    } catch { /* A normal guarded read reports storage errors; retry is bounded here. */ }
+    timer = setTimeout(() => { if (!stopped && db.isOpen) { try { expireMetadata(db); } catch { /* Retry; never print private storage diagnostics. */ } schedule(); } }, delay);
+    timer.unref();
+  };
+  schedule();
+  return () => { stopped = true; if (timer) clearTimeout(timer); };
 }
 /** Called inside the edit transaction: only actual corrections change field ownership. */
 export function recordCorrections(db: DatabaseSync, id: string, before: Record<string, unknown>, after: Record<string, unknown>) {

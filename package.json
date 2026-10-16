@@ -14,7 +14,8 @@
     "db:verify": "node scripts/db/verify.mjs",
     "db:init": "node --env-file-if-exists=.env.local scripts/db/init.mjs",
     "db:verify:persistence": "node scripts/db/persistence-check.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "metadata:maintain": "node --env-file-if-exists=.env.local scripts/metadata-maintain.mjs"
   },
   "engines": {
     "node": ">=24.15.0 <25"

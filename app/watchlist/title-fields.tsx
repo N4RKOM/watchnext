@@ -13,6 +13,7 @@ export function MetadataFields({ values, moods, update, setMoods, errors, source
       <input className="field" id="title" name="title" value={values.title} onChange={(e) => update("title", e.target.value)} {...fieldProps("title")} />{error("title")}
       <label className="field-label" htmlFor="contentType">Content type</label>
       <select className="field" id="contentType" name="contentType" value={values.contentType} onChange={(e) => update("contentType", e.target.value)} {...fieldProps("contentType")}>
+        <option value="">Choose content type</option>
         {contentTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
       </select>{error("contentType")}
       <fieldset className="form-fields duration-fields"><legend className="field-label">{episodic ? "Typical episode duration" : "Full duration"}</legend>
