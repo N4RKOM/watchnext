@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import Link from "next/link";
 import { avatarPalette, initials, initialProfileState, type ProfileState, type ProfileView } from "../../lib/profile-state";
 
 export function ProfilePanel({ initial, action }: { initial: ProfileView; action: (previous: ProfileState, form: FormData) => Promise<ProfileState> }) {
@@ -17,6 +18,7 @@ export function ProfilePanel({ initial, action }: { initial: ProfileView; action
       <h2 id="profile-heading">Who’s watching?</h2>
       <p>Anyone with the group invitation can select any profile. Names are not authenticated identities.</p>
       {active ? <div className="active-profile"><span className="avatar" style={{ backgroundColor: active.color }} aria-hidden="true">{initials(active.name)}</span><p>Current profile: <strong className="profile-name">{active.name}</strong></p></div> : <p>No profile selected.</p>}
+      {active && <Link className="button" href="/watchlist/add">Add title</Link>}
       <form action={submit} aria-busy={pending}>
         <input type="hidden" name="intent" value="select" />
         <fieldset className="form-fields" disabled={pending}>
