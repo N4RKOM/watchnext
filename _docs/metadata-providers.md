@@ -167,3 +167,7 @@ This body follows the documented `ApiError` shape, but does not by itself determ
 - [#19](https://github.com/xiaodlb/watchnext/issues/19): candidate selection, explicit correction of uncertain fields, safe failure messaging, and manual fallback even when both providers are unconfigured.
 
 No source is labeled verified usable without an authenticated result. These outstanding checks belong to the linked provider/interface/UI tasks and do not prevent completing this research document. U01 in the decision record should be revisited with these findings during an authorized decisions update; this task does not mark product proposals approved.
+
+## Implemented offline contract
+
+See [metadata-contract.md](metadata-contract.md) for the #16 normalized projections, safe failures, synthetic fixture coverage and review/persistence handoff. These tests verify interface behavior only; actual provider availability, runtime semantics and rights remain unverified until the corresponding adapter work. No provider becomes authenticated or usable because a synthetic fixture passes.
