@@ -62,6 +62,13 @@ it("anime-related genres do not infer anime, and unsupported types require manua
     expect(JSON.stringify(result)).not.toMatch(/"contentType":"anime"|"moods"|"notes"|"rating"/);
   }
 });
+it.each(["movie", "series", "anime", "youtube", "film", "tv_series", "TV_SHOW", "ANIME", " FILM ", "UNKNOWN", null, 42, {}])("unsupported raw enums cannot borrow an internal normalized type in detail or candidates", async type => {
+  const value = { ...film(), type };
+  const result = await lookup(mock(value));
+  expect(result).toMatchObject({ kind: "incomplete", item: { contentType: null, duration: { seconds: null, meaning: "unknown" }, manualFields: ["contentType", "duration"] } });
+  const candidates = await lookup(mock({ items: [value] }), search);
+  expect(candidates).toMatchObject({ kind: "candidates", candidates: [{ contentType: null }] });
+});
 it("name fallback chooses the first valid name, with all-invalid names explicitly incomplete", async () => {
   expect(await lookup(mock({ ...film(), nameRu: "\u0000bad", nameOriginal: " Original ", nameEn: "English" }))).toMatchObject({ item: { title: "Original" } });
   expect(await lookup(mock({ ...film(), nameRu: "x".repeat(201), nameOriginal: " ", nameEn: " English " }))).toMatchObject({ item: { title: "English" } });

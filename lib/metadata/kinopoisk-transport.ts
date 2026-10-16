@@ -15,7 +15,7 @@ function validName(value: unknown): value is string {
 function project(raw: RecordValue): ItemProjection {
   const title = [raw.nameRu, raw.nameOriginal, raw.nameEn].find(validName)?.trim() ?? null;
   return { externalId: responseId(raw.kinopoiskId), title, year: raw.year,
-    contentType: raw.type === "FILM" ? "movie" : raw.type === "TV_SERIES" || raw.type === "MINI_SERIES" ? "series" : raw.type,
+    contentType: raw.type === "FILM" ? "movie" : raw.type === "TV_SERIES" || raw.type === "MINI_SERIES" ? "series" : null,
     genres: Array.isArray(raw.genres) ? raw.genres.map(genre => record(genre).genre) : raw.genres,
     sourceUrl: raw.webUrl, watchUrl: null, coverUrl: null,
     // Units and episodic meaning are unverified; never convert filmLength to seconds.
