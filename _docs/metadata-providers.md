@@ -171,3 +171,5 @@ No source is labeled verified usable without an authenticated result. These outs
 ## Implemented offline contract
 
 See [metadata-contract.md](metadata-contract.md) for the #16 normalized projections, safe failures, synthetic fixture coverage and review/persistence handoff. These tests verify interface behavior only; actual provider availability, runtime semantics and rights remain unverified until the corresponding adapter work. No provider becomes authenticated or usable because a synthetic fixture passes.
+
+The [#18 Unofficial adapter handoff](kinopoisk-adapter.md) records the October 16, 2026 OpenAPI 2.0.1 recheck and delivered mocked search/detail implementation. Endpoint bounds/header/status mapping are verified against public documentation. `filmLength` units, actual account access/allowance, and cover/persistence rights remain unverified; runtime stays manual, cover absent and policy verification is required before persistence in #19.
