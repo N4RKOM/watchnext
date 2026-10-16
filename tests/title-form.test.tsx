@@ -37,3 +37,14 @@ it("disables pending submissions and announces a safe retryable failure", async 
   fireEvent.click(button); expect(action).toHaveBeenCalledTimes(1);
   finish({ kind: "error", message: "Retry fixture" }); await screen.findByRole("alert"); expect(screen.getByRole("button", { name: "Save title" })).toBeTruthy();
 });
+it("offers explicit confirmation, cancels without submitting, preserves fields, and announces already-added", async () => {
+  const action = vi.fn().mockResolvedValueOnce({ kind: "confirmation", id: "fixture", title: "Existing work", message: "Confirm fixture" }).mockResolvedValueOnce({ kind: "confirmation", id: "fixture", title: "Existing work", message: "Confirm fixture" }).mockResolvedValueOnce({ kind: "already_added", id: "fixture", title: "Existing work", message: "You already added this title. Nothing was changed." });
+  render(<TitleForm action={action} />);
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Existing work" } });fireEvent.click(screen.getByLabelText("Funny", { exact: true }));fireEvent.click(screen.getByRole("button", { name: "Save title" }));await screen.findByRole("button", { name: "Add my name to this title" });
+  fireEvent.click(screen.getByRole("button", { name: "Return to editing" }));expect(action).toHaveBeenCalledTimes(1);expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Existing work");expect((screen.getByLabelText("Funny", { exact: true }) as HTMLInputElement).checked).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "Save title" }));fireEvent.click(await screen.findByRole("button", { name: "Add my name to this title" }));await screen.findByText("You already added this title. Nothing was changed.");expect(screen.getByRole("link", { name: "View existing details" }).getAttribute("href")).toBe("/watchlist/fixture");expect(action.mock.calls[2][1].get("intent")).toBe("confirm");expect(action.mock.calls[2][1].get("confirmationId")).toBe("fixture");
+});
+it("shows unchanged archived/conflict results with honest real detail links", async () => {
+  const action=vi.fn().mockResolvedValueOnce({kind:"archived",id:"archive",title:"Archived work",message:"Restoration is not available yet."}).mockResolvedValueOnce({kind:"conflict",id:"existing",message:"Nothing was merged."});
+  render(<TitleForm action={action} />);fireEvent.click(screen.getByRole("button",{name:"Save title"}));await screen.findByText("Restoration is not available yet.");expect(screen.getByRole("link",{name:"View archived details"}).getAttribute("href")).toBe("/watchlist/archive");fireEvent.click(screen.getByRole("button",{name:"Save title"}));await screen.findByText("Nothing was merged.");expect(screen.getByRole("link",{name:"View existing details"}).getAttribute("href")).toBe("/watchlist/existing");
+});

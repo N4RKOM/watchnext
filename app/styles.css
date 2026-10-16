@@ -130,3 +130,6 @@ h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); font-weight: 700; }
 .personal-note { white-space: pre-wrap; overflow-wrap: anywhere; }
 .archive-notice, .timestamp-warning { padding: var(--space-3); background: var(--color-accent-soft); border-left: 3px solid var(--color-accent); }
 @media (max-width: 30rem) { .detail-metadata { grid-template-columns: minmax(0, 1fr); } .detail-metadata > .title-cover { width: 6rem; } }
+
+.save-confirmation { border: 1px solid var(--color-accent); border-radius: 0.5rem; padding: var(--space-3); background: var(--color-accent-soft); min-width: 0; }
+.save-confirmation .button { max-width: 100%; white-space: normal; }

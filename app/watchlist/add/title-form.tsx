@@ -1,11 +1,14 @@
 "use client";
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import { contentTypes, fixedMoods, type TitleField, type TitleFormState } from "../../../lib/title-state";
 
 export function TitleForm({ action }: { action: (previous: TitleFormState, form: FormData) => Promise<TitleFormState> }) {
   const [state, submit, pending] = useActionState(action, { kind: "idle" });
   const [values, setValues] = useState({ title: "", contentType: "movie", minutes: "", seconds: "", numberingStyle: "", genres: "", watchUrl: "" });
   const [moods, setMoods] = useState<string[]>([]);
+  const [dismissed, setDismissed] = useState<TitleFormState | null>(null);
+  const confirming = state.kind === "confirmation" && state !== dismissed;
   const episodic = values.contentType === "series" || values.contentType === "anime";
   const errors = state.kind === "invalid" ? state.errors : {};
   const fieldProps = (field: TitleField) => ({ "aria-invalid": Boolean(errors[field]), "aria-describedby": errors[field] ? `${field}-error` : undefined });
@@ -37,8 +40,13 @@ export function TitleForm({ action }: { action: (previous: TitleFormState, form:
         {fixedMoods.map((mood) => <label className="color-choice" key={mood.value}><input type="checkbox" name="moods" value={mood.value} checked={moods.includes(mood.value)} onChange={(e) => setMoods((previous) => e.target.checked ? [...previous, mood.value] : previous.filter((value) => value !== mood.value))} />{mood.label}</label>)}
       </fieldset>{error("moods")}
       <label className="field-label" htmlFor="watchUrl">External watch link (optional)</label><input className="field" id="watchUrl" name="watchUrl" type="url" value={values.watchUrl} onChange={(e) => update("watchUrl", e.target.value)} {...fieldProps("watchUrl")} />{error("watchUrl")}
-      <button className="button" type="submit">{pending ? "Saving title…" : "Save title"}</button>
+      {confirming && <section className="save-confirmation" aria-labelledby="confirmation-heading"><h3 id="confirmation-heading">Is this the title you meant?</h3><p className="saved-title-name">{state.title}</p><p>{state.message}</p>
+        <input type="hidden" name="confirmationId" value={state.id} />
+        <button className="button" type="submit" name="intent" value="confirm">Add my name to this title</button>{" "}<button className="button button-secondary" type="button" onClick={() => setDismissed(state)}>Return to editing</button>
+      </section>}
+      {!confirming && <button className="button" type="submit" name="intent" value="save">{pending ? "Saving title…" : "Save title"}</button>}
     </fieldset>
-    <p role={state.kind === "error" ? "alert" : "status"} className={state.kind === "error" ? "field-error" : "form-feedback"}>{pending ? "Saving your title…" : state.kind === "error" ? state.message : "Add something you’ve been meaning to watch."}</p>
+    <p role={state.kind === "error" ? "alert" : "status"} className={state.kind === "error" ? "field-error" : "form-feedback"}>{pending ? "Saving your title…" : state.kind === "error" || state.kind === "already_added" || state.kind === "archived" || state.kind === "conflict" ? state.message : confirming ? "Please confirm the existing title or return to editing." : "Add something you’ve been meaning to watch."}</p>
+    {(state.kind === "already_added" || state.kind === "archived" || state.kind === "conflict") && state.id && <Link href={`/watchlist/${encodeURIComponent(state.id)}`}>{state.kind === "archived" ? "View archived details" : "View existing details"}</Link>}
   </form>;
 }
