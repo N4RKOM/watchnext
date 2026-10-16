@@ -6,6 +6,8 @@ import { DatabaseSync } from "node:sqlite";
 import { resolveDatabasePath, type DatabaseEnvironment } from "./config.ts";
 // @ts-expect-error Node executes the source .ts file directly; no TypeScript emit is used.
 import { assertCurrentSchema, migrate } from "./migrate.ts";
+// @ts-expect-error Node executes this source directly for maintenance/CLI use.
+import { ensureFreshMetadata } from "../lib/metadata/lifecycle.ts";
 
 if (typeof window !== "undefined") throw new Error("WatchNext database access is server-only and cannot run in a browser");
 
@@ -51,12 +53,13 @@ export function getDatabase(environment: DatabaseEnvironment = process.env): Dat
   const path = resolveDatabasePath(environment);
   if (state.__watchNextDatabase) {
     if (state.__watchNextDatabase.path !== path) throw new Error("Database path changed while a connection is open; closeDatabase() before switching configuration");
-    if (state.__watchNextDatabase.connection.isOpen) return state.__watchNextDatabase.connection;
+    if (state.__watchNextDatabase.connection.isOpen) { ensureFreshMetadata(state.__watchNextDatabase.connection); return state.__watchNextDatabase.connection; }
     delete state.__watchNextDatabase;
   }
   const connection = open(path, false);
   try {
     assertCurrentSchema(connection);
+    ensureFreshMetadata(connection);
   } catch (cause) {
     connection.close();
     throw new Error(`Database at ${path} needs initialization: run pnpm db:init. ${cause instanceof Error ? cause.message : String(cause)}`, { cause });

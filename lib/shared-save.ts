@@ -6,6 +6,7 @@ import { AccessError } from "./sessions";
 import { validateManualTitle, type ManualTitleInput } from "./title-validation";
 import { safeExternalUrl } from "./urls";
 import { saveContribution } from "./contributions";
+import { ensureFreshMetadata } from "./metadata/lifecycle";
 
 export type SaveResult =
   | { kind: "created"; id: string; title: string; message: string }
@@ -30,8 +31,9 @@ function validateIdentity(input: Extract<SaveInput, { kind: "provider" }>["provi
 }
 
 /** Server-owned input only: the manual action never forwards client-supplied provider fields. */
-export function saveTitle(db: DatabaseSync, request: Request, input: SaveInput, configuredOrigin?: string): SaveResult {
+export function saveTitle(db: DatabaseSync, request: Request, input: SaveInput, configuredOrigin?: string, hooks: { beforeCommit?: (result: SaveResult) => void } = {}): SaveResult {
   requireTitleMember(db, request, { mutation: true, configuredOrigin, groupId: input.fields.groupId, memberId: input.fields.memberId });
+  ensureFreshMetadata(db);
   if (input.kind !== "manual" && input.kind !== "provider") throw new SaveInputError();
   const value = validateManualTitle(input.fields), identity = input.kind === "provider" ? validateIdentity(input.provider) : null;
   db.exec("BEGIN IMMEDIATE");
@@ -45,7 +47,7 @@ export function saveTitle(db: DatabaseSync, request: Request, input: SaveInput, 
       authorizeRequest(db, request, { kind: "title", id: input.confirmationId }, { mutation: true, configuredOrigin, claimedGroupId: input.fields.groupId });
       if (!manual || manual.id !== input.confirmationId) throw new AccessError();
     }
-    const finish = (result: SaveResult) => { db.exec("COMMIT"); return result; };
+    const finish = (result: SaveResult) => { hooks.beforeCommit?.(result); db.exec("COMMIT"); return result; };
     const archived = (match: Match): SaveResult => ({ kind: "archived_match", id: match.id, title: match.title, message: "This title is archived. Confirm restoration to add your name and return the same title to the watchlist with everyone’s history preserved." });
     const conflict = (match: Match): SaveResult => ({ kind: "identity_conflict", id: match.id, title: match.title, message: "This identity or title belongs to a different saved entry. Nothing was merged. For a genuinely different work, use a distinguishing title such as its year." });
     const contribute = (match: Match): SaveResult => {
