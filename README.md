@@ -33,6 +33,8 @@ pnpm db:verify:persistence
 
 To serve a production build locally, run `pnpm build` followed by `pnpm start`, then open http://localhost:3000.
 
+Builds cap Next page/static worker concurrency at two via `experimental.cpus` in `next.config.mjs`, verified with pinned Next 16.4.1. This retains compilation, TypeScript validation and all static generation. During #16 verification, the default 11-worker build repeatedly exited on Windows with code 3221226505 while host committed memory was about 93%; no application exception was emitted. The same build passed with two workers. This supports a resource-pressure diagnosis, but the generic exit code alone does not establish the exact native failure. Keep verification sequential on constrained machines and recheck this experimental option when upgrading Next. It does not change request-serving concurrency or privacy settings.
+
 ## Current scope
 
 The shared shell supports creating a named group, receiving a private invitation URL, and opening it into a protected browser-session group context. The token-free group page shows the real group name and explains the trust model. Profiles, watchlists, and metadata clients remain in later issues. No provider API credentials are needed for current features or database checks. Re-run `pnpm db:init` after pulling new numbered migrations.
