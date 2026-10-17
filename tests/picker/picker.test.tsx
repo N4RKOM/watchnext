@@ -23,13 +23,23 @@ it("submits explicit fields, displays one result and hides all old result links 
 it("edited inputs reject delayed prior response; pending blocks duplicate submit and preserves controls", async () => {
   let release!: (state: PickState) => void, submitted!: FormData; const action = vi.fn((form: FormData) => { submitted = form; return new Promise<PickState>(done => { release = done; }); });
   render(<Picker view={view} action={action} />); fill(); fireEvent.click(screen.getByRole("button", { name: "Pick for me" })); expect(screen.getByRole("button", { name: "Finding a pick…" }).matches(":disabled")).toBe(true);
+  expect(screen.getByText("Finding a pick for Anna · 25 minutes · Funny · Rewatches off…")).toBeTruthy();
   fireEvent.submit(screen.getByRole("button", { name: "Finding a pick…" }).closest("form")!); expect(action).toHaveBeenCalledTimes(1);
   fireEvent.change(screen.getByLabelText("Mood"), { target: { value: "dark" } }); await act(async () => release(reply(submitted))); expect(screen.queryByText("Real title")).toBeNull(); expect((screen.getByLabelText("Mood") as HTMLSelectElement).value).toBe("dark");
 });
-it("group context change prevents previous success/error from restoring links", async () => {
+it("group context change prevents previous response from restoring links", async () => {
   let release!: (state: PickState) => void, submitted!: FormData; const action = (form: FormData) => { submitted = form; return new Promise<PickState>(done => { release = done; }); };
   const rendered = render(<Picker view={view} action={action} />); fill(); fireEvent.click(screen.getByRole("button", { name: "Pick for me" })); rendered.rerender(<Picker view={{ ...view, groupId: "new-group", groupName: "New group" }} action={action} />);
   await act(async () => release(reply(submitted))); expect(screen.queryByText("Real title")).toBeNull(); expect((screen.getByRole("checkbox", { name: "Anna" }) as HTMLInputElement).checked).toBe(false);
+});
+it("delayed rejected request cannot replace edited input with an old error", async () => {
+  let reject!: (reason: Error) => void; render(<Picker view={view} action={() => new Promise((_resolve, fail) => { reject = fail; })} />); fill(); fireEvent.click(screen.getByRole("button", { name: "Pick for me" }));
+  fireEvent.change(screen.getByLabelText("Available time (whole minutes)"), { target: { value: "18" } }); await act(async () => reject(new Error("old network error")));
+  expect(screen.queryByText(/We couldn’t pick right now/)).toBeNull(); expect((screen.getByLabelText("Available time (whole minutes)") as HTMLInputElement).value).toBe("18");
+});
+it("mismatched request identifier never creates actionable links", async () => {
+  render(<Picker view={view} action={async form => reply(form, { requestId: "unrelated-request" })} />); fill(); fireEvent.click(screen.getByRole("button", { name: "Pick for me" }));
+  await act(async () => {}); expect(screen.queryByRole("link", { name: "View details" })).toBeNull();
 });
 it("safe errors retain values and allow fresh retry; validation associates its field", async () => {
   const action = vi.fn(async (form: FormData) => reply(form, { kind: "invalid", errors: { availableMinutes: "Enter whole minutes" } })); render(<Picker view={view} action={action} />); fill(); fireEvent.click(screen.getByRole("button", { name: "Pick for me" })); await screen.findByText("Enter whole minutes"); expect(screen.getByLabelText("Available time (whole minutes)").getAttribute("aria-invalid")).toBe("true");
