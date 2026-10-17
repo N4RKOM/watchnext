@@ -1,0 +1,59 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { contentTypes, durationLabel, fixedMoods } from "../../lib/title-state";
+import { initials } from "../../lib/profile-state";
+import type { Profile } from "../../lib/profile-state";
+import type { PickerPageView, PickAction, PickState, PickView } from "../../lib/picker/view-state";
+function People({ members }: { members: Profile[] }) { return <ul className="contributor-list">{members.map(member => <li key={member.id}><span className="avatar" style={{ backgroundColor: member.color }} aria-hidden="true">{initials(member.name)}</span><span className="profile-name">{member.name}</span></li>)}</ul>; }
+export function PickResult({ pick }: { pick: PickView }) {
+  const episodic = pick.target.kind === "episode";
+  return <section className="group-result" aria-labelledby="pick-result-heading"><p className="status-label">{pick.tier === "exact" ? "Exact match" : "Alternative suggestion"}</p><h2 id="pick-result-heading">{pick.title}</h2>
+    <p>{contentTypes.find(type => type.value === pick.contentType)?.label} · {episodic ? "Typical episode duration" : "Full duration"}: {durationLabel(pick.durationSeconds)}</p>
+    <p className={pick.tier === "exact" ? "form-feedback" : "notice"}>{pick.message}</p>
+    {pick.target.kind === "episode" && <><p className="saved-title-name">{pick.target.nextSeason === null ? `Episode ${pick.target.nextEpisode}` : `Season ${pick.target.nextSeason}, episode ${pick.target.nextEpisode}`}</p>{pick.target.restart && <p>Restart from the first episode.</p>}{pick.target.catchUp && <p>Catch-up episode for the least advanced viewer.</p>}</>}
+    {pick.rewatchers.length > 0 && <div><h3>Rewatching</h3><People members={pick.rewatchers} /></div>}
+    <h3>Watching together</h3><People members={pick.viewers} /><p>Requested: {pick.availableMinutes} minutes · {pick.requestedMood} · Rewatches {pick.rewatches ? "OK" : "off"}</p>
+    <div className="progress-actions"><Link className="button button-secondary" href={`/watchlist/${encodeURIComponent(pick.id)}`}>View details</Link>{pick.watchUrl ? <a className="button" href={pick.watchUrl} target="_blank" rel="noopener noreferrer">{episodic ? "Open series (external)" : "Watch (external)"}</a> : <p>No viewing link saved.</p>}</div>
+    <p className="field-hint">External watching does not update progress. Update your own progress in details.</p>
+  </section>;
+}
+export function Picker({ view, action }: { view: PickerPageView; action: PickAction }) {
+  const [viewers, setViewers] = useState<string[]>([]), [minutes, setMinutes] = useState(""), [mood, setMood] = useState(""), [rewatches, setRewatches] = useState(false);
+  const [state, setState] = useState<PickState>({ kind: "idle" }), [pending, setPending] = useState(false);
+  const generation = useRef(0), active = useRef(""), group = useRef(view.groupId), feedback = useRef<HTMLDivElement>(null);
+  useEffect(() => { group.current = view.groupId; generation.current++; active.current = ""; setPending(false); setState({ kind: "idle" }); setViewers([]); }, [view.groupId]);
+  const changed = () => { generation.current++; setState({ kind: "idle" }); };
+  const response = state.kind === "idle" || state.groupId !== view.groupId ? null : state;
+  const errors = response?.kind === "invalid" ? response.errors : {};
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (active.current) return;
+    const requestId = crypto.randomUUID(), version = generation.current, currentGroup = view.groupId;
+    active.current = requestId; setPending(true); setState({ kind: "idle" });
+    const form = new FormData(); form.set("groupId", currentGroup); form.set("requestId", requestId); viewers.forEach(id => form.append("viewers", id)); form.set("availableMinutes", minutes); form.set("mood", mood); if (rewatches) form.set("rewatches", "yes");
+    try {
+      const result = await action(form);
+      if (active.current === requestId && generation.current === version && group.current === currentGroup && result.kind !== "idle" && result.requestId === requestId && result.groupId === currentGroup) {
+        setState(result); requestAnimationFrame(() => feedback.current?.focus());
+      }
+    } catch {
+      if (active.current === requestId && generation.current === version && group.current === currentGroup) { setState({ kind: "error", groupId: currentGroup, requestId, message: "We couldn’t pick right now. Your inputs are still here. Please try again." }); requestAnimationFrame(() => feedback.current?.focus()); }
+    } finally { if (active.current === requestId) { active.current = ""; setPending(false); } }
+  }
+  return <div className="page-content"><div className="page-heading"><p className="eyebrow">{view.groupName}</p><h1>Pick for me</h1><p className="page-introduction">Choose who’s watching, your time and your mood. Get one suggestion from your saved list.</p></div>
+    <section className="placeholder" aria-labelledby="picker-controls-heading"><h2 id="picker-controls-heading">Plan this watch</h2><p>Viewers are separate from your selected profile. Nothing is chosen for you.</p>
+    {view.members.length === 0 ? <div><p>No group members yet. Create a named profile before choosing viewers.</p><Link className="button" href="/group">Create a profile</Link></div> : <form onSubmit={submit} noValidate aria-busy={pending}>
+      <fieldset className="mood-choices picker-viewers" aria-describedby={errors.viewers ? "picker-viewers-error" : undefined}><legend className="field-label">Who’s watching?</legend>{view.members.map(member => <label className="color-choice" key={member.id}><input type="checkbox" checked={viewers.includes(member.id)} onChange={event => { changed(); setViewers(previous => event.target.checked ? [...previous, member.id] : previous.filter(id => id !== member.id)); }} /><span className="avatar" style={{ backgroundColor: member.color }} aria-hidden="true">{initials(member.name)}</span><span className="profile-name">{member.name}</span></label>)}</fieldset>
+      {errors.viewers && <p className="field-error" id="picker-viewers-error">{errors.viewers}</p>}
+      <label className="field-label" htmlFor="picker-time">Available time (whole minutes)</label><input id="picker-time" className="field" type="text" inputMode="numeric" value={minutes} onChange={event => { changed(); setMinutes(event.target.value); }} aria-invalid={Boolean(errors.availableMinutes)} aria-describedby={errors.availableMinutes ? "picker-time-hint picker-time-error" : "picker-time-hint"} /><p id="picker-time-hint" className="field-hint">Enter 1–1440 minutes. Picks use the full movie/video or one typical episode duration.</p>{errors.availableMinutes && <p className="field-error" id="picker-time-error">{errors.availableMinutes}</p>}
+      <label className="field-label" htmlFor="picker-mood">Mood</label><select id="picker-mood" className="field" value={mood} onChange={event => { changed(); setMood(event.target.value); }} aria-invalid={Boolean(errors.mood)} aria-describedby={errors.mood ? "picker-mood-error" : undefined}><option value="">Choose a mood</option>{fixedMoods.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select>{errors.mood && <p id="picker-mood-error" className="field-error">{errors.mood}</p>}
+      <label className="color-choice picker-rewatches"><input type="checkbox" checked={rewatches} onChange={event => { changed(); setRewatches(event.target.checked); }} />Rewatches OK</label>{errors.rewatches && <p className="field-error">{errors.rewatches}</p>}
+      <div className="progress-actions"><button className="button" type="submit" disabled={pending}>{pending ? "Finding a pick…" : "Pick for me"}</button><Link href="/group">Manage profiles</Link><Link href={view.hasActiveProfile ? "/watchlist/add" : "/group"}>{view.hasActiveProfile ? "Add a title" : "Choose profile to add a title"}</Link></div>
+    </form>}
+    <div ref={feedback} tabIndex={-1} className="form-feedback" role={response?.kind === "error" || response?.kind === "invalid" ? "alert" : "status"} aria-live="polite">{pending ? "Finding a current pick for your submitted viewers and settings…" : response?.kind === "error" ? response.message : response?.kind === "invalid" ? errors.form ?? "Review the highlighted choices and try again." : response?.kind === "picked" ? "Your suggestion is ready." : response?.kind === "no_match" ? "No match for these settings." : "Choose your viewers, time and mood, then pick."}</div>
+    </section>
+    {!pending && response?.kind === "picked" && <PickResult pick={response.pick} />}
+    {!pending && response?.kind === "no_match" && <section className="group-result" aria-labelledby="no-pick-heading"><h2 id="no-pick-heading">No match</h2><p>{response.message}</p><ul>{response.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul><p>Edit the choices above and submit again. Your settings haven’t changed.</p><div className="progress-actions">{response.links.map(link => <Link key={link.href} className="button button-secondary" href={link.href}>{link.label}</Link>)}</div></section>}
+    {response?.kind === "error" && <p><Link href="/group">Reload group and profiles</Link></p>}
+  </div>;
+}

@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Navigation } from "../app/components/navigation";
-import PickPage from "../app/pick/page";
+import { Picker } from "../app/pick/picker";
 
 
 const route = vi.hoisted(() => ({ pathname: "/" }));
@@ -24,16 +24,10 @@ describe("shared navigation", () => {
   }
 });
 
-describe("honest destination placeholders", () => {
-  for (const [Page, heading] of [[PickPage, "Pick for me"]] as const) {
-    it(`${heading} has one heading and an unavailable state without simulated controls`, () => {
-      render(<Page />);
-      expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-      expect(screen.getByRole("heading", { level: 1, name: heading })).toBeTruthy();
-      expect(screen.getByText("Not available yet")).toBeTruthy();
-      expect(screen.getAllByRole("heading").map((element) => element.tagName)).toEqual(["H1", "H2"]);
-      expect(screen.queryByRole("button")).toBeNull();
-      expect(screen.queryByRole("textbox")).toBeNull();
-    });
-  }
+it("real Pick destination keeps one heading and an honest empty-group action", () => {
+  render(<Picker view={{ groupId: "group", groupName: "Actual group", members: [], hasActiveProfile: false }} action={async () => ({ kind: "idle" })} />);
+  expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  expect(screen.getByRole("heading", { level: 1, name: "Pick for me" })).toBeTruthy();
+  expect(screen.getByRole("link", { name: "Create a profile" }).getAttribute("href")).toBe("/group");
+  expect(screen.queryByRole("button")).toBeNull();
 });

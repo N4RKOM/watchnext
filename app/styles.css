@@ -136,3 +136,7 @@ h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); font-weight: 700; }
 
 .save-confirmation { border: 1px solid var(--color-accent); border-radius: 0.5rem; padding: var(--space-3); background: var(--color-accent-soft); min-width: 0; }
 .save-confirmation .button { max-width: 100%; white-space: normal; }
+.picker-viewers legend { float: none; }
+.picker-viewers label { min-width: 0; max-width: 100%; }
+.picker-rewatches { margin-top: var(--space-6); width: fit-content; }
+.page-content > .group-result { margin-top: var(--space-6); }

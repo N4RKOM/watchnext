@@ -1,10 +1,13 @@
-import { Placeholder } from "../components/placeholder";
-
-export default function PickPage() {
-  return <Placeholder
-    title="Pick for me"
-    introduction="Spend your evening watching, instead of choosing."
-    heading="A little help with the big decision"
-    description="Choose who’s watching, how much time you have, and your mood. You’ll get one suggestion from your saved list. Picking is coming soon."
-  />;
+import { getDatabase } from "../../db/server";
+import { getGroupRequest } from "../../lib/access";
+import { AccessError } from "../../lib/sessions";
+import { readPickerPage } from "../../lib/picker/server-only";
+import { AccessErrorMessage } from "../components/access-error";
+import { Picker } from "./picker";
+import { pickAction } from "./actions";
+import { PickerLoadError } from "./load-error";
+export const dynamic = "force-dynamic";
+export default async function PickPage() {
+  try { const view = readPickerPage(getDatabase(), await getGroupRequest()); return <Picker key={view.groupId} view={view} action={pickAction} />; }
+  catch (error) { return error instanceof AccessError ? <AccessErrorMessage /> : <PickerLoadError />; }
 }
