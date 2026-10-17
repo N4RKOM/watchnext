@@ -106,13 +106,15 @@ Each entry states its own status. D01/D02 retain the exact recommendations expli
 
 - **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
-- **Recommendation:** Keep Unknown distinct from explicitly Not started. Not started maps to S1E1 or episode 1; Unknown has no target episode and excludes that series from group picks even when rewatches are enabled. Ask that viewer to set a position. For movies/videos, absent progress means not marked completed, with no fabricated timestamp.
+- **Recommendation:** Keep Unknown distinct from explicitly Not started. Not started maps to S1E1 or episode 1; an unfinished viewer with Unknown has no target episode and excludes that series from group picks even when rewatches are enabled. Ask that viewer to set a position. For movies/videos, absent progress means not marked completed, with no fabricated timestamp.
 - **Rationale:** Unknown episodic progress cannot safely establish spoiler eligibility.
 - **Example:** Anna at 3 and Max Unknown yields “Set Max's episode first”; setting Max Not started permits episode 1 with rewatches on.
 - **Approval question:** Should unknown episodic progress block picks while explicitly unstarted means episode 1?
 - **Affected:** [#4](https://github.com/xiaodlb/watchnext/issues/4), [#20](https://github.com/xiaodlb/watchnext/issues/20), [#21](https://github.com/xiaodlb/watchnext/issues/21), [#24](https://github.com/xiaodlb/watchnext/issues/24).
 
 ### D07. Completed-series rewatches
+
+**Delivery clarification (#24, delegated October 17, 2026):** D06 Unknown blocking applies to unfinished viewers. Explicit completion is known-finished even with Unknown or absent coordinates: rewatches off excludes; on follows the least advanced known unfinished viewer, or restarts at episode 1 when everyone finished. This reconciles D06 with independent completion (D07/D24), without fabricating or changing saved positions. Adopted under the October 15 autonomy directive, not an individually explicit answer. See [the eligibility truth table](eligibility.md).
 
 - **Status:** Delegated decision — recommendation adopted in issue #4 under the October 15, 2026 directive quoted above; rationale and example below apply.
 
