@@ -1,10 +1,10 @@
 # Server operations
 
+This document describes the implemented application boundary and handoff for subsequent issues. Read it before changing server behavior. Uses Next.js Server Actions rather than a separate public REST API; generated action IDs and multipart transport are framework details, not a stable external API.
+
 ## Pure viewer eligibility — issue #24
 
 `evaluateEligibility` in `lib/picker/eligibility.ts` is a readonly typed internal operation, not a public route or authorization guard. See [the input/result contract, reason codes and executable truth table](eligibility.md). It requires an already authorized fresh group snapshot and explicit selected viewers; rewatches defaults false. It returns invalid input/selection separately from per-title eligible/excluded results, full unchanged duration, exact episode targets and rewatching viewer IDs. It performs no reads/writes, provider calls, ranking or time/mood fallback. #26 must supply real session-authorized projections after metadata freshness enforcement; #25/#27 own ranking/cycles.
-
-This document describes the implemented application boundary and handoff for subsequent issues. Read it before changing server behavior. Uses Next.js Server Actions rather than a separate public REST API; generated action IDs and multipart transport are framework details, not a stable external API.
 
 ## Create a group — issue #7
 
