@@ -137,7 +137,7 @@ Personal preference profiles and previous ratings do not influence selection. Se
 - “Pick again” shows the next closest fit.
 - Do not repeat suggestions until all matching items have been shown.
 - Delegated D18 (#25) breaks ties by original title creation instant ascending, then stable title ID in locale-independent ordinal order. Contributors, edits and restoration do not reset creation order.
-- When the no-repeat sequence resets after filter or viewer changes remains to be defined.
+- Delegated D21–D22 (#27) cycle through only the chosen tier, then show All matches shown with explicit Start again. Input/group/page changes discard the cycle; relevant current title/contributor/selected-progress changes reset with List changed; picks refreshed. Ratings, notes and nonselected progress never reset it. Page state is ephemeral, not viewing history.
 
 ### No exact match
 
@@ -214,7 +214,7 @@ Read [the first-release decision record](decisions.md) before implementing edge-
 
 - Complete the authenticated and field-semantics verification linked from [metadata provider research](metadata-providers.md); both documented provider routes remain untested with credentials.
 - Implement the resolved fixed moods, genre handling, manual timestamps/completion, next-episode semantics, numbering boundaries, and duplicate identity rules in their owning feature tasks; issue #4 supplies storage only.
-- Ranking ties and fallback tolerance are resolved in D18–D20/#25; suggestion-cycle reset behavior remains for #27.
+- Ranking ties/fallback tolerance are resolved in D18–D20/#25, and explicit cycle exhaustion/reset in D21–D22/#27 under delegated authority.
 - Implement the resolved title-level integer ratings and plain-text notes in their owning tasks.
 - Define external-link handling for individual episodes and entries without playable links.
 - Implement the resolved profile validation/session/group-switching contracts; invitation workflows remain in their owning tasks.

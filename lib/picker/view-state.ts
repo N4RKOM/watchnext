@@ -10,7 +10,9 @@ export type PickView = {
 };
 export type PickState = { kind: "idle" } | ({ requestId: string; groupId: string } & (
   { kind: "invalid"; errors: Partial<Record<PickerField, string>> } |
-  { kind: "error"; message: string } | { kind: "picked"; pick: PickView } |
-  { kind: "no_match"; message: string; reasons: string[]; links: { href: string; label: string }[] }
+  { kind: "error"; message: string } | { kind: "picked"; pick: PickView; cursor?: string; refreshed?: boolean; pageId?: string; intentId?: string } |
+  { kind: "exhausted"; cursor: string; pageId: string; intentId: string; refreshed: boolean } |
+  { kind: "conflict"; message: string } |
+  { kind: "no_match"; message: string; reasons: string[]; links: { href: string; label: string }[]; refreshed?: boolean }
 ));
 export type PickAction = (form: FormData) => Promise<PickState>;

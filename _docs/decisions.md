@@ -257,7 +257,7 @@ Each entry states its own status. D01/D02 retain the exact recommendations expli
 
 ### D21. Pick again and exhaustion
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #27 on October 17, 2026 under the October 15 autonomy directive quoted above, not an individually explicit approval. One ranked tier exhausts before explicit restart; the page-local cycle never widens filters or invents successive episodes. Bounded process-memory state, opaque session/group-bound cursors and a fixed 30-minute lifetime avoid a persistent viewing-history table. Lost/expired/replayed context requires explicit safe restart; same-intent retry revalidates the same logical position.
 
 - **Recommendation:** Keep an ordered candidate list for the current picking context. Advance through all exact matches, or through only the selected fallback tier if no exact matches exist. After its last item, show “All matches shown” with an explicit Start again action; do not repeat automatically. Keep cycle state local to the picking page, not permanent history.
 - **Rationale:** Enforce no early repeats and disclose restarts clearly.
@@ -267,7 +267,7 @@ Each entry states its own status. D01/D02 retain the exact recommendations expli
 
 ### D22. Reset and invalidation
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #27 on October 17, 2026 under the October 15 autonomy directive quoted above, not an individually explicit approval. Semantic fingerprints include group titles/moods/genres/identities/destinations, contributions and selected profiles/progress (including retained timestamps); they exclude ratings, notes, unselected progress and refresh-only bookkeeping. Data reset is visibly disclosed before a freshly computed first result. Canonical viewer sets avoid treating reordering as a new context; explicit input edits discard the page cycle.
 
 - **Recommendation:** Changing viewers, time, mood, or rewatch permission discards the old cycle. Revalidate relevant title/progress/contribution state before showing another result; archive/restoration, addition/removal, duration/mood/type/identity edits, or selected-viewer progress changes reset and recompute. Inform the user when list changes reset a cycle. Rating/note changes alone do not reset it. Ignore stale responses and serialize advance actions.
 - **Rationale:** Prevent stale spoiler-ineligible results while keeping unrelated feedback out of selection.

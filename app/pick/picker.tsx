@@ -22,19 +22,33 @@ export function Picker({ view, action }: { view: PickerPageView; action: PickAct
   const [viewers, setViewers] = useState<string[]>([]), [minutes, setMinutes] = useState(""), [mood, setMood] = useState(""), [rewatches, setRewatches] = useState(false);
   const [state, setState] = useState<PickState>({ kind: "idle" }), [pending, setPending] = useState(false), [pendingLabel, setPendingLabel] = useState("");
   const generation = useRef(0), active = useRef(""), group = useRef(view.groupId), feedback = useRef<HTMLDivElement>(null);
-  useEffect(() => { group.current = view.groupId; generation.current++; active.current = ""; setPending(false); setState({ kind: "idle" }); setViewers([]); }, [view.groupId]);
-  const changed = () => { generation.current++; setState({ kind: "idle" }); };
+  const page = useRef(crypto.randomUUID()), cursor = useRef("");
+  const retry = useRef<{ pageId: string; intentId: string; intent: "start" | "next" | "restart"; cursor: string } | null>(null);
+  const [phase, setPhase] = useState<"idle" | "active" | "exhausted" | "conflict">("idle");
+  const reset = () => { page.current = crypto.randomUUID(); cursor.current = ""; retry.current = null; setPhase("idle"); };
+  useEffect(() => { group.current = view.groupId; generation.current++; active.current = ""; setPending(false); setState({ kind: "idle" }); setViewers([]); reset(); }, [view.groupId]);
+  const changed = () => { generation.current++; setState({ kind: "idle" }); reset(); };
   const response = state.kind === "idle" || state.groupId !== view.groupId ? null : state;
   const errors = response?.kind === "invalid" ? response.errors : {};
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (active.current) return;
     const requestId = crypto.randomUUID(), version = generation.current, currentGroup = view.groupId;
+    if (phase === "conflict") reset();
+    const logical = retry.current ?? { pageId: page.current, intentId: crypto.randomUUID(), intent: phase === "active" ? "next" as const : phase === "exhausted" ? "restart" as const : "start" as const, cursor: cursor.current };
+    retry.current = logical;
     active.current = requestId; setPending(true); setState({ kind: "idle" });
     setPendingLabel(`Finding a pick for ${viewers.map(id => view.members.find(member => member.id === id)?.name ?? "unavailable viewer").join(", ") || "your selected viewers"} · ${minutes || "no time selected"} minutes · ${fixedMoods.find(item => item.value === mood)?.label ?? "no mood selected"} · Rewatches ${rewatches ? "OK" : "off"}…`);
     const form = new FormData(); form.set("groupId", currentGroup); form.set("requestId", requestId); viewers.forEach(id => form.append("viewers", id)); form.set("availableMinutes", minutes); form.set("mood", mood); if (rewatches) form.set("rewatches", "yes");
+    form.set("pageId", logical.pageId); form.set("intentId", logical.intentId); form.set("intent", logical.intent); if (logical.cursor) form.set("cursor", logical.cursor);
     try {
       const result = await action(form);
       if (active.current === requestId && generation.current === version && group.current === currentGroup && result.kind !== "idle" && result.requestId === requestId && result.groupId === currentGroup) {
+        if ((result.kind === "picked" || result.kind === "exhausted") && (result.pageId !== logical.pageId || result.intentId !== logical.intentId)) return;
+        if (result.kind !== "error") retry.current = null;
+        if (result.kind === "picked" && result.cursor) { cursor.current = result.cursor; setPhase("active"); }
+        else if (result.kind === "exhausted") { cursor.current = result.cursor; setPhase("exhausted"); }
+        else if (result.kind === "conflict") { cursor.current = ""; setPhase("conflict"); }
+        else if (result.kind === "invalid" || result.kind === "no_match") reset();
         setState(result); requestAnimationFrame(() => feedback.current?.focus());
       }
     } catch {
@@ -49,11 +63,14 @@ export function Picker({ view, action }: { view: PickerPageView; action: PickAct
       <label className="field-label" htmlFor="picker-time">Available time (whole minutes)</label><input id="picker-time" className="field" type="text" inputMode="numeric" value={minutes} onChange={event => { changed(); setMinutes(event.target.value); }} aria-invalid={Boolean(errors.availableMinutes)} aria-describedby={errors.availableMinutes ? "picker-time-hint picker-time-error" : "picker-time-hint"} /><p id="picker-time-hint" className="field-hint">Enter 1–1440 minutes. Picks use the full movie/video or one typical episode duration.</p>{errors.availableMinutes && <p className="field-error" id="picker-time-error">{errors.availableMinutes}</p>}
       <label className="field-label" htmlFor="picker-mood">Mood</label><select id="picker-mood" className="field" value={mood} onChange={event => { changed(); setMood(event.target.value); }} aria-invalid={Boolean(errors.mood)} aria-describedby={errors.mood ? "picker-mood-error" : undefined}><option value="">Choose a mood</option>{fixedMoods.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select>{errors.mood && <p id="picker-mood-error" className="field-error">{errors.mood}</p>}
       <label className="color-choice picker-rewatches"><input type="checkbox" checked={rewatches} aria-describedby={errors.rewatches ? "picker-rewatches-error" : undefined} onChange={event => { changed(); setRewatches(event.target.checked); }} />Rewatches OK</label>{errors.rewatches && <p className="field-error" id="picker-rewatches-error">{errors.rewatches}</p>}
-      <div className="progress-actions"><button className="button" type="submit" disabled={pending}>{pending ? "Finding a pick…" : "Pick for me"}</button><Link href="/group">Manage profiles</Link><Link href={view.hasActiveProfile ? "/watchlist/add" : "/group"}>{view.hasActiveProfile ? "Add a title" : "Choose profile to add a title"}</Link></div>
+      <div className="progress-actions"><button className="button" type="submit" disabled={pending}>{pending ? "Finding a pick…" : response?.kind === "error" ? "Retry pick" : phase === "active" ? "Pick again" : phase === "exhausted" ? "Start again" : phase === "conflict" ? "Start a new cycle" : "Pick for me"}</button><Link href="/group">Manage profiles</Link><Link href={view.hasActiveProfile ? "/watchlist/add" : "/group"}>{view.hasActiveProfile ? "Add a title" : "Choose profile to add a title"}</Link></div>
     </form>}
-    <div ref={feedback} tabIndex={-1} className="form-feedback picker-feedback" role={response?.kind === "error" || response?.kind === "invalid" ? "alert" : "status"} aria-live="polite">{pending ? pendingLabel : response?.kind === "error" ? response.message : response?.kind === "invalid" ? errors.form ?? "Review the highlighted choices and try again." : response?.kind === "picked" ? "Your suggestion is ready." : response?.kind === "no_match" ? "No match for these settings." : "Choose your viewers, time and mood, then pick."}</div>
+    <div ref={feedback} tabIndex={-1} className="form-feedback picker-feedback" role={response?.kind === "error" || response?.kind === "invalid" || response?.kind === "conflict" ? "alert" : "status"} aria-live="polite">{pending ? pendingLabel : response?.kind === "error" || response?.kind === "conflict" ? response.message : response?.kind === "invalid" ? errors.form ?? "Review the highlighted choices and try again." : response?.kind === "picked" ? "Your suggestion is ready." : response?.kind === "exhausted" ? "All matches shown. Choose Start again to begin explicitly." : response?.kind === "no_match" ? "No match for these settings." : "Choose your viewers, time and mood, then pick."}</div>
     </section>
+    {response && "refreshed" in response && response.refreshed && <p className="notice" role="status">List changed; picks refreshed.</p>}
     {!pending && response?.kind === "picked" && <PickResult pick={response.pick} />}
+    {!pending && response?.kind === "exhausted" && <section className="group-result"><h2>All matches shown</h2><p>You’ve seen every match in this tier. Choose Start again to begin a freshly checked cycle. No other tier has been added.</p></section>}
+    {!pending && response?.kind === "conflict" && <section className="group-result"><h2>Start a new picking cycle</h2><p>{response.message}</p><p>Your choices are still here. Use Start a new cycle above to begin explicitly.</p></section>}
     {!pending && response?.kind === "no_match" && <section className="group-result" aria-labelledby="no-pick-heading"><h2 id="no-pick-heading">No match</h2><p>{response.message}</p><ul>{response.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul><p>Edit the choices above and submit again. Your settings haven’t changed.</p><div className="progress-actions">{response.links.map(link => <Link key={link.href} className="button button-secondary" href={link.href}>{link.label}</Link>)}</div></section>}
     {response?.kind === "error" && <p><Link href="/group">Reload group and profiles</Link></p>}
   </div>;
