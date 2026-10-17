@@ -50,7 +50,7 @@ The remaining picker and external-link proposals gate their feature issues rathe
 
 ## Detailed behavior decisions
 
-Each entry states its own status. D01/D02 retain the exact recommendations explicitly approved in the planning answers on October 15, 2026. The schema-affecting delegated entries adopt their existing recommendations because their recorded rationale suits a small manual-entry academic app; their original approval questions remain as historical context, not pending requests. D26/D28 are resolved in issue #12 below. Non-schema D18–D22 remain Proposed until their owning tasks record a delegated choice.
+Each entry states its own status. D01/D02 retain the exact recommendations explicitly approved in the planning answers on October 15, 2026. The schema-affecting delegated entries adopt their existing recommendations because their recorded rationale suits a small manual-entry academic app; their original approval questions remain as historical context, not pending requests. D26/D28 are resolved in issue #12 below. D18–D20 are delegated resolutions in #25; D21–D22 remain Proposed for #27.
 
 ### D01. Fixed moods
 
@@ -227,7 +227,7 @@ Each entry states its own status. D01/D02 retain the exact recommendations expli
 
 ### D18. Exact-match ties
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #25 on October 17, 2026 under the October 15 autonomy directive quoted above; not an individually explicit approval. Original creation instant and locale-independent ordinal ID ties make equal inputs reproducible without changing saved history.
 
 - **Recommendation:** Sort exact matches by duration descending, then original title-entry creation time ascending, then stable entry ID ascending. Additional contributors or restoration do not reset creation time.
 - **Rationale:** Deterministic ties make Pick again understandable and give older saved entries priority.
@@ -237,7 +237,7 @@ Each entry states its own status. D01/D02 retain the exact recommendations expli
 
 ### D19. Near-match fallback
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #25 on October 17, 2026 under the October 15 autonomy directive quoted above; not an individually explicit approval. Only one disclosed tier is returned: exact first, otherwise same-mood overrun up to 300 seconds, otherwise different mood within the unchanged budget. Viewer safety is never relaxed.
 
 - **Recommendation:** Use fallback only if there are no exact mood-and-time matches. First offer same-mood viewer-eligible items up to 5 minutes over budget, smallest overrun first. If none exist, offer different-mood viewer-eligible items within budget, longest first. Apply D18 ties after the primary order. Do not relax both mood and time together or relax viewer eligibility.
 - **Rationale:** Preserve the requested mood first while bounding the cost of an overrun.
@@ -247,7 +247,7 @@ Each entry states its own status. D01/D02 retain the exact recommendations expli
 
 ### D20. No result
 
-- **Status:** Proposed.
+- **Status:** Delegated decision — recommendation adopted in issue #25 on October 17, 2026 under the October 15 autonomy directive quoted above; not an individually explicit approval. Explicit reasons/actions preserve the original input instead of inventing a result or silently changing filters. See [the ranking contract](ranking.md).
 
 - **Recommendation:** Return an explicit no-match state when exact and permitted fallback sets are empty. Explain whether viewers need progress, the list is empty, or filters exclude known eligible titles; provide relevant actions without silently changing inputs.
 - **Rationale:** A near match is useful only when it remains within the agreed relaxation policy.

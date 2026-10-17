@@ -2,6 +2,10 @@
 
 This document describes the implemented application boundary and handoff for subsequent issues. Read it before changing server behavior. Uses Next.js Server Actions rather than a separate public REST API; generated action IDs and multipart transport are framework details, not a stable external API.
 
+## Pure time/mood ranking — issue #25
+
+`rankCandidates` in `lib/picker/ranking.ts` validates canonical whole-minute time and one fixed mood, recomputes #24 eligibility from the same fresh snapshot, and returns one deterministic exact/over-budget/different-mood tier or explicit safe no-match reasons/actions. Invalid inputs stay distinct. Full runtime and #24 episode/rewatch targets remain unchanged. See [ranking.md](ranking.md) for projection/creation validation, exact seconds, delegated D18–D20, reason codes and #26/#27 handoff. It adds no route, I/O, writes or cycle state.
+
 ## Pure viewer eligibility — issue #24
 
 `evaluateEligibility` in `lib/picker/eligibility.ts` is a readonly typed internal operation, not a public route or authorization guard. See [the input/result contract, reason codes and executable truth table](eligibility.md). It requires an already authorized fresh group snapshot and explicit selected viewers; rewatches defaults false. It returns invalid input/selection separately from per-title eligible/excluded results, full unchanged duration, exact episode targets and rewatching viewer IDs. It performs no reads/writes, provider calls, ranking or time/mood fallback. #26 must supply real session-authorized projections after metadata freshness enforcement; #25/#27 own ranking/cycles.

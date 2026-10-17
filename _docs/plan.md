@@ -136,14 +136,14 @@ Personal preference profiles and previous ratings do not influence selection. Se
 - Among eligible items matching the chosen mood and fitting the available time, choose the longest item that fits.
 - “Pick again” shows the next closest fit.
 - Do not repeat suggestions until all matching items have been shown.
-- A deterministic tie-breaker for equally long matches is not yet defined.
+- Delegated D18 (#25) breaks ties by original title creation instant ascending, then stable title ID in locale-independent ordinal order. Contributors, edits and restoration do not reset creation order.
 - When the no-repeat sequence resets after filter or viewer changes remains to be defined.
 
 ### No exact match
 
 Suggest a close match and clearly explain the mismatch, such as “5 minutes longer.”
 
-The exact fallback ranking, maximum allowed time overrun, and priority between relaxing time and mood are still undecided. The fallback must visibly disclose any filter mismatch.
+Delegated D19–D20 (#25) return only one tier: exact mood-and-time fits first; if none, same mood up to 300 seconds over budget (smallest overrun first); only if that is empty, another mood within budget (longest first). Every alternative explains the exact mismatch. Never relax mood and time together or viewer eligibility. Empty tiers produce explicit no-match reasons/actions with unchanged inputs. These recommendations were adopted October 17, 2026 under the October 15 autonomy directive, not separate explicit approvals; rationale and examples remain in [decisions.md](decisions.md). See [ranking.md](ranking.md) for the pure contract. #27 owns exhaustion/reset and consumes one tier without appending fallback to an exact cycle.
 
 ## Watching content
 
@@ -206,7 +206,7 @@ The user authorized the backlog run on October 15, 2026. During that run, the us
 
 ## Decision record and implementation gates
 
-Read [the first-release decision record](decisions.md) before implementing edge-case behavior. Its Approved baseline preserves the choices in this plan. D01/D02 are explicitly approved; D03–D17, D23–D25, and D27 are resolved delegated choices for issue #4's schema foundation. Other D entries remain proposals for their owning feature tasks to resolve using delegated authority. U01 now identifies the remaining live access, semantics, and rights checks following provider research.
+Read [the first-release decision record](decisions.md) before implementing edge-case behavior. Its Approved baseline preserves the choices in this plan. D01/D02 are explicitly approved; D03–D17, D23–D25, and D27 are resolved delegated choices for issue #4's schema foundation. D18–D20 are resolved under delegated authority in #25; D21–D22 remain for #27. Other decisions state their owning feature resolution below. U01 identifies the remaining live access, semantics, and rights checks following provider research.
 
 [Issue #4](https://github.com/xiaodlb/watchnext/issues/4) records the [schema-affecting resolutions](decisions.md#schema-affecting-approval-gate) before implementing those contracts. Each entry retains its rationale/example and distinguishes explicit approval from delegated resolution. Historical approval questions are not requests to ask again. Follow the relevant issue prerequisite links to its decision IDs.
 
@@ -214,7 +214,7 @@ Read [the first-release decision record](decisions.md) before implementing edge-
 
 - Complete the authenticated and field-semantics verification linked from [metadata provider research](metadata-providers.md); both documented provider routes remain untested with credentials.
 - Implement the resolved fixed moods, genre handling, manual timestamps/completion, next-episode semantics, numbering boundaries, and duplicate identity rules in their owning feature tasks; issue #4 supplies storage only.
-- Define ranking ties, fallback tolerance, and suggestion-cycle reset behavior.
+- Ranking ties and fallback tolerance are resolved in D18–D20/#25; suggestion-cycle reset behavior remains for #27.
 - Implement the resolved title-level integer ratings and plain-text notes in their owning tasks.
 - Define external-link handling for individual episodes and entries without playable links.
 - Implement the resolved profile validation/session/group-switching contracts; invitation workflows remain in their owning tasks.

@@ -24,7 +24,7 @@ Selected progress must be unique per title/member, same-group, matching numberin
 
 ## Decision trace and truth table
 
-Rules follow [plan.md](plan.md) and [decisions.md](decisions.md): D03 next-to-watch, D04 bounds, D05 lexicographic seasons, D06 Unknown/Not started, D07 completion/restart, D17 full exact seconds, D24 explicit completion and D26 optional links. The scoped D06/D07 clarification was adopted October 17, 2026 under the user's October 15 delegated authority, not an individually explicit answer: **unfinished Unknown blocks; completed Unknown is known-finished**. This avoids fabricated coordinates and preserves completion-only actions. D18–D22 ranking/fallback/cycle proposals remain unchanged.
+Rules follow [plan.md](plan.md) and [decisions.md](decisions.md): D03 next-to-watch, D04 bounds, D05 lexicographic seasons, D06 Unknown/Not started, D07 completion/restart, D17 full exact seconds, D24 explicit completion and D26 optional links. The scoped D06/D07 clarification was adopted October 17, 2026 under the user's October 15 delegated authority, not an individually explicit answer: **unfinished Unknown blocks; completed Unknown is known-finished**. This avoids fabricated coordinates and preserves completion-only actions. D18–D20 ranking/fallback are delivered separately in [#25's pure ranking module](ranking.md); D21–D22 cycle proposals remain for #27.
 
 These rows run for both continuous and seasonal numbering in `tests/picker/eligibility.test.ts`, with explicit reason/target assertions. Seasonal 3 means S1E3; U means absent or explicit unfinished Unknown; C(U) is explicitly completed with Unknown; NS is explicitly Not started.
 
