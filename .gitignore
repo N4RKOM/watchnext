@@ -11,6 +11,8 @@ coverage/
 *.sqlite-*
 *.sqlite3
 *.sqlite3-*
+*.backup
+*.bak
 *.log
 **/.watchnext-demo-owner.json
 **/.watchnext-demo-test-owner.json

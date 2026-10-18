@@ -6,13 +6,12 @@ import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { createIsolatedDemoRoot } from "../../scripts/demo/paths.mjs";
 import { prepareDemo } from "../../scripts/demo/prepare.mjs";
-import { createSnapshot } from "../../scripts/db/snapshot.mjs";
 import { assertCurrentSchema } from "../../db/migrate.ts";
 const repo = fileURLToPath(new URL("../../", import.meta.url));
 export function verifyBackup() {
   const root = createIsolatedDemoRoot(); let writer;
   const check = (value, message) => { if (!value) throw new Error(message); };
-  const rows = db => JSON.stringify(["groups", "members", "titles", "contributors", "progress", "ratings", "notes", "metadata_fields", "schema_migrations"].map(table => db.prepare(`SELECT * FROM ${table}`).all().map(row => JSON.stringify(row)).sort()));
+  const rows = db => JSON.stringify(db.prepare("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all().map(({ name }) => [name, db.prepare(`SELECT * FROM "${name.replaceAll('"', '""')}"`).all().map(row => JSON.stringify(row)).sort()]));
   const history = db => JSON.stringify(["contributors", "progress", "ratings", "notes", "schema_migrations"].map(table => db.prepare(`SELECT * FROM ${table}`).all().map(row => JSON.stringify(row)).sort()));
   try {
     const prepared = prepareDemo({ testRoot: root, environment: { LOCALAPPDATA: join(root, "normal-local"), XDG_DATA_HOME: join(root, "normal-local") } });
@@ -24,7 +23,11 @@ export function verifyBackup() {
     writer.prepare("UPDATE notes SET body=? WHERE title_id='demo-funny-24' AND member_id='demo-anna'").run(walNote);
     check(existsSync(prepared.path + "-wal") && !readFileSync(prepared.path).includes(Buffer.from(walNote)) && readFileSync(prepared.path + "-wal").includes(Buffer.from(walNote)), "Fixture must contain a committed WAL-only record");
     const mainBytes = readFileSync(prepared.path), walBytes = readFileSync(prepared.path + "-wal"), before = rows(writer), originalHistory = history(writer);
-    createSnapshot(prepared.path, backup); createSnapshot(backup, restored);
+    for (const [source, destination] of [[prepared.path, backup], [backup, restored]]) {
+      const args = process.env.npm_execpath ? [process.env.npm_execpath, "db:snapshot", source, destination] : [join(repo, "scripts/db/snapshot.mjs"), source, destination];
+      const snapshot = spawnSync(process.execPath, args, { cwd: repo, env: process.env, encoding: "utf8", timeout: 15000, windowsHide: true });
+      check(snapshot.status === 0 && snapshot.stdout.includes("Consistent snapshot verified"), "The actual documented snapshot/restore command must succeed with quoted paths");
+    }
     for (const path of [backup, restored]) { const copy = new DatabaseSync(path, { readOnly: true }); try { assertCurrentSchema(copy); check(rows(copy) === before, "Snapshot/restore must preserve every logical value and original deadline"); } finally { copy.close(); } }
     check(readFileSync(prepared.path).equals(mainBytes) && readFileSync(prepared.path + "-wal").equals(walBytes), "Source main and committed WAL bytes remain unchanged by snapshot/restore");
     const maintenance = spawnSync(process.execPath, [join(repo, "scripts/metadata-maintain.mjs")], { cwd: repo, env: { ...process.env, WATCHNEXT_DATABASE_PATH: restored, YOUTUBE_API_KEY: "", KINOPOISK_UNOFFICIAL_API_KEY: "" }, encoding: "utf8", timeout: 15000, windowsHide: true });

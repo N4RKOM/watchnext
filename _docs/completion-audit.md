@@ -1,6 +1,6 @@
 # First-release requirement and delivery audit
 
-Dated **October 18, 2026**. This maps the agreed [plan](plan.md) and all [30 backlog issues](tasks.md) to actual source/documentation and authoritative verification. It is an evidence record, not a duplicated live issue board: GitHub issue comments/closure remain authoritative. #1–#29 were closed after independent QA at the start of #30; #30 implementation/evidence must receive its own independent verdict before the orchestrator closes it.
+Dated **October 18, 2026**. This maps the agreed [plan](plan.md) and all [30 backlog issues](tasks.md) to actual source/documentation and authoritative verification. It is an evidence record, not a duplicated live issue board: GitHub comments/closure remain authoritative. #1–#29 were closed at the start of #30. The API audit found independent PASS comments for #2–#29; #1 predates the orchestrator run and has no standalone historical QA comment. Its current home/build/fresh-checkout behavior is verified below; no earlier verdict is invented. #30 must receive its own independent verdict before closure, including the baseline check.
 
 The last pre-documentation production baseline is `f1a6a3ff9eae9587f81c08e63e67feeb0c48ac31`, with [#29 independent QA PASS](https://github.com/xiaodlb/watchnext/issues/29#issuecomment-6246402934). [#28 QA PASS](https://github.com/xiaodlb/watchnext/issues/28#issuecomment-6246227440) covers isolated demo ownership/scenarios. #30 adds documentation, the native snapshot helper and isolated walkthrough/restore verification; it does not silently replace unimplemented core behavior with a limitation.
 
@@ -19,7 +19,7 @@ The last pre-documentation production baseline is `f1a6a3ff9eae9587f81c08e63e67f
 | Personal movie/video timestamps and independent completion | [Timestamp tests](../tests/watch-progress.test.ts), [controls](../tests/watch-controls.test.tsx); two UI timestamps and completion/undo retaining position in E2E. Duration corrections preserve older historical positions with warnings. |
 | Explicit viewers, time, mood; rewatches initially off | [Picker UI/action tests](../tests/picker/picker.test.tsx), [guarded server](../tests/picker/server.test.ts), real explicit controls in E2E. Selected profile is independent of selected viewers. |
 | Full duration / typical episode duration, not remaining time | [Ranking truth tables](../tests/picker/ranking.test.ts), [saved projection](../tests/picker/ranking-saved.test.ts), real 24-minute result despite partial timestamps in E2E/demo. |
-| Finished/different next episodes excluded without rewatches; catch-up with rewatches | [Eligibility truth table](eligibility.md), [100+ boundary cases](../tests/picker/eligibility.test.ts), [saved projection](../tests/picker/eligibility-saved.test.ts), real seasonal/continuous catch-up with named rewatchers in E2E. Completed viewers follow the recorded D06 precedence. |
+| Finished/different next episodes excluded without rewatches; catch-up with rewatches | [Eligibility truth table](eligibility.md), [boundary cases](../tests/picker/eligibility.test.ts), [saved projection](../tests/picker/eligibility-saved.test.ts), real seasonal/continuous catch-up with named rewatchers in E2E. Completed viewers follow the recorded D06 precedence. |
 | Longest eligible exact fit first; no early repeat | [Ranking](ranking.md), [cycle contract](picking-cycle.md), [cycle/server cases](../tests/picker/cycle-server.test.ts); real 24→18, exhaustion/explicit restart and relevant-data invalidation in E2E. Ties and fallback tiers follow delegated D18–D22. |
 | Near matches explain mismatch without changing input | [Ranking boundaries](../tests/picker/ranking.test.ts); real +2-minute overrun and alternate-mood exclusion/catch-up in E2E/demo. No silent mixed relaxation or eligibility bypass. |
 | External watching, no manufactured episode URL | [Safe detail tests](../tests/title-details.test.ts), [detail rendering](../tests/detail-view.test.tsx), [picker links](../tests/picker/picker.test.tsx), focused [browser external-link check](../tests/fixtures/picker-browser-check.mjs). Missing links use an honest unavailable state; opening links writes no progress. |
@@ -75,4 +75,20 @@ The outer command then runs the documented full unit/type/build/schema/persisten
 
 ## Verification record
 
-The #29 baseline passed 64 files / 779 tests, typecheck/build, 12 schema checks, fresh-process persistence and repeated production E2E with credential/sentinel audits. Hosted Linux CI and authenticated provider access were not exercised. #30's final current-source/fresh-checkout/restore results are recorded here after executing the documented walkthrough; no pending check is represented as a pass.
+Executed October 18, 2026 on **Windows, Node v24.19.0, pnpm11.25.0, pinned Playwright1.64.1 and its installed headless Chromium**. `pnpm verify:fresh-checkout` passed from clean committed source **`18913fd6c2cbf4900bdcc98b670db87fb3a344b2`**. Its local clone (no hardlinks or copied normal environment files) actually ran:
+
+| Command / outcome | Evidence |
+| --- | --- |
+| `pnpm install --frozen-lockfile` | Fresh clone installed exact committed dependencies. |
+| `pnpm exec playwright install chromium` | Matching browser setup completed; no hidden runtime path. |
+| `pnpm verify:guide` | Explicit path-with-spaces initialization/repeat, real `pnpm dev --port <owned-port>`, current build and `pnpm start --port <same-port>`, home/group/profile/list/details/edit/picker/archive/restore, persisted timestamp; real demo CLI prepare/show/repeat/reset and exact/catch-up/near-match in isolated verified child home; routine/generated credential scans passed. |
+| `pnpm test` | 784 tests passed; includes original home baseline, current features, four snapshot cases and real owned-process shutdown regression. |
+| `pnpm typecheck`, `pnpm build` | Passed all type/compile/static generation checks; existing migration filesystem-tracing warning remains. |
+| `pnpm db:verify` | All 12 migration/constraint checks passed. |
+| `pnpm db:verify:persistence` | Fresh-process persistence and separate-file isolation passed. |
+| `pnpm db:verify:backup` | WAL-aware snapshot/restore, IDs/history/provenance/deadlines, source/sentinel preservation and real offline expiry/physical main-file clearing passed. |
+| `pnpm test:e2e` | Complete real two-context 375/1280 journeys passed, including synthetic outbound-only providers, ownership/stale-session guards, restart persistence, no-repeat/disclosures and cleanup/privacy/sentinel audits. |
+
+The owned clone, runtime databases, browser and server trees were removed/closed. Subsequent #30 edits strengthen backup readback to every logical table and run the actual quoted `pnpm db:snapshot` CLI for backup and restore, plus documentation/ignore reconciliation; focused current-source verification passed. No application runtime/schema changed after that fresh-checkout revision. Current final command results are recorded in the Engineer/QA comments on #30 rather than pretending this dated record is live issue state.
+
+The walkthrough initially exposed a **verification-harness** Windows shutdown acknowledgement race; it now waits for the actual owned child exit after tree termination, with a real-process regression. Failed runs cleaned their owned clones and were not counted as passes. No product-core gap was discovered. Hosted Linux/macOS, authenticated providers, playback and public hosting were not exercised or claimed. First-release feature limitations/deferred scope remain those expressly listed above, not hidden dropped requirements.
