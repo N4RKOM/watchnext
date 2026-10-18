@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDatabase } from "../../../../db/server";
-import { accountBody, accountCookieName, accountCredential, AuthError, loginAccount, logoutAccount, registerAccount, requireAccountPost } from "../../../../lib/accounts/server-only";
+import { accountBody, accountCookieName, accountCredential, AuthError, loginAccount, logoutAccount, recoverAccount, registerAccount, requireAccountPost } from "../../../../lib/accounts/server-only";
 import { cookieOptions } from "../../../../lib/sessions";
 import { resolveAppOrigin } from "../../../../lib/groups";
 
@@ -10,8 +10,14 @@ export async function POST(request: Request, context: { params: Promise<{ operat
   try {
     requireAccountPost(request, process.env.WATCHNEXT_APP_ORIGIN);
     const { operation } = await context.params;
-    if (!["register", "login", "logout"].includes(operation)) return NextResponse.json({ error: "Unavailable operation." }, { status: 404, headers: privateHeaders });
+    if (!["register", "login", "logout", "recover"].includes(operation)) return NextResponse.json({ error: "Unavailable operation." }, { status: 404, headers: privateHeaders });
     const input = await accountBody(request, operation), previous = accountCredential(request.headers.get("cookie")), db = getDatabase();
+    if (operation === "recover") {
+      const result = await recoverAccount(db, input);
+      const response = NextResponse.json({ ...result, location: "/login" }, { headers: privateHeaders });
+      response.cookies.set(accountCookieName, "", { ...cookieOptions(resolveAppOrigin(process.env.WATCHNEXT_APP_ORIGIN).origin), maxAge: 0 });
+      return response;
+    }
     if (operation === "logout") {
       logoutAccount(db, previous);
       const response = NextResponse.json({ location: "/login" }, { headers: privateHeaders });

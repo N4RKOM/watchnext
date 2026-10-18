@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { credentialHash, validCredential } from "../sessions";
 import { AuthError, checkPassword, makePassword, passwordInput, passwordParameters, security, usernameInput } from "./security";
@@ -53,4 +53,34 @@ export async function loginAccount(db: DatabaseSync, input: Record<string, unkno
 }
 export function logoutAccount(db: DatabaseSync, credential: unknown, now = Math.floor(Date.now() / 1000)) {
   if (validCredential(credential)) db.prepare("UPDATE account_sessions SET revoked_at=max(created_at,?) WHERE token_hash=? AND revoked_at IS NULL").run(now, credentialHash(credential));
+}
+
+export const recoveryFailure = "The username or recovery code is incorrect or no longer valid.";
+export async function recoverAccount(db: DatabaseSync, input: Record<string, unknown>, now = Math.floor(Date.now() / 1000)) {
+  // Separate recovery admission, including malformed usernames/codes; cookies grant no proof.
+  security.recoveryTotal.take("all");
+  let key: string | undefined;
+  try { key = usernameInput(input.username).key; } catch { /* Same safe proof error below. */ }
+  security.recovery.take(key ?? "<invalid>");
+  const row = key ? db.prepare("SELECT id,recovery_digest FROM accounts WHERE username_key=?").get(key) : undefined;
+  const canonical = validCredential(input.recoveryCode);
+  const actual = Buffer.from(credentialHash(canonical ? input.recoveryCode as string : ""), "hex");
+  const supported = row && typeof row.recovery_digest === "string" && /^[0-9a-f]{64}$/.test(row.recovery_digest);
+  const expected = Buffer.from(supported ? row.recovery_digest as string : "00".repeat(32), "hex");
+  const proof = timingSafeEqual(actual, expected);
+  if (!proof || !canonical || !supported) throw new AuthError(recoveryFailure);
+  const password = passwordInput(input.password);
+  if (input.confirmation !== password) throw new AuthError("The password confirmation must match exactly.");
+  const record = await makePassword(password), recoveryCode = randomBytes(32).toString("base64url");
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const changed = db.prepare(`UPDATE accounts SET password_version=1,password_algorithm='scrypt',password_hash=?,password_salt=?,
+      password_n=?,password_r=?,password_p=?,password_maxmem=?,recovery_digest=? WHERE id=? AND recovery_digest=?`)
+      .run(record.hash, record.salt, passwordParameters.N, passwordParameters.r, passwordParameters.p, passwordParameters.maxmem,
+        credentialHash(recoveryCode), row.id as string, row.recovery_digest as string);
+    if (changed.changes !== 1) throw new AuthError(recoveryFailure);
+    db.prepare("UPDATE account_sessions SET revoked_at=max(created_at,?) WHERE account_id=? AND revoked_at IS NULL").run(now, row.id as string);
+    db.exec("COMMIT"); security.recovery.clear(key!);
+    return { recoveryCode };
+  } catch (error) { db.exec("ROLLBACK"); throw error; }
 }

@@ -60,3 +60,36 @@ it("returns safe retryable storage failures without leaking password, SQL, path 
   expect(response.status).toBe(400); const text = await response.text(); expect(text).toContain("try again");
   expect(text).not.toMatch(/SQL|private database path|Synthetic private password/); expect(response.headers.get("set-cookie")).toBeNull();
 });
+it("recovery needs current code proof regardless of duplicate/other-account cookies, clears only browser account cookie and returns a private replacement", async () => {
+  security.recoveryTotal.clear("all");
+  const register = async (username: string) => {
+    const response = await call("register", request({ username, password, confirmation: password }));
+    return { cookie: response.headers.get("set-cookie")!.split(";")[0], body: await response.json() };
+  };
+  const a = await register("Recovery.HttpA"), b = await register("Recovery.HttpB");
+  const duplicate = a.cookie + "; " + a.cookie;
+  const input = { username: "Recovery.HttpB", recoveryCode: b.body.recoveryCode, password: password + " new", confirmation: password + " new" };
+  const errors = [];
+  for (const fields of [{ ...input, recoveryCode: "wrong" }, { ...input, username: "Unknown.Http" }, { ...input, recoveryCode: undefined }]) {
+    const response = await call("recover", request(fields, { cookie: duplicate }));
+    expect(response.status).toBe(400); errors.push(await response.json()); expect(response.headers.get("set-cookie")).toBeNull();
+  }
+  expect(errors[0]).toEqual(errors[1]); expect(errors[1]).toEqual(errors[2]);
+  const response = await call("recover", request(input, { cookie: duplicate }));
+  expect(response.status).toBe(200); expect(response.headers.get("cache-control")).toBe("private, no-store"); expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+  const result = await response.json(); expect(result.location).toBe("/login"); expect(result.recoveryCode).toHaveLength(43); expect(result.recoveryCode).not.toBe(b.body.recoveryCode);
+  expect(response.headers.get("set-cookie")).toContain("Max-Age=0"); expect(response.headers.get("set-cookie")).not.toContain("watchnext_session=");
+  expect(currentAccount(db, accountCredential(b.cookie))).toBeNull(); expect(currentAccount(db, accountCredential(a.cookie))).not.toBeNull();
+  const reused = await call("recover", request(input)); expect(reused.status).toBe(400); expect(await reused.json()).toEqual(errors[0]);
+});
+it("recovery rejects IDs, unsafe origins/methods/shape/size and invalid new passwords without changing credentials", async () => {
+  security.recoveryTotal.clear("all");
+  const registration = await call("register", request({ username: "Recovery.Guards", password, confirmation: password }));
+  const original = await registration.json();
+  const input = { username: "Recovery.Guards", recoveryCode: original.recoveryCode, password: password + " replacement", confirmation: password + " replacement" };
+  const snapshot = () => JSON.stringify([db.prepare("SELECT * FROM accounts").all(), db.prepare("SELECT * FROM account_sessions").all()]);
+  const before = snapshot();
+  for (const req of [request(input, { origin: "" }), request(input, { origin: "https://other.example" }), request(input, {}, "GET"), request({ ...input, accountId: "other" }), request({ ...input, memberId: "old" }), request({ ...input, recoveryCode: "x".repeat(5000) }), request([]), request({ ...input, password: "short", confirmation: "short" }), request({ ...input, confirmation: "different" })])
+    expect((await call("recover", req)).status).toBe(400);
+  expect(snapshot()).toBe(before);
+});

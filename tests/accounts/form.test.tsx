@@ -30,3 +30,21 @@ it("shows private recovery once, supports manual copy fallback, and discards it 
   expect(screen.getByRole("link", { name: /Continue/ }).getAttribute("href")).toBe("/account");
   fireEvent(window, new Event("pagehide")); expect(screen.queryByLabelText("Private recovery code")).toBeNull();
 });
+it("recovery clears all secrets on errors, retains username and shows replacement only until departing for fresh login", async () => {
+  const fetcher = vi.fn().mockResolvedValueOnce({ ok: false, json: async () => ({ error: "Invalid recovery proof." }) })
+    .mockResolvedValueOnce({ ok: true, json: async () => ({ recoveryCode: "SyntheticReplacementCode" }) }); vi.stubGlobal("fetch", fetcher);
+  render(<AccountForm operation="recover" />);
+  const fillRecovery = () => {
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "Recovery.User" } });
+    fireEvent.change(screen.getByLabelText("Saved recovery code"), { target: { value: "SyntheticSavedCode" } });
+    fireEvent.change(screen.getByLabelText("New password"), { target: { value: "Exact replacement password" } });
+    fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "Exact replacement password" } });
+  };
+  fillRecovery(); fireEvent.submit(screen.getByRole("button", { name: "Reset password" }).closest("form")!); await screen.findByRole("alert");
+  for (const label of ["Saved recovery code", "New password", "Confirm password"]) expect((screen.getByLabelText(label) as HTMLInputElement).value).toBe("");
+  expect((screen.getByLabelText("Username") as HTMLInputElement).value).toBe("Recovery.User");
+  fillRecovery(); fireEvent.submit(screen.getByRole("button", { name: "Reset password" }).closest("form")!);
+  await screen.findByRole("heading", { name: "Save your replacement recovery code" });
+  expect(screen.getByRole("link", { name: /Continue/ }).getAttribute("href")).toBe("/login");
+  fireEvent(window, new Event("pagehide")); expect(screen.queryByLabelText("Private recovery code")).toBeNull();
+});

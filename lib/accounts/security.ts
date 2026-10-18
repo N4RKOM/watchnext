@@ -40,9 +40,12 @@ export class Attempts {
   }
   clear(key: string) { this.entries.delete(key); }
 }
-type SecurityState = { pool: WorkPool; login: Attempts; signup: Attempts; signupTotal: Attempts };
+type SecurityState = { pool: WorkPool; login: Attempts; signup: Attempts; signupTotal: Attempts; recovery: Attempts; recoveryTotal: Attempts };
 const shared = globalThis as typeof globalThis & { __watchnextAccountSecurity?: SecurityState };
-export const security = shared.__watchnextAccountSecurity ??= { pool: new WorkPool(), login: new Attempts(), signup: new Attempts(), signupTotal: new Attempts(30, 15 * 60_000, 1) };
+export const security = shared.__watchnextAccountSecurity ??= { pool: new WorkPool(), login: new Attempts(), signup: new Attempts(), signupTotal: new Attempts(30, 15 * 60_000, 1), recovery: new Attempts(), recoveryTotal: new Attempts(30, 15 * 60_000, 1) };
+// A development hot reload can retain the earlier process-shared #32 object.
+security.recovery ??= new Attempts();
+security.recoveryTotal ??= new Attempts(30, 15 * 60_000, 1);
 
 export function usernameInput(value: unknown) {
   if (typeof value !== "string" || value.length > 128) throw new AuthError("Use a username of 3–32 letters, numbers, underscores, dots or hyphens.");
