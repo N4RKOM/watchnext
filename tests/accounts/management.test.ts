@@ -15,6 +15,8 @@ import { updateOwnNote } from "../../lib/notes";
 import { updateWatchProgress } from "../../lib/watch-progress";
 import { readPickerPage,pickFromForm } from "../../lib/picker/server";
 import { beginReview,saveReview,type Providers } from "../../lib/metadata/reviews";
+import { createGroup } from "../../lib/groups";
+import { acceptInvitation } from "../../lib/sessions";
 let db:DatabaseSync,a:string,b:string,c:string,group:string,invite:string,member:string;
 const origin="https://watch.example",password="Synthetic management password";
 function req(token=a){const request=new Request(origin,{method:"POST",headers:{origin,cookie:`${accountCookieName}=${token}; watchnext_access_mode=account`}});try{request.headers.set("x-watchnext-context",requestContext(db,request).contextKey);}catch{}return request;}
@@ -36,18 +38,25 @@ it("derives live creator authority and denies self, foreign, stale, duplicate/mi
   const stale=req();switchAccountGroup(db,req(),group,accountSession(db,req()).revision,origin);expect(()=>rotateGroupInvite(db,stale,1,origin)).toThrow();
   for(const change of[(request:Request)=>request.headers.delete("cookie"),(request:Request)=>request.headers.set("cookie",`${accountCookieName}=${a}; ${accountCookieName}=${a}; watchnext_access_mode=account`),(request:Request)=>request.headers.delete("origin"),(request:Request)=>request.headers.set("origin","https://foreign.example"),(request:Request)=>request.headers.set("cookie",`${accountCookieName}=${a}; watchnext_access_mode=legacy`),(request:Request)=>request.headers.delete("x-watchnext-context")]){const request=req();change(request);expect(()=>rotateGroupInvite(db,request,1,origin)).toThrow();}
   const view=readGroupManagement(db,req());expect(view.members.map(value=>value.name)).toContain("Manage.Member");expect(view.members.every(value=>value.status==="active"&&/^#[0-9a-f]{6}$/.test(value.color))).toBe(true);
+  createAccountGroup(db,req(c),"Other group",0,origin);expect(()=>removeParticipant(db,req(c),member,1,origin)).toThrow();
+  const legacy=createGroup(db,"Separate legacy",origin),credential=acceptInvitation(db,legacy.inviteUrl.split("/").at(-1));
+  const legacyRequest=new Request(origin,{method:"POST",headers:{origin,cookie:`watchnext_session=${credential}; watchnext_access_mode=legacy`}});
+  expect(()=>readGroupManagement(db,legacyRequest)).toThrow();expect(()=>rotateGroupInvite(db,legacyRequest,1,origin)).toThrow();
 });
 
 it("removal preserves sole-contributor business/history, denies both sessions and held results, and never revives stale intents on rejoin",async()=>{
   const second=(await loginAccount(db,{username:"Manage.Member",password})).credential;switchAccountGroup(db,req(second),group,0,origin);
   const saved=saveTitle(db,req(b),{kind:"manual",fields},origin);if(saved.kind!=="created")throw new Error("Expected title");const id=saved.id,claim={groupId:group,memberId:member};
   updateOwnRating(db,req(b),id,{...claim,intent:"save_rating",score:"8"},origin);updateOwnNote(db,req(b),id,{...claim,intent:"save_note",body:"Retain me"},origin);updateWatchProgress(db,req(b),id,{...claim,intent:"save_timestamp",numberingStyle:"none",timestamp:"0:09"},origin);
+  const unrelated=(await loginAccount(db,{username:"Manage.Member",password})).credential;
+  const other=createAccountGroup(db,req(unrelated),"Unaffected membership",0,origin);
   const old=req(second),review=await beginReview(db,old,"youtube","YtFixture01",providers,origin),before=business();
   const form=new FormData();Object.entries({requestId:"request",groupId:group,availableMinutes:"25",mood:"funny",viewers:member,pageId:"management-cycle",intentId:"start",intent:"start",cursor:""}).forEach(([key,value])=>form.set(key,value));const picked=pickFromForm(db,old,form,origin);expect(picked.kind).toBe("picked");
   let release!:(value:Awaited<ReturnType<typeof provider.lookup>>)=>void,started!:()=>void;const ready=new Promise<void>(resolve=>{started=resolve;}),waiting=new Promise<Awaited<ReturnType<typeof provider.lookup>>>(resolve=>{release=resolve;});
   const held=beginReview(db,old,"youtube","YtFixture01",{...providers,youtube:{namespace:"youtube",async lookup(){started();return waiting;}}},origin).then(()=>"returned",()=>"denied");await ready;
   const removed=removeParticipant(db,req(),member,1,origin);expect(removed.outcome).toBe("removed");expect(business()).toBe(before);expect(removed.members.find(value=>value.id===member)?.status).toBe("removed");
   for(const token of[b,second]){expect(()=>readWatchlist(db,req(token))).toThrow();expect(()=>switchAccountGroup(db,req(token),group,accountSession(db,req(token)).revision,origin)).toThrow();}
+  expect(readGroupManagement(db,req(unrelated)).groupId).toBe(other.selectedGroupId);expect(readGroupManagement(db,req(unrelated)).canManage).toBe(true);
   expect(readWatchlist(db,req()).items[0].contributors[0].inactive).toBe(true);expect(readTitleDetails(db,req(),id).history.find(value=>value.id===member)?.inactive).toBe(true);expect(readTitleDetails(db,req(),id).canEdit).toBe(false);expect(readPickerPage(db,req()).members.some(value=>value.id===member)).toBe(false);
   const cutoff=db.prepare("SELECT * FROM account_memberships WHERE member_id=?").get(member);const rotated=rotateGroupInvite(db,req(),1,origin);expect(removeParticipant(db,req(),member,1,origin).outcome).toBe("already_removed");expect(db.prepare("SELECT * FROM account_memberships WHERE member_id=?").get(member)).toEqual(cutoff);
   join(b,rotated.inviteUrl);expect(requestContext(db,req(second)).activeMemberId).toBe(member);expect(()=>removeParticipant(db,req(),member,1,origin)).toThrow();
