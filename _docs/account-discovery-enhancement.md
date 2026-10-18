@@ -63,6 +63,12 @@ Each issue uses the four-section template. The newly authorized backlog run foll
 
 Applied migrations remain immutable. An additive schema change classifies all existing groups legacy and preserves business values/IDs; only newly created authenticated groups use account membership. Tests initialize only disposable databases. No task claims to migrate a user's normal database as part of verification.
 
+## Account storage contract — issue #31
+
+The additive foundation is documented in [database.md](database.md#additive-account-foundation--issue-31). Under the existing delegated authority, #31 chooses explicit immutable group mode/owner columns rather than copying groups or reassigning profiles; memberships map one account/group to one stable member, preserving historical attribution across removal/rejoin. Session timestamps use UTC Unix seconds, with no cookie or runtime access implementation in this issue. Hex digests/salt and explicit versioned scrypt parameter columns permit #32 to implement native hashing without raw-credential schema defaults; the SQL parameter ranges are storage bounds, not an implemented work factor.
+
+Invite generation starts at 1; removal records the generation that bars old invitations, and reactivation requires a newer generation on the same membership. Group generations cannot decrease. SQL rejects cross-mode legacy sessions/account memberships and wrong-group member mappings. Actual token issuance, membership authorization, rotation and viewer filtering stay #34/#35. Existing groups remain legacy; no account creation, name matching, history claiming or conversion occurs during migration. These are reasoned implementation choices under delegated authority, not additional explicit user answers.
+
 ## Provider evidence and limits
 
 Primary material inspected October 18, 2026:

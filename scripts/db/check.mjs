@@ -25,7 +25,7 @@ export function verifySchema() {
 
   try {
     check("empty database migrates with foreign keys and all required tables", () => {
-      assert.deepEqual(migrate(db), ["0001_initial.sql", "0002_group_sessions.sql", "0003_metadata_lifecycle.sql"]);
+      assert.deepEqual(migrate(db), ["0001_initial.sql", "0002_group_sessions.sql", "0003_metadata_lifecycle.sql", "0004_accounts_memberships.sql"]);
       assert.equal(all("PRAGMA foreign_keys")[0].foreign_keys, 1);
       const names = all("SELECT name FROM sqlite_schema WHERE type = 'table'").map((row) => row.name);
       for (const name of ["groups", "invitations", "members", "titles", "contributors", "moods",
@@ -163,7 +163,7 @@ export function verifySchema() {
       const countBefore = all("SELECT count(*) AS count FROM titles")[0].count;
       assert.deepEqual(migrate(db), []);
       assert.equal(all("SELECT count(*) AS count FROM titles")[0].count, countBefore);
-      assert.equal(all("SELECT count(*) AS count FROM schema_migrations")[0].count, 3);
+      assert.equal(all("SELECT count(*) AS count FROM schema_migrations")[0].count, 4);
       assert.equal(all("PRAGMA integrity_check")[0].integrity_check, "ok");
     });
     return passed;

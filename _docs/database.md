@@ -100,6 +100,26 @@ The fixtures validate reads as well as rejected writes, including the four conte
 
 ## Data dictionary
 
+### Additive account foundation — issue #31
+
+`0004_accounts_memberships.sql` adds storage only. Migrations 0001–0003 are unchanged. Existing groups receive `access_mode='legacy'`, `owner_account_id=NULL`, and invite generation 1; existing invitations receive generation 1. Every original column and business row is preserved, including revoked invites, legacy sessions, unavailable metadata, provenance, reviews and personal history. The migration does not create accounts or claim a legacy profile. Mode and owner are immutable after group insertion; a new account group must be inserted explicitly with `access_mode='account'` and a real owner account. Existing application routes still create/use legacy groups; account credentials and group authorization are delivered separately in #32–#35.
+
+| Storage | Contract |
+| --- | --- |
+| `accounts` | Stable ID, display `username` and unique lowercase `username_key`; 3–32 ASCII letters/digits/underscore/dot/hyphen, no surrounding whitespace. Server validation in #32 trims input before insertion. No password/recovery default values. |
+| Password columns | Version 1 / `scrypt`; 64-byte derived key and 16-byte salt encoded as lowercase hex, explicit N/r/p/maxmem integers. SQL checks power-of-two N (16384–1048576), r (1–32), p (1–16), maxmem (16 MiB–2147483647 bytes). These are storage bounds, not the chosen runtime work factor or a claim that hashing is implemented; #32 chooses an appropriate compatible tuple and asynchronous resource limits. |
+| `recovery_digest` | 32-byte lowercase hex digest only; #32/#33 generate/show the private code and replace/revoke credentials. No plaintext code copy. |
+| `account_sessions` | SHA-256-sized lowercase hex token hash; account FK, integer UTC Unix seconds `created_at`/`expires_at` (expiry strictly later), nullable `revoked_at` at/after creation. Account-global, separate from legacy `group_sessions`; no raw cookie, active profile or group authority. #32 performs live expiry/revocation checks. |
+| `groups` additions | Immutable `legacy`/`account` mode with null/non-null owner respectively. Owner FK prevents orphan ownership; no ownership transfer. `invite_generation` is positive, bounded to 2147483647 and cannot decrease. |
+| `invitations.generation` | Positive bounded generation of issuance, default 1 for existing legacy behavior. #34/#35 issue and validate actual invite generations and revoke old invites transactionally; the column alone does not implement rotation/access. |
+| `account_memberships` | PK `(account_id,group_id)` and unique `member_id`; composite FKs require an account-mode group and that member's actual group. Identity mapping is immutable and cannot be deleted; status changes between active and removed retain the same member/history. Indexed `(group_id,status,account_id)` supports future live guards. |
+
+Memberships record `joined_invite_generation`; removed status requires `removed_at` and `removed_invite_generation >= joined_invite_generation`. Active status has null removal fields. Generations cannot exceed the group's current generation. Reactivation of a removed membership requires a strictly newer joined generation than its removal generation. The owner cannot be marked removed. #35 must still verify a valid newly shared invite, current owner/membership and race conditions on every request: SQL structure alone is not request authorization. Removing a membership never removes its contributions, titles, progress, ratings, notes or display identity, even when it was the last contributor. There is no account/group deletion cascade.
+
+Legacy `group_sessions` inserts and updates into account groups are rejected by triggers; account memberships cannot reference legacy groups. Having a legacy member ID never establishes account ownership. Runtime account cookie parsing, protected own writes, live membership guards, removed-viewer filtering and stale review/picker invalidation remain #32/#34/#35; no new mode is reachable through current UI as part of #31.
+
+`pnpm test tests/db/accounts.test.ts` uses owned temporary files for fresh/populated/repeated migration, complete original-column snapshots, failed-DDL rollback/retry, normalized account uniqueness, orphan/duplicate/cross-group/cross-mode rejection, removals/rejoin history and competing connections with transactional rollback. Existing schema/persistence/backup and legacy browser journeys remain regression gates. Normal user databases are never initialized/migrated by these tests.
+
 All tables use SQLite `STRICT` typing. Integer storage rejects fractional values that cannot be losslessly converted. Foreign keys are explicitly enabled for each migration connection; future app connections must do the same. [STRICT tables](https://www.sqlite.org/stricttables.html), [foreign-key requirements](https://www.sqlite.org/foreignkeys.html)
 
 | Table | Keys and stored data | Important invariants |
