@@ -52,6 +52,12 @@ it("one-off invitation output is explicit, freshly renewed, hash-only and invali
   expect(readFileSync(first.path).includes(Buffer.from(token))).toBe(false); expect(readFileSync(first.path).includes(Buffer.from(credential))).toBe(false);
   const explicit = runDemoCommand(["--show-invite"], options()); expect(/PRIVATE one-off/.test(explicit)).toBe(true); expect(/\/invite\/[A-Za-z0-9_-]{43}/.test(explicit)).toBe(true);
 }, 30000);
+it("prints matching startup ports and refuses origins unsupported by the local demo launcher", () => {
+  const output = runDemoCommand([], { ...options(), environment: { ...options().environment, WATCHNEXT_APP_ORIGIN: "http://localhost:3456" } }); expect(output.includes("pnpm dev --port 3456\nOr after pnpm build:\npnpm start --port 3456")).toBe(true);
+  const before = snapshot(demoPaths(options()).path);
+  for (const origin of ["https://localhost:3456", "http://[::1]:3456", "http://127.0.0.2:3456", "http://localhost:0", "https://example.com"]) expect(() => prepareDemo({ ...options(), reset: true, environment: { ...options().environment, WATCHNEXT_APP_ORIGIN: origin } })).toThrow();
+  expect(snapshot(demoPaths(options()).path)).toBe(before);
+}, 30000);
 it("actual ranker confirms documented exact order, mismatched fallback, catch-up, anime and near-match scenarios", () => {
   const seeded = prepareDemo({ ...options(), showInvite: true }); read(seeded.path, db => {
     const credential = acceptInvitation(db, seeded.inviteUrl!.split("/").at(-1)!), request = new Request("http://127.0.0.1:3000", { method: "POST", headers: { origin: "http://127.0.0.1:3000", cookie: `${sessionCookieName}=${credential}` } });

@@ -17,7 +17,8 @@ export function prepareDemo(options = {}) {
   if (Object.keys(options).some(key => !["environment", "testRoot", "reset", "showInvite", "beforeCommit"].includes(key))) throw new DemoSafetyError("Unsupported demo setup option; paths cannot be supplied.");
   const environment = options.environment ?? process.env, paths = demoPaths(options), marker = validateOwnedDemo(paths, true);
   const origin = resolveAppOrigin(environment.WATCHNEXT_APP_ORIGIN);
-  if (!origin.loopback) throw new DemoSafetyError("Demo invitation output requires a local loopback app origin.");
+  const originUrl = new URL(origin.origin);
+  if (!origin.loopback || originUrl.protocol !== "http:" || !["127.0.0.1", "localhost"].includes(originUrl.hostname) || originUrl.port === "0") throw new DemoSafetyError("Demo invitation output requires an HTTP localhost or 127.0.0.1 app origin with a fixed nonzero port matching the local launcher.");
   const existing = existsSync(paths.path);
   if (existing) {
     const header = Buffer.alloc(100), descriptor = openSync(paths.path, "r"); let bytes;
@@ -57,9 +58,10 @@ const quote = value => `'${value.replaceAll("'", "''")}'`;
 export function runDemoCommand(args, options = {}) {
   if (args.some(arg => !["--reset", "--show-invite"].includes(arg)) || new Set(args).size !== args.length) throw new DemoSafetyError("Use only --reset and/or --show-invite. Demo paths cannot be supplied on the command line.");
   const result = prepareDemo({ ...options, reset: args.includes("--reset"), showInvite: args.includes("--show-invite") });
+  const port = new URL(result.origin).port || "80", portArgument = port === "3000" ? "" : ` --port ${port}`;
   const lines = [result.status === "already_prepared" ? "Already prepared. Demonstration edits preserved; use --reset to restore the baseline." : result.status === "reset" ? "Demo baseline reset atomically." : "Synthetic demo prepared.",
     `Demo database: ${result.path}`, `Fictional group: ${result.groupName}; members: ${result.members.join(", ")}.`,
-    "PowerShell startup (repository root; these explicit settings do not rewrite environment files):", `$env:WATCHNEXT_DATABASE_PATH = ${quote(result.path)}`, `$env:WATCHNEXT_APP_ORIGIN = ${quote(result.origin)}`, "pnpm dev", "Or after pnpm build:", "pnpm start"];
+    "PowerShell startup (repository root; these explicit settings do not rewrite environment files):", `$env:WATCHNEXT_DATABASE_PATH = ${quote(result.path)}`, `$env:WATCHNEXT_APP_ORIGIN = ${quote(result.origin)}`, `pnpm dev${portArgument}`, "Or after pnpm build:", `pnpm start${portArgument}`];
   if (result.inviteUrl) lines.push("PRIVATE one-off demo invite (renewed; earlier links and sessions no longer work):", result.inviteUrl);
   else lines.push("Use pnpm demo:prepare --show-invite for an explicit private one-off invitation.");
   return lines.join("\n");
