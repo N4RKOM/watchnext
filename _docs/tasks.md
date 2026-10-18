@@ -1,6 +1,6 @@
 # WatchNext backlog
 
-Task descriptions have moved to GitHub issues. Each issue is intended for one focused session and includes its goal and scope. Implement only the task selected by the user; creating the backlog does not authorize every issue.
+Task descriptions/live QA state belong to GitHub issues. This document remains their index, not a duplicate status board. Work one selected issue at a time through the roles/process; the authorized backlog run and delegated choices are recorded in [plan.md](plan.md). The dated [completion audit](completion-audit.md) maps concrete requirement/evidence coverage.
 
 Project context: an academic Next.js and TypeScript web app with local SQLite storage. See [the project scope](plan.md) for agreed behavior; mixed watch sessions, embedded playback, and automatic playback tracking remain outside the first release.
 

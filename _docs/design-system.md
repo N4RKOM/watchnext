@@ -45,7 +45,7 @@ Each background supports at least 4.5:1 white-text contrast. Color choice UI in 
 
 ## Shell, navigation, and responsive behavior
 
-`app/layout.tsx` owns the header, skip link, one main landmark, and footer. `Navigation` uses Next links/pathname for `/`, `/watchlist`, `/pick`, `/archive`. Exactly the current destination is active; future subroutes retain their owning non-root destination. `Placeholder` supplies consistent page heading/content rather than per-page styling.
+`app/layout.tsx` owns the header, skip link, main landmark and footer. `Navigation` uses Next links/pathname for `/`, `/watchlist`, `/pick`, `/archive`; subroutes retain their owning non-root destination. Shared page/card/field styles keep real feature screens consistent.
 
 The header places brand and navigation side by side on wide screens. At 46rem and below it stacks them, and navigation wraps into as many rows as needed. No hamburger/menu dependency or hidden navigation exists. Do not hide overflow to mask layout problems. The baseline is checked at 375px and 1280px on all four routes. Keep controls and text unclipped with no horizontal page overflow.
 
@@ -55,6 +55,6 @@ The skip link is first in keyboard order, visible when focused, and targets `#ma
 
 Shared `.button` and `.field` styles establish 44px minimum height, system typography, 8px corner radius, and visible focus. A field uses a darker outline than decorative cards. Use an actual label with each field; do not make placeholders serve as labels. Use links for navigation and buttons for actions. Disabled buttons are visibly muted with the native disabled attribute; never show an enabled action before its behavior exists.
 
-The initial pages expose only functioning navigation. They show a visible **Not available yet** label and specific future behavior in plain language, with no fake save/pick controls, counts, or loading skeletons. Later empty/error/success states must describe the user's situation and provide only actions that actually work.
+Delivered pages expose real group/profile/watchlist/detail/picker/archive operations with honest empty/loading/error/success states. The #6 scaffold's historical Not available yet placeholders have been replaced; never reintroduce fake counts or enabled actions without behavior. Describe the user's situation and provide actions that actually work.
 
 No animation is needed for this baseline. Honor reduced-motion preferences when motion is added. Do not remove focus, force fixed heights around text, or introduce per-page palettes and spacing without updating this document.

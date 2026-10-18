@@ -1,6 +1,6 @@
 # Normalized metadata contract (#16)
 
-This is an offline interface, not a working provider integration. `lib/metadata/types.ts` defines projections/results; `lookupMetadata` in `lib/metadata/lookup.ts` accepts an injected `MetadataProvider`. The future server adapters own credentials, fixed-host network access, provider response parsing and error classification. No endpoint, provider request, database write, review screen or refresh job is implemented here. See [provider research](metadata-providers.md) for documented-but-not-live-tested access and unresolved rights/runtime questions.
+This is the pure offline layer of the delivered provider integration. `types.ts` defines projections/results and `lookupMetadata` accepts an injected provider; implemented #17/#18 adapters own credentials/fixed-host transport, and #19 owns review/save/lifecycle. Those operations are deliberately outside this pure module. See [the delivered lifecycle](metadata-lifecycle.md) and [research](metadata-providers.md) for honest live-access/rights/runtime limits.
 
 ## Delegated interface choices
 
@@ -54,7 +54,7 @@ Public, non-authorized YouTube metadata carries `youtube_public_30_days`, a UTC 
 3. Convert completed fields into existing `ManualTitleInput` (whole minutes/seconds, CSV genres, fixed moods and numbering) and validate with the existing title validator. This does not call the manual form action with provider fields; that action intentionally ignores them.
 4. Only the trusted server path constructs the existing `SaveInput` provider variant for `saveTitle` in `lib/shared-save.ts`: reviewed `fields`, `{namespace, externalId, sourceUrl?, coverUrl?}` from the validated server-owned identity and reviewed safe links, plus an explicit confirmation ID when required. Recheck group/profile access and preserve shared-save confirmation, collision, contribution, archive restoration and history rules from #13/#15. Lookup itself never invokes this operation.
 
-Review UI, server review state, save/provenance persistence and policy enforcement remain [#19](https://github.com/xiaodlb/watchnext/issues/19). Live adapters remain [#17](https://github.com/xiaodlb/watchnext/issues/17) and [#18](https://github.com/xiaodlb/watchnext/issues/18).
+Review UI, server review state, shared-save provenance and policy enforcement are delivered in [#19](https://github.com/xiaodlb/watchnext/issues/19), consuming the implemented #17/#18 adapters. Authenticated live access remains unverified; the pure module itself performs no persistence/network calls.
 
 ## Verification
 

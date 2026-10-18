@@ -12,7 +12,7 @@ This record makes behavior reviewable without chat history. It does not implemen
 - **Proposed** means not yet resolved in the relevant feature task. The user has authorized suitable defaults; record a reasoned delegated resolution before relying on one.
 - **Unresolved** means there is no reliable recommendation yet. The exact question and affected issues are recorded below.
 
-Implementers must distinguish explicit approval from delegated choice. Record future resolutions against their decision IDs with source and rationale. Issue #4 resolves only its schema-affecting subset; remaining proposals are resolved by their owning feature tasks without further approval questions under the documented delegation.
+Distinguish explicit approval from delegated choice. D01/D02 are explicit; D03–D28 are resolved delegated decisions in their recorded owning increments. Original approval questions below are historical context, not pending permission gates. U01 remains external authenticated-access/semantics/rights uncertainty, not an unimplemented core feature. Record any genuinely new choice with its source/rationale.
 
 ## Approved baseline
 
@@ -46,7 +46,7 @@ All rows in this table have status **Approved**, based on the corresponding sect
 | D14–D16 | Member-name uniqueness and group-scoped profile/session references | [#4](https://github.com/xiaodlb/watchnext/issues/4), [#8](https://github.com/xiaodlb/watchnext/issues/8), [#9](https://github.com/xiaodlb/watchnext/issues/9) |
 | D17, D23–D25 | Duration/timestamp units, bounds, nullability, and completion state | [#4](https://github.com/xiaodlb/watchnext/issues/4), [#21](https://github.com/xiaodlb/watchnext/issues/21) |
 
-The remaining picker and external-link proposals gate their feature issues rather than the initial schema. Provider research U01 must not prevent manual-entry storage; nullable provider fields can be represented without claiming a particular API is usable.
+The schema gate is a historical design boundary. Picker/external-link decisions are now resolved/delivered in their owning increments. U01 does not prevent manual storage or the disclosed configured local-academic integration; it does not establish live account access or rights.
 
 ## Detailed behavior decisions
 
@@ -308,7 +308,7 @@ Each entry states its own status. D01/D02 retain the exact recommendations expli
 ### D26. Missing and series-level viewing links
 
 - **Status:** Delegated decision — bounded resolution adopted in issue #12 under the October 15, 2026 autonomy directive quoted above; not a separate explicit user answer.
-- **Delivery boundary:** Missing links, HTTP/HTTPS validation, external/series labeling and no automatic progress changes are implemented by #12. Contributor-only missing-link edit actions remain in [#14](https://github.com/xiaodlb/watchnext/issues/14); no inert edit action is shown. Picker eligibility is implemented by #26, not this detail increment. The rationale/example below are retained.
+- **Delivery boundary:** Missing links, HTTP/HTTPS external labeling and no automatic progress changes are delivered by #12, contributor-only link editing by #14, guarded picker integration by #26. The original increment boundary does not mean these app features remain pending.
 
 - **Recommendation:** Permit absent viewing links; show No viewing link saved with an edit action only when the selected member can edit. Accept HTTP/HTTPS destinations only. Label a series-level destination “Open series”; show the suggested episode separately without fabricating an episode-specific URL. Opening externally never changes progress.
 - **Rationale:** Metadata/source pages are not guaranteed playable episode destinations.
@@ -341,11 +341,11 @@ Each entry states its own status. D01/D02 retain the exact recommendations expli
 
 ### U01. Exact metadata access and available fields
 
-- **Status:** Unresolved.
+- **Status:** External live-verification limits remain unresolved; implementation/mocked verification is delivered, not blocked or falsely live-certified.
 - **Question:** Can the documented routes in [metadata-providers.md](metadata-providers.md) be used with the project's actual credentials/allowances, what are the unofficial provider's runtime units and episodic semantics, and what cover-display rights apply?
 - **Rationale:** Issue #3 established official YouTube v3 and third-party Kinopoisk API Unofficial documentation, but neither was live-tested. Public documentation does not prove authenticated availability or settle all semantics/rights.
 - **Observable example:** If the chosen provider lacks typical episode duration, its lookup result must request manual duration rather than inventing 22 minutes.
-- **Affected/blocking:** Research in [#3](https://github.com/xiaodlb/watchnext/issues/3) is complete. [#16](https://github.com/xiaodlb/watchnext/issues/16) defines incomplete/unavailable results; [#17](https://github.com/xiaodlb/watchnext/issues/17) and [#18](https://github.com/xiaodlb/watchnext/issues/18) verify their respective provider routes; [#19](https://github.com/xiaodlb/watchnext/issues/19) handles fallback. Manual entry remains available independently.
+- **Delivered boundary:** #3 research, #16 contract, #17/#18 configured adapters and #19 lookup/review/save/fallback/lifecycle are implemented and covered with synthetic responses. Actual authenticated access/allowances, external runtime/image/persistence rights remain unverified; see [the current policy](metadata-lifecycle.md). Manual entry is independent. This is not a reopened approval gate or a claim that mocked tests establish live entitlements.
 
 ## Completion and handoff
 

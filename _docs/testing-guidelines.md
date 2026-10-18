@@ -9,6 +9,7 @@ Use Node.js 24.15+ within 24.x and pnpm 11.25.0. Run checks serially on constrai
 - `pnpm typecheck`: TypeScript validation.
 - `pnpm build`: current production compilation/type/static-generation checks. Next's existing two build-worker limit remains; keep builds and browser runs sequential. The known migration filesystem-tracing warning is documented in README.
 - `pnpm db:verify` and `pnpm db:verify:persistence`: synthetic migration/constraint and separate-process persistence/isolation checks with automatic owned cleanup.
+- `pnpm db:verify:backup`: isolated WAL-aware new-file snapshot/restore, preserved provenance/deadlines/history and real offline expiry checks; see [backup/restore](backup-restore.md).
 - `pnpm test:e2e`: current-source production build followed by named serial real browser journeys. It always initializes a fresh owned OS temporary database and chooses an available HTTP loopback port. It runs no normal/demo-default initialization and does not require an already-running server or an existing `.next` build.
 
 ## Reproducible browser setup

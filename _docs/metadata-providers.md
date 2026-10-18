@@ -103,7 +103,7 @@ Source contracts: [YouTube resource fields](https://developers.google.com/youtub
 }
 ```
 
-Map to YouTube namespace + ID, title, video type, and 1440-second full duration; derive a canonical YouTube watch URL from a real validated ID. Leave genres/moods for user input. Thumbnail is optional; the reserved example URL is not a real image. Duration conversion here is illustrative, not a change to pending storage-unit decisions.
+Map to YouTube namespace + ID, title, video type and 1440-second full duration; derive its canonical YouTube watch URL from the validated ID. Leave genres/moods for user input. Thumbnail is optional; this reserved example is not a real image. The illustration is consistent with the delivered D17 whole-second contract.
 
 **Synthetic YouTube failures:**
 
@@ -172,4 +172,4 @@ No source is labeled verified usable without an authenticated result. These outs
 
 See [metadata-contract.md](metadata-contract.md) for the #16 normalized projections, safe failures, synthetic fixture coverage and review/persistence handoff. These tests verify interface behavior only; actual provider availability, runtime semantics and rights remain unverified until the corresponding adapter work. No provider becomes authenticated or usable because a synthetic fixture passes.
 
-The [#18 Unofficial adapter handoff](kinopoisk-adapter.md) records the October 16, 2026 OpenAPI 2.0.1 recheck and delivered mocked search/detail implementation. Endpoint bounds/header/status mapping are verified against public documentation. `filmLength` units, actual account access/allowance, and cover/persistence rights remain unverified; runtime stays manual, cover absent and policy verification is required before persistence in #19.
+The [#18 Unofficial adapter](kinopoisk-adapter.md) records the October 16 OpenAPI 2.0.1 recheck and implemented search/detail transport with synthetic tests. Endpoint/header/status contracts follow public documentation. Runtime units, account allowances and external cover/persistence rights remain unverified. Runtime stays manual and covers absent. Delivered [#19 lifecycle](metadata-lifecycle.md) records the delegated local academic text-snapshot policy with a real app-chosen 30-day refresh/delete deadline; uncertainty is not an invented permanent save ban or verified-license claim.

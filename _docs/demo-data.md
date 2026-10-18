@@ -38,6 +38,7 @@ Start each picker example with fresh settings (a new `/pick` visit suffices). Se
 4. **Anna only, 25 minutes, Emotional, rewatches off**: Heartfelt Film is the disclosed alternative **2 minutes longer** than available. Keep Max unselected: his completed flag would otherwise exclude it. The time input remains 25.
 5. Open Funny Film details as Anna and in the other browser as Max. Ratings/notes show both names/colors; personal progress controls show 10:00 versus 2:00. Selecting another profile changes the personal editor, not saved history. Picks write no progress/feedback, and ratings/notes do not rank picks.
 6. Open **Archive**, then Archive Keepsake. Both ratings/notes and independent completion/timestamps remain. As Anna choose **Restore to watchlist**: the same `/watchlist/demo-archive` ID becomes active, with Anna as contributor and unchanged personal history. **Remove my contribution**, then **Confirm removal**, archives it again when nobody remains. Cancellation changes nothing.
+7. As Anna, open Funny Film details → **Edit title** and change its optional genre labels, then **Save changes**. Both contributors still appear, personal timestamps/ratings/notes remain and Max can see the shared correction after reload. Only contributors edit shared metadata; a member without a contribution can still update their own progress/feedback. Reset afterward to restore the exact baseline.
 
 ## Repeat, reset and failure
 

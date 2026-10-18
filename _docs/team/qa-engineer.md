@@ -17,7 +17,7 @@ acceptance criterion fails. Post it as a comment on the issue:
 - [ ] A duplicate username shows a visible error - FAIL
       Submitted an existing username and received an unhandled error
 
-Tests: `uv run pytest`, 18 passed, 0 failed
+Tests: `pnpm test`, 18 passed, 0 failed (example only; report the actual current result)
 
 Definition of done:
 

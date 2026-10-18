@@ -45,11 +45,11 @@ The default deadline is **10 seconds**; injected test/server overrides must be w
 
 These URL/deadline/status defaults are delegated implementation choices under the October 15 autonomy directive in [plan.md](plan.md), not new explicit user approvals. Native fetch/URL/AbortController/timers and existing TypeScript/Vitest suffice; no dependencies added. Header credentials reduce routine trace exposure; the finite deadline and conservative live handling preserve reliable manual fallback.
 
-## Review, freshness and next delivery
+## Delivered review/freshness boundary
 
 All items pass through the [#16 normalized contract](metadata-contract.md), with accepted-field provenance and trusted retrieval time. Public YouTube suggestions carry the retrieval-plus-30-calendar-days refresh-or-delete deadline; controlled-clock tests verify it. This is an upper lifecycle deadline, not a freshness or playable-content guarantee. Review and manual fixed moods are still required even for `available` items.
 
-This adapter performs **no durable cache/database writes**, supplies no save endpoint/UI and does not make imported suggestions permanently fresh. [#19](https://github.com/xiaodlb/watchnext/issues/19) explicitly owns server-held review provenance, separating corrections/history from acquired data, and enforcing refresh/deletion before stored imported fields are displayed long-term. That task must keep YouTube attribution/linking consistent with [branding guidance](https://developers.google.com/youtube/terms/branding-guidelines), preserve source/watch distinctions and manual fallback, and recheck safe fields during refresh. None of that lifecycle is claimed implemented here. API-key access, actual project quotas and live provider availability remain unverified; no failure may block manual entry.
+This adapter itself performs no durable writes/UI. Delivered [#19 lifecycle](metadata-lifecycle.md) owns bound review/provenance, independent corrections/history, real refresh/deletion and safe source/watch links. YouTube destinations remain labeled external YouTube/video links; public data is not licensed streaming access. Follow [branding guidance](https://developers.google.com/youtube/terms/branding-guidelines) when changing display. API-key account access/quotas and live availability remain unverified, and no failure blocks manual entry.
 
 ## Offline verification
 

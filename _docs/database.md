@@ -10,7 +10,7 @@ Read [the schema-affecting decision gate](decisions.md#schema-affecting-approval
 
 In particular, D08/D09 define manual/provider identities; D03 defines stored position as **next to watch**; D04–D07 define unknown progress, numbering bounds, transitions, and completed-series rewatches; D11–D13 define one title-level rating/note per member; D14 defines group-unique normalized names. D17 uses whole seconds, and D23–D25 separate manual timestamp from completion while retaining old timestamps when duration is corrected.
 
-These foundations do not implement sessions, edit authorization, duplicate-confirmation UI, progress controls, automatic archive/restore, providers, or a picker. Non-schema D18–D22, D26, and D28 remain for their owning tasks. [Provider research](metadata-providers.md) establishes documented routes, not authenticated access. Imported-data provenance/refresh fields may be added by a later migration when [#16–#19](https://github.com/xiaodlb/watchnext/issues/16) implement retention and provider handling; no data is imported here.
+The database module supplies storage rather than UI/authorization. The app now implements sessions, guards, duplicate confirmation, progress/feedback, transactional archive/restore, provider review/lifecycle and picker/cycles through their owning #7–#27 increments. D18–D22/D26/D28 are resolved there. Migration `0003_metadata_lifecycle.sql` adds nullable acquired fields/provenance/reviews; see below and [the lifecycle guide](metadata-lifecycle.md). [Provider research](metadata-providers.md) does not establish authenticated availability.
 
 ## Normal persistent database setup
 
@@ -36,6 +36,7 @@ Example PowerShell override for a **local** drive:
 
 ```powershell
 $env:WATCHNEXT_DATABASE_PATH = 'C:\Users\your-name\AppData\Local\WatchNext Demo\watchnext.sqlite'
+$env:WATCHNEXT_APP_ORIGIN = 'http://127.0.0.1:3000'
 pnpm db:init
 pnpm dev
 ```
@@ -117,7 +118,7 @@ All tables use SQLite `STRICT` typing. Integer storage rejects fractional values
 | `notes` | Group ID, title/member composite primary key, plain-text body | Same group; 1–2000 Unicode code points; clearing deletes a row. Embedded NUL is rejected so SQLite length cannot undercount text. |
 | `group_sessions` | SHA-256 session hash primary key, group ID, backing invitation ID, nullable active member ID, UTC creation time | Added by immutable `0002_group_sessions.sql`; composite foreign keys ensure invitation/member belong to the session group. No raw cookie/invite credentials stored. |
 
-Identifiers are stable across archive and restore. `archived = 1` means excluded from the active list/picker by future queries; `0` means active. Updating this flag has no side effects. There are no contributor-removal/archive automation triggers and no cascade deletion of personal history. Future workflows in #15 must update archive state transactionally while preserving IDs and history.
+Identifiers are stable across archive/restore. `archived = 1` is excluded by delivered active-list/picker queries; `0` is active. No SQL automation trigger or cascade deletes history. The #15 application service transactionally removes own contributions, archives on the final removal and restores the same entry/history.
 
 Issue #8 adds only the sessions migration and an invitation ID/group unique index. Re-run `pnpm db:init` to apply it to an existing local database. Session validity is checked against the current invitation revocation state on every access; browser cookie lifetime and server invalidation policy are documented in [api.md](api.md). Session rows do not supply verified personal identity and are not profile records.
 
@@ -125,7 +126,7 @@ Composite foreign keys reference `(title_id, group_id)` and `(member_id, group_i
 
 ## Identity and validation boundaries
 
-Callers must produce keys using Unicode NFKC normalization, outer trimming, collapse of internal whitespace, and locale-independent lowercasing as specified in D08/D14. SQLite's built-in NOCASE is insufficient for this Unicode contract. Display casing stays separate from the key. This task does not implement form parsing or normalization services; later writes must normalize on the server and must never accept caller-supplied keys blindly.
+Server validators produce keys using Unicode NFKC, outer trimming, internal-whitespace collapse and locale-independent lowercase (D08/D14). SQLite's NOCASE alone is insufficient; display casing stays separate. Delivered form/service writes normalize server-side and never accept caller-supplied keys blindly.
 
 Titles have unique `(group_id, content_type, title_key)` keys, including archived entries. Manual matching therefore requires confirmation or a distinguishable title such as a year suffix, rather than silent history merging. Known provider identities are unique by `(group_id, provider_namespace, provider_id)`, including archived entries. Different providers and groups may share an external identifier; many manual entries can have NULL provider fields. A duplicate import must add a contributor rather than overwrite metadata (D27), implemented in #13/#19.
 
@@ -139,8 +140,8 @@ History-sensitive content type/numbering changes are blocked by a trigger once p
 - `position_state = unknown` on episodic content has NULL episode/season. No progress row also means unknown episodic progress; neither fabricates episode 1. For movies/videos an absent row means not marked completed with no timestamp.
 - `not_started` on episodic content explicitly stores episode 1, and season 1 for season/episode numbering. `in_progress` stores the next positive episode, with a positive season only for season/episode mode. Coordinates are integer 1–9999. The schema never infers season lengths.
 - `none` numbering forbids episode coordinates; episodic styles forbid timestamps. A composite foreign key rejects a progress style different from its title.
-- `completed` is a separate 0/1 flag. An episode position can be retained while completed; rewatch suggestions and explicit completion/undo controls belong to later tasks.
-- Movie/video timestamp is NULL for not recorded, or an integer from zero through the current full duration. Insert/update triggers reject newly submitted out-of-range timestamps. A shared duration correction can leave an older saved timestamp above the new duration without deleting it; later UI must warn and permit correction/clearing. Updating completion alone does not revalidate or erase that historical timestamp. No timestamp automatically changes completion.
+- `completed` is a separate 0/1 flag. Episode coordinates survive completion/undo; delivered controls and eligibility/rewatch logic preserve that distinction.
+- Movie/video timestamp is NULL for not recorded, or an integer from zero through the current full duration. Triggers reject new out-of-range timestamps. Older timestamps above a corrected runtime remain, with delivered warning/correction/clearing controls. Completion alone does not erase/revalidate that historical position; timestamps never automatically mark completion.
 
 ## Migration contract and recovery
 
@@ -148,9 +149,9 @@ History-sensitive content type/numbering changes are blocked by a trigger once p
 
 Every pending migration and its ledger record run inside one `BEGIN IMMEDIATE` batch transaction. A failed SQL statement or history check rolls back the batch. The empty ledger table may exist after a first failed attempt, but none of the new schema/data/versions survive. Correct the unapplied file and retry. Already-applied files must never be rewritten; add a new numbered migration instead. Missing, changed, or reordered applied history causes a clear failure rather than reapplication. Repeat migration with unchanged files returns an empty list and preserves all fixtures.
 
-There are no down migrations, migration framework, or automatic destructive resets. Issue #5's explicit initializer and read-only normal-access check reuse this mechanism; operational backup/restore remains in #30. The repository ignores `.db`, `.sqlite`, `.sqlite3`, their sidecars, environment files, and logs; no database or usable credential is committed.
+There are no down migrations, migration framework or automatic destructive normal resets. Explicit initialization and read-only normal-access checks reuse this mechanism. Use [the new-file SQLite snapshot/restore recipe](backup-restore.md) and `pnpm db:verify:backup` for isolated WAL/deadline/history verification. Databases, sidecars, environment files and logs are Git-ignored.
 ## Imported metadata lifecycle foundation — issue #19
 
 Migration `0003_metadata_lifecycle.sql` rebuilds only `titles` to allow genuinely null acquired title/key/type/duration when `metadata_unavailable=1` and a provider identity exists. Ordinary manual rows still require real title/type/positive runtime; no zero or invented value is stored. Numbering, identity, contributions and history remain intact. `metadata_fields` stores origins/deadlines without duplicate acquired values, and `metadata_reviews` stores short-lived group/member/session-bound review state. Cleared provider fields retain deadline/origin rows for later guarded refresh, with no original-value copy.
 
-SQLite table replacement uses deferred foreign keys inside the existing migration transaction. A SQL assertion checks every actual foreign key before resetting SQLite's pending deferred DROP counter; foreign_keys remains enabled. Populated upgrade/rollback fixtures verify history, associations and ledger preservation. Runtime connection access runs bounded offline expiry maintenance; a pending large batch fails safely for retry rather than returning expired fields. Full review/refresh integration is described in the API/metadata lifecycle guidance as it is delivered.
+SQLite replacement uses deferred foreign keys inside the migration transaction. An assertion checks actual foreign keys before resetting SQLite's pending deferred DROP counter; foreign_keys stays enabled. Populated upgrade/rollback fixtures verify history/associations/ledger. Runtime access runs bounded expiry cleanup; pending large batches fail safely rather than expose expired fields. The delivered review/refresh integration is documented in [metadata lifecycle](metadata-lifecycle.md).

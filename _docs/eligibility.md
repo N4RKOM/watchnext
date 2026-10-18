@@ -1,6 +1,6 @@
 # Viewer eligibility — issue #24
 
-`evaluateEligibility` in `lib/picker/eligibility.ts` accepts the readonly types in `lib/picker/types.ts`. It has no database, provider, clock, network or framework dependency. It never changes progress, completion, inputs or stored data. Outcomes follow input title order; they are not ranked. Time/mood matching, fallback, the picker page and repeat cycles remain #25–#27.
+`evaluateEligibility` in `lib/picker/eligibility.ts` accepts readonly types from `lib/picker/types.ts`, without database/provider/clock/network/framework dependencies or writes. Outcomes follow input order. Delivered #25–#27 ranking/fallback/page/cycle integration consumes this pure operation; it does not rank internally.
 
 The caller must authorize the actual session/group, load that group's members/titles/progress and enforce metadata expiry **before** taking a fresh snapshot (as the existing detail read does). A supplied group ID does not authenticate anything. #26 owns the runtime caller; no new query/route/write is introduced here. Tests project actual saved records through existing authorized fresh detail reads; that projection is test-only.
 

@@ -1,6 +1,6 @@
 # Server operations
 
-This document describes the implemented application boundary and handoff for subsequent issues. Read it before changing server behavior. Uses Next.js Server Actions rather than a separate public REST API; generated action IDs and multipart transport are framework details, not a stable external API.
+This document describes delivered application boundaries. Read it before changing behavior. Next.js Server Actions supply the server interface; generated IDs/multipart transport are not a stable public API. Setup, private backup/deadline handling and requirement evidence are linked in [local setup](local-setup.md), [backup/restore](backup-restore.md) and [completion audit](completion-audit.md). Historical increment boundaries below identify module ownership, not unfinished current features.
 
 ## Pick again/exhaustion — issue #27
 
