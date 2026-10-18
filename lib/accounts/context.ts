@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import { AccessError, credentialHash, readSessionCookie, requireSession, validCredential } from "../sessions";
-import { accountCookieName, accountCredential } from "./service";
+import { accountCookieName, accountCredential } from "./credentials";
 export const modeCookieName = "watchnext_access_mode";
 export function namedCookie(header: string | null, name: string) {
   const values = (header ?? "").split(";").map(part => part.trim()).filter(part => part.startsWith(name + "="));
@@ -36,5 +36,6 @@ export function requestContext(db: DatabaseSync, request: Request) {
     revision = row!.context_revision as number; tokenHash = credentialHash(credential!);
   } else throw new AccessError();
   const contextKey = credentialHash(JSON.stringify([selectedMode,tokenHash,groupId,activeMemberId,revision]));
-  return { groupId, groupName, activeMemberId, mode: selectedMode, accountId, revision, contextKey, ownerKey: contextKey };
+  const pickerOwnerKey = selectedMode === "account" ? contextKey : credentialHash(JSON.stringify([selectedMode,tokenHash,groupId,revision]));
+  return { groupId, groupName, activeMemberId, mode: selectedMode, accountId, revision, contextKey, ownerKey: contextKey, pickerOwnerKey };
 }

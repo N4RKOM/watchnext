@@ -7,7 +7,8 @@ export class AuthError extends Error {
 export class WorkPool {
   active = 0;
   private waiting: { resolve: () => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }[] = [];
-  constructor(private limit = 2, private capacity = 8, private waitMs = 30_000) {}
+  private limit: number; private capacity: number; private waitMs: number;
+  constructor(limit = 2, capacity = 8, waitMs = 30_000) { this.limit=limit;this.capacity=capacity;this.waitMs=waitMs; }
   async run<T>(work: () => Promise<T>): Promise<T> {
     if (this.active < this.limit) this.active++;
     else {
@@ -30,7 +31,8 @@ export class WorkPool {
 }
 export class Attempts {
   private entries = new Map<string, { count: number; expires: number }>();
-  constructor(private maximum = 5, private windowMs = 15 * 60_000, private capacity = 2048) {}
+  private maximum: number; private windowMs: number; private capacity: number;
+  constructor(maximum = 5, windowMs = 15 * 60_000, capacity = 2048) { this.maximum=maximum;this.windowMs=windowMs;this.capacity=capacity; }
   take(key: string, now = Date.now()) {
     for (const [name, entry] of this.entries) if (entry.expires <= now) this.entries.delete(name);
     const entry = this.entries.get(key);

@@ -21,7 +21,7 @@ await withBrowserFixture("demo", async ({ db, origin, secrets, check, createCont
     phase(`${width}: ordinary invitation/profile/watchlist`);
     const contexts = await Promise.all([createContext(width), createContext(width)]), [a, b] = await Promise.all(contexts.map(context => context.newPage()));
     for (const page of [a, b]) { await page.goto(invite); await page.waitForURL("**/group"); }
-    for (const context of contexts) for (const cookie of await context.cookies()) secrets.push(cookie.value);
+    for (const context of contexts) for (const cookie of await context.cookies()) if(cookie.name !== "watchnext_access_mode") secrets.push(cookie.value);
     await choose(a, "Anna"); await choose(b, "Max"); await a.goto(origin + "/watchlist");
     for (const title of ["Fictional Funny Film", "Fictional Short Sketches", "Fictional Space Sitcom", "Fictional Quiet Quest", "Fictional Heartfelt Film"]) await a.getByRole("heading", { name: title, exact: true }).waitFor();
     check(await a.getByRole("heading", { name: "Fictional Archive Keepsake", exact: true }).count() === 0, "Archived title absent from active list");

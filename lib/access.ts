@@ -16,7 +16,7 @@ export async function getGroupRequest(mutation = false, contextKey?: string) {
   return new Request(origin, { method: mutation ? "POST" : "GET", headers: incoming });
 }
 
-export async function getActionContext() { return (await getActiveGroup()).contextKey; }
+export async function getActionContext(kind?: "picker") { const context = await getActiveGroup(); return kind === "picker" ? context.pickerOwnerKey : context.contextKey; }
 
 export async function requireRecordAccess(target: RecordTarget, options: { mutation?: boolean; claimedGroupId?: unknown } = {}) {
   const incoming = await headers();

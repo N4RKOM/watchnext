@@ -4,7 +4,7 @@ export async function journeys(f, step, check) {
   const history = id => JSON.stringify(["progress", "ratings", "notes"].map(table => read(`SELECT * FROM ${table} WHERE title_id=? ORDER BY member_id`, id)));
   const snapshot = group => JSON.stringify(["titles", "contributors", "progress", "ratings", "notes"].map(table => read(`SELECT * FROM ${table} WHERE group_id=? ORDER BY rowid`, group)));
   const detail = (page, id) => page.goto(`${origin}/watchlist/${id}`);
-  async function credentials(context) { for (const cookie of await context.cookies()) if (!secrets.includes(cookie.value)) secrets.push(cookie.value); }
+  async function credentials(context) { for (const cookie of await context.cookies()) if (!secrets.includes(cookie.value)) if(cookie.name !== "watchnext_access_mode") secrets.push(cookie.value); }
   async function createGroup(page, name) {
     await page.goto(origin); await page.getByLabel("Group name", { exact: true }).fill(name); await page.getByRole("button", { name: "Create group", exact: true }).press("Enter");
     const input = page.getByLabel("Invite link", { exact: true }); await input.waitFor(); const invite = await input.inputValue(); secrets.push(invite.split("/").at(-1)); return invite;

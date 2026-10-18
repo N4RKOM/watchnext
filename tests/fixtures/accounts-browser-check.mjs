@@ -6,7 +6,7 @@ import { credentialHash } from "../../lib/sessions.ts";
 let f, failure, current = "setup";
 const check = (value, label) => { if (!value) throw new Error(`Expected ${label}; observed condition false`); };
 const step = async (name, run) => { current = name; await run(); console.log(`PASS ${name}`); };
-async function capture(context) { for (const cookie of await context.cookies()) if (!f.secrets.includes(cookie.value)) f.secrets.push(cookie.value); }
+async function capture(context) { for (const cookie of await context.cookies()) if (!f.secrets.includes(cookie.value)) if(cookie.name !== "watchnext_access_mode") f.secrets.push(cookie.value); }
 async function submit(page, operation, username, password) {
   await page.goto(f.origin + (operation === "register" ? "/register" : "/login"));
   await page.getByLabel("Username", { exact: true }).fill(username);
@@ -24,7 +24,7 @@ try {
     const passwordA = " " + randomBytes(24).toString("base64url") + "🔒 ", passwordB = randomBytes(24).toString("base64url"), wrong = randomBytes(24).toString("base64url");
     const fixation = randomBytes(32).toString("base64url"); f.secrets.push(passwordA, passwordA.trim(), passwordB, wrong, fixation);
     await step(`${width}: real registration, private one-time recovery, separate identity and cookie flags`, async () => {
-      await pageA.goto(f.origin + "/account"); check(new URL(pageA.url()).pathname === "/login", "anonymous account redirect");
+      await pageA.goto(f.origin + "/account"); await pageA.waitForURL("**/login"); check(new URL(pageA.url()).pathname === "/login", "anonymous account redirect");
       await a.addCookies([{ name: "watchnext_account_session", value: fixation, url: f.origin }]);
       await submit(pageA, "register", " " + nameA + " ", passwordA);
       const code = pageA.getByLabel("Private recovery code"); await code.waitFor();
@@ -62,27 +62,29 @@ try {
       const next = (await a.cookies()).find(cookie => cookie.name === "watchnext_account_session").value;
       check(next !== old && f.db.prepare("SELECT revoked_at FROM account_sessions WHERE token_hash=?").get(credentialHash(old)).revoked_at !== null, "successful rotation revokes only prior credential");
       const duplicate = await a.request.get(f.origin + "/account", { headers: { cookie: `watchnext_account_session=${next}; watchnext_account_session=${next}` } });
-      check(new URL(duplicate.url()).pathname === "/login", "duplicate account cookie names denied");
+      const duplicateBody = await duplicate.text();
+      // The loading boundary may stream Next's redirect instead of an HTTP 3xx.
+      check((new URL(duplicate.url()).pathname === "/login" || (duplicateBody.includes("NEXT_REDIRECT") && duplicateBody.includes("/login"))) && !duplicateBody.includes(nameA), "duplicate account cookie names denied without account disclosure");
       await submit(pageThird, "login", nameA, passwordA); await pageThird.waitForURL("**/account"); await capture(third);
       const response = await a.request.get(f.origin + "/account"); check(response.headers()["cache-control"].includes("no-store"), "private dynamic account response");
       await pageA.getByRole("button", { name: "Sign out", exact: true }).press("Enter"); await pageA.waitForURL("**/login");
       check(!(await a.cookies()).some(cookie => cookie.name === "watchnext_account_session"), "account cookie cleared");
-      await a.addCookies([{ name: "watchnext_account_session", value: next, url: f.origin }]); await pageA.goto(f.origin + "/account"); check(new URL(pageA.url()).pathname === "/login", "revoked credential cannot be reused");
+      await a.addCookies([{ name: "watchnext_account_session", value: next, url: f.origin }]); await pageA.goto(f.origin + "/account"); await pageA.waitForURL("**/login"); check(new URL(pageA.url()).pathname === "/login", "revoked credential cannot be reused");
       await pageThird.reload(); await pageThird.getByText(nameA, { exact: true }).waitFor();
       await f.restart(); await pageB.reload(); await pageB.getByText(nameB, { exact: true }).waitFor();
       const token = (await third.cookies()).find(cookie => cookie.name === "watchnext_account_session").value;
       const writer = new DatabaseSync(f.path);
       try { const now = Math.floor(Date.now() / 1000); writer.prepare("UPDATE account_sessions SET created_at=?,expires_at=? WHERE token_hash=?").run(now - 700000, now - 1, credentialHash(token)); } finally { writer.close(); }
-      await pageThird.reload(); check(new URL(pageThird.url()).pathname === "/login", "expired credential denied");
+      await pageThird.reload(); await pageThird.waitForURL("**/login"); check(new URL(pageThird.url()).pathname === "/login", "expired credential denied");
       await a.clearCookies(); await a.addCookies([{ name: "watchnext_account_session", value: randomBytes(32).toString("base64url"), url: f.origin }]); await capture(a);
-      await pageA.goto(f.origin + "/account"); check(new URL(pageA.url()).pathname === "/login", "tampered credential denied");
+      await pageA.goto(f.origin + "/account"); await pageA.waitForURL("**/login"); check(new URL(pageA.url()).pathname === "/login", "tampered credential denied");
     });
     await step(`${width}: keyboard/responsive privacy and honest legacy separation`, async () => {
       await pageA.goto(f.origin); await pageA.getByRole("heading", { name: "Legacy group access", exact: true }).waitFor();
       await pageA.goto(f.origin + "/login"); await pageA.keyboard.press("Tab"); check(await pageA.evaluate(() => document.activeElement?.tagName === "A"), "keyboard focus visible on link");
       for (const page of [pageA, pageB]) check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "no horizontal overflow");
       for (const page of [pageA, pageB]) check(await page.evaluate(() => localStorage.length === 0 && sessionStorage.length === 0), "no web storage secrets");
-      check(await pageB.getByRole("button", { name: /Create group|Join group/ }).count() === 0, "no fake account group actions");
+      check(await pageB.getByRole("button", { name: "Create account group", exact: true }).count() === 1, "real account group create control without implicit membership");
     });
     await a.close(); await b.close(); await third.close();
   }

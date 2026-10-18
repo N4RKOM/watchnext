@@ -15,7 +15,7 @@ await withBrowserFixture("note", async ({ db, origin, root, secrets, check, crea
     for (const [id, type, style] of [[movie, "movie", "none"], [video, "youtube", "none"], [series, "series", "season_episode"], [anime, "anime", "continuous"]]) db.prepare("INSERT INTO titles(id,group_id,title,title_key,content_type,duration_seconds,numbering_style) VALUES (?,?,?,?,?,5400,?)").run(id, group, `Fixture ${type}`, `fixture ${type}`, type, style);
     db.prepare("INSERT INTO contributors(group_id,title_id,member_id) VALUES (?,?,?)").run(group, movie, anna);
     const contexts = await Promise.all([createContext(width), createContext(width), createContext(width)]), [a, b, viewer] = await Promise.all(contexts.map(context => context.newPage()));
-    for (const page of [a, b, viewer]) { await page.goto(invite); await page.waitForURL("**/group"); } for (const context of contexts) for (const cookie of await context.cookies()) secrets.push(cookie.value);
+    for (const page of [a, b, viewer]) { await page.goto(invite); await page.waitForURL("**/group"); } for (const context of contexts) for (const cookie of await context.cookies()) if(cookie.name !== "watchnext_access_mode") secrets.push(cookie.value);
     await a.goto(`${origin}/watchlist/${movie}`); await panel(a).getByRole("link", { name: "Choose profile" }).click(); await a.waitForURL("**/group"); await choose(a, "Anna"); await choose(b, "Max");
     await a.goto(`${origin}/watchlist/${movie}`); check(await panel(a).getByLabel("Your note text").inputValue() === "", "Absence is an empty draft/No notes");
     phase(`browser ${width}: normalization and independent attribution`);

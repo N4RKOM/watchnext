@@ -42,7 +42,7 @@ try {
     for (const context of contexts) await context.route("**/*", route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
     const [a, b] = await Promise.all(contexts.map(context => context.newPage()));
     for (const page of [a, b]) { await page.goto(invite); await page.waitForURL("**/group"); }
-    for (const context of contexts) for (const cookie of await context.cookies()) secrets.push(cookie.value);
+    for (const context of contexts) for (const cookie of await context.cookies()) if(cookie.name !== "watchnext_access_mode") secrets.push(cookie.value);
     await a.goto(`${origin}/watchlist/${movie}`); await panel(a).getByRole("link", { name: "Choose profile" }).click(); await a.waitForURL("**/group"); await choose(a, "Anna"); await choose(b, "Max");
     await a.goto(`${origin}/watchlist/${movie}`); check(await panel(a).getByLabel("Stopped at").inputValue() === "", "Absent is not a fabricated zero"); check(db.prepare("SELECT count(*) n FROM progress WHERE group_id=?").get(group).n === 0, "Read must not insert progress");
     phase = `browser ${width}: zero, clear and independent histories`;

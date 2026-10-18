@@ -27,12 +27,12 @@ export function changeProfile(
   configuredOrigin: string | undefined,
 ): ProfileView {
   // Deny forged access/origins before any validation response or write.
-  if (authorizeRequest(db, request, undefined, { mutation: true, claimedGroupId: input.groupId, configuredOrigin }).mode !== "legacy") throw new AccessError();
+  if (authorizeRequest(db, request, undefined, { mutation: true, claimedGroupId: input.groupId, configuredOrigin, contextKind:"picker" }).mode !== "legacy") throw new AccessError();
   if (input.intent !== "create" && input.intent !== "select") throw new AccessError();
   db.exec("BEGIN IMMEDIATE");
   try {
     const context = authorizeRequest(db, request, input.intent === "select" ? { kind: "member", id: input.memberId as string } : undefined,
-      { mutation: true, claimedGroupId: input.groupId, configuredOrigin });
+      { mutation: true, claimedGroupId: input.groupId, configuredOrigin, contextKind:"picker" });
     let memberId: string;
     if (input.intent === "create") {
       const name = normalizeProfileName(input.name);
@@ -51,7 +51,8 @@ export function changeProfile(
     const changed = db.prepare("UPDATE group_sessions SET active_member_id=? WHERE token_hash=? AND group_id=?")
       .run(memberId, credentialHash(credential), context.groupId);
     if (changed.changes !== 1) throw new AccessError();
-    const result = getProfileView(db, request);
+    const freshRequest = new Request(request); freshRequest.headers.delete("x-watchnext-context");
+    const result = getProfileView(db, freshRequest);
     db.exec("COMMIT");
     return result;
   } catch (error) { db.exec("ROLLBACK"); throw error; }

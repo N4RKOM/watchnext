@@ -9,14 +9,14 @@ vi.mock("next/navigation", () => ({ usePathname: () => route.pathname }));
 afterEach(cleanup);
 
 describe("shared navigation", () => {
-  for (const [path, label] of [["/", "Group entry"], ["/watchlist", "Watchlist"], ["/pick", "Pick for me"], ["/archive", "Archive"]]) {
+  for (const [path, label] of [["/", "Group entry"], ["/watchlist", "Watchlist"], ["/pick", "Pick for me"], ["/archive", "Archive"], ["/account", "Account groups"]]) {
     it(`marks only ${label} current on ${path} and supplies real destinations`, () => {
       route.pathname = path;
       render(<Navigation />);
       expect(screen.getByRole("navigation", { name: "Main navigation" })).toBeTruthy();
-      expect(screen.getAllByRole("link")).toHaveLength(4);
+      expect(screen.getAllByRole("link")).toHaveLength(5);
       expect(screen.getAllByRole("link").map((link) => link.getAttribute("href")))
-        .toEqual(["/", "/watchlist", "/pick", "/archive"]);
+        .toEqual(["/", "/watchlist", "/pick", "/archive", "/account"]);
       const current = screen.getAllByRole("link").filter((link) => link.getAttribute("aria-current") === "page");
       expect(current).toHaveLength(1);
       expect(current[0].textContent).toBe(label);

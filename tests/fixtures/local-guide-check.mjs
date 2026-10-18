@@ -21,7 +21,7 @@ try {
     phase = `${mode}: supported privacy launcher`; server = pnpmChild([mode, "--port", String(port)], repo, { ...environment, WATCHNEXT_DATABASE_PATH: database }, text => { logs += text; }); const deadline = Date.now() + 45000;
     while (Date.now() < deadline) { if (server.exitCode !== null) throw new Error("Supported launcher exited before readiness"); try { if ((await fetch(origin, { signal: AbortSignal.timeout(1000) })).ok) return; } catch {} await new Promise(done => setTimeout(done, 100)); } throw new Error("Supported launcher not ready within 45 seconds");
   }
-  async function collect(context) { for (const cookie of await context.cookies()) secrets.push(cookie.value); }
+  async function collect(context) { for (const cookie of await context.cookies()) if(cookie.name !== "watchnext_access_mode") secrets.push(cookie.value); }
   browser = await chromium.launch({ headless: true, args: ["--disable-background-networking"] });
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" }); context.setDefaultTimeout(15000); await context.route("**/*", route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort()); const page = await context.newPage();
   phase = "explicit isolated initialization"; await command(["db:init"]); await command(["db:init"]); await start("dev");

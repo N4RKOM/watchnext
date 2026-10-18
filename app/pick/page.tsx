@@ -8,6 +8,6 @@ import { pickAction } from "./actions";
 import { PickerLoadError } from "./load-error";
 export const dynamic = "force-dynamic";
 export default async function PickPage() {
-  try { const contextKey=await getActionContext(); const view = readPickerPage(getDatabase(), await getGroupRequest()); return <Picker key={contextKey} view={view} action={pickAction.bind(null,contextKey)} />; }
+  try { const contextKey=await getActionContext("picker"); const view = readPickerPage(getDatabase(), await getGroupRequest()); return <Picker key={contextKey} view={view} action={pickAction.bind(null,contextKey)} />; }
   catch (error) { return error instanceof AccessError ? <AccessErrorMessage /> : <PickerLoadError />; }
 }

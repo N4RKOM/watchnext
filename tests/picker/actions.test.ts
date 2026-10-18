@@ -11,7 +11,7 @@ const form = () => { const data = new FormData(); data.set("requestId", "request
 it("action forwards the actual mutation request and returns only guarded response", async () => {
   const db = {}, request = new Request("https://watch.example"); getDatabase.mockReturnValue(db); getGroupRequest.mockResolvedValue(request);
   const expected = { kind: "no_match", groupId: "group", requestId: "request", reasons: [], links: [], message: "No saved titles" }; pickFromForm.mockReturnValue(expected);
-  const data = form(); expect(await pickAction(undefined, data)).toEqual(expected); expect(getGroupRequest).toHaveBeenCalledWith(true); expect(pickFromForm).toHaveBeenCalledWith(db, request, data, process.env.WATCHNEXT_APP_ORIGIN);
+  const data = form(); expect(await pickAction("captured-context", data)).toEqual(expected); expect(getGroupRequest).toHaveBeenCalledWith(true,"captured-context"); expect(pickFromForm).toHaveBeenCalledWith(db, request, data, process.env.WATCHNEXT_APP_ORIGIN);
 });
 it("storage and access failures produce safe retry/context identifiers, not raw errors", async () => {
   for (const error of [new Error("PRIVATE SQL C:/private secret"), new AccessError()]) {

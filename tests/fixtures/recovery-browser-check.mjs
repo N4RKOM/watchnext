@@ -4,7 +4,7 @@ import { credentialHash } from "../../lib/sessions.ts";
 let f, failure, current = "setup";
 const check = (value, label) => { if (!value) throw new Error(`Expected ${label}; observed condition false`); };
 const step = async (name, run) => { current = name; await run(); console.log(`PASS ${name}`); };
-async function capture(context) { for (const cookie of await context.cookies()) if (!f.secrets.includes(cookie.value)) f.secrets.push(cookie.value); }
+async function capture(context) { for (const cookie of await context.cookies()) if (!f.secrets.includes(cookie.value)) if(cookie.name !== "watchnext_access_mode") f.secrets.push(cookie.value); }
 async function login(page, name, password) {
   await page.goto(f.origin + "/login"); await page.getByLabel("Username", { exact: true }).fill(name); await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).press("Enter");
@@ -47,7 +47,7 @@ try {
       check(!(await a.cookies()).some(cookie => cookie.name === "watchnext_account_session"), "recovery creates no session and clears current cookie");
       check((await a.cookies()).find(cookie => cookie.name === "watchnext_session").value === legacy, "legacy cookie preserved");
       check(f.db.prepare("SELECT recovery_digest FROM accounts WHERE username_key=?").get(name.toLowerCase()).recovery_digest === credentialHash(replacement), "replacement digest only");
-      await page2.reload(); check(new URL(page2.url()).pathname === "/login", "second target browser revoked immediately");
+      await page2.reload(); await page2.waitForURL("**/login"); check(new URL(page2.url()).pathname === "/login", "second target browser revoked immediately");
       await other.reload(); await other.getByText(otherName, { exact: true }).waitFor();
       await page.getByRole("button", { name: "Copy recovery code" }).press("Enter");
       await page.getByRole("link", { name: /Continue/ }).press("Enter"); await page.waitForURL("**/login");

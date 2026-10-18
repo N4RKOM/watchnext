@@ -3,12 +3,8 @@ import type { DatabaseSync } from "node:sqlite";
 import { credentialHash, validCredential } from "../sessions";
 import { AuthError, checkPassword, makePassword, passwordInput, passwordParameters, security, usernameInput } from "./security";
 
-export const accountCookieName = "watchnext_account_session";
+export { accountCookieName, accountCredential } from "./credentials";
 export const accountLifetime = 7 * 24 * 60 * 60;
-export function accountCredential(header: string | null) {
-  const matches = (header ?? "").split(";").map(part => part.trim()).filter(part => part.startsWith(accountCookieName + "="));
-  return matches.length === 1 ? matches[0].slice(accountCookieName.length + 1) : undefined;
-}
 export function currentAccount(db: DatabaseSync, credential: unknown, now = Math.floor(Date.now() / 1000)) {
   if (!validCredential(credential)) return null;
   const row = db.prepare(`SELECT a.id,a.username FROM account_sessions s JOIN accounts a ON a.id=s.account_id

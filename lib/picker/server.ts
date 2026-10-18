@@ -37,7 +37,7 @@ export function pickFromForm(db: DatabaseSync, request: Request, form: FormData,
   const requestId = typeof form.get("requestId") === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(form.get("requestId") as string) ? form.get("requestId") as string : "invalid";
   const claimedGroup = typeof form.get("groupId") === "string" ? form.get("groupId") as string : "";
   const reply = { requestId, groupId: claimedGroup };
-  const context = authorizeRequest(db, request, undefined, { mutation: true, configuredOrigin, claimedGroupId: claimedGroup });
+  const context = authorizeRequest(db, request, undefined, { mutation: true, configuredOrigin, claimedGroupId: claimedGroup, contextKind:"picker" });
   for (const [key] of form) if (!key.startsWith("$ACTION_") && !["requestId", "groupId", "viewers", "availableMinutes", "mood", "rewatches", "pageId", "intentId", "intent", "cursor"].includes(key)) return { ...reply, kind: "invalid", errors: { form: "This pick accepts only viewers, time, mood, rewatch permission and picking context." } };
   if (requestId === "invalid" || ["requestId", "groupId", "availableMinutes", "mood"].some(key => form.getAll(key).length !== 1)) return { ...reply, kind: "invalid", errors: { form: "The request fields are incomplete or repeated. Review your inputs and try again." } };
   const rewatchValues = form.getAll("rewatches");
@@ -51,7 +51,7 @@ export function pickFromForm(db: DatabaseSync, request: Request, form: FormData,
     || !["start", "next", "restart"].includes(intent as string) || typeof cursor !== "string" || (cursor !== "" && !/^[A-Za-z0-9_-]{43}$/.test(cursor)))) return { ...reply, kind: "invalid", errors: { form: "The picking context is invalid. Start a new cycle." } };
   db.exec("BEGIN IMMEDIATE");
   try {
-    authorizeRequest(db, request, undefined, { mutation: true, configuredOrigin, claimedGroupId: claimedGroup });
+    authorizeRequest(db, request, undefined, { mutation: true, configuredOrigin, claimedGroupId: claimedGroup, contextKind:"picker" });
     ensureFreshMetadata(db);
     const currentMembers = members(db, context.groupId), data = snapshot(db, context.groupId);
     const input: RankingInput = { groupId: context.groupId, members: currentMembers.map(member => ({ id: member.id, groupId: context.groupId })), ...data,
@@ -75,7 +75,7 @@ export function pickFromForm(db: DatabaseSync, request: Request, form: FormData,
           tier: result.kind === "ranked" ? result.tier : "none", identities: result.kind === "ranked" ? result.candidates.map(candidate => candidateIdentity(candidate.titleId, candidate.target)) : [],
         };
         const planned = pageCycles.plan({ pageId: pageId as string, intentId: intentId as string, intent: intent as CycleIntent, cursor: cursor as string,
-          owner: fingerprint([context.groupId, context.ownerKey]),
+          owner: fingerprint([context.groupId, context.pickerOwnerKey]),
           context: fingerprint([context.groupId, canonicalViewers, result.context.budgetSeconds, result.context.mood, result.context.rewatches]),
           semantic: fingerprint(dependencies), count: result.kind === "ranked" ? result.candidates.length : 0 });
         if (planned.kind === "conflict") { db.exec("COMMIT"); return { ...reply, kind: "conflict", message: planned.message }; }

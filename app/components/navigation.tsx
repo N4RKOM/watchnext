@@ -8,6 +8,7 @@ const destinations = [
   { href: "/watchlist", label: "Watchlist" },
   { href: "/pick", label: "Pick for me" },
   { href: "/archive", label: "Archive" },
+  { href: "/account", label: "Account groups" },
 ];
 
 export function Navigation() {

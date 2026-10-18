@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 export function AccountForm({ operation }: { operation: "register" | "login" | "logout" | "recover" }) {
@@ -45,7 +44,7 @@ export function AccountForm({ operation }: { operation: "register" | "login" | "
     <input className="field" id="recovery-code" value={recovery} readOnly onFocus={event => event.currentTarget.select()} />
     <button className="button button-secondary" type="button" onClick={copy}>Copy recovery code</button>
     <p role="status">{copyMessage}</p>
-    <Link className="button" href={operation === "recover" ? "/login" : "/account"} onClick={() => setRecovery(null)}>I saved it — Continue</Link>
+    <a className="button" href={operation === "recover" ? "/login" : "/account"} onClick={() => setRecovery(null)}>I saved it — Continue</a>
   </section>;
   return <form method="post" action={`/api/account/${operation}`} onSubmit={submit} noValidate aria-busy={pending} className="form-fields">
     {operation !== "logout" && <fieldset disabled={pending} className="form-fields">

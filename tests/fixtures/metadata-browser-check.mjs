@@ -38,7 +38,7 @@ try {
     const page = await context.newPage(); await page.goto(origin);
     await page.getByLabel("Group name", { exact: true }).fill(`Browser fixture ${width}`); await page.getByRole("button", { name: "Create group", exact: true }).click();
     const invite = await page.getByLabel("Invite link", { exact: true }).inputValue(); secrets.push(invite.split("/").at(-1)); await page.goto(invite); await page.waitForURL("**/group");
-    for (const cookie of await context.cookies()) secrets.push(cookie.value);
+    for (const cookie of await context.cookies()) if(cookie.name !== "watchnext_access_mode") secrets.push(cookie.value);
     await page.getByLabel("Your name", { exact: true }).fill("Anna"); await page.getByRole("button", { name: "Create and select profile", exact: true }).click(); await page.getByRole("link", { name: "Add title", exact: true }).click();
     await page.getByLabel("Title", { exact: true }).fill("Manual draft preserved"); await page.getByLabel("Entry method").selectOption("youtube");
     await page.getByLabel("YouTube video link or ID").fill("YtQuota0001"); await page.getByRole("button", { name: "Look up video" }).press("Enter"); await page.getByRole("alert").filter({ hasText: "quota" }).waitFor();

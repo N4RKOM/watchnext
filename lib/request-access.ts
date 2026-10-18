@@ -13,7 +13,7 @@ const ownershipQueries = {
 /** Call before returning private data or executing a mutation. Never trust payload ownership. */
 export function authorizeRequest(
   db: DatabaseSync, request: Request, target?: RecordTarget,
-  options: { mutation?: boolean; claimedGroupId?: unknown; configuredOrigin?: string } = {},
+  options: { mutation?: boolean; claimedGroupId?: unknown; configuredOrigin?: string; contextKind?: "picker" } = {},
 ) {
   if (options.mutation) {
     const origin = resolveAppOrigin(options.configuredOrigin).origin;
@@ -21,9 +21,10 @@ export function authorizeRequest(
         request.headers.get("sec-fetch-site") === "cross-site") throw new AccessError();
   }
   const session = requestContext(db, request);
+  const expectedContext = options.contextKind === "picker" ? session.pickerOwnerKey : session.contextKey;
   const claimedContext = request.headers.get("x-watchnext-context");
-  if (claimedContext !== null && claimedContext !== session.contextKey) throw new AccessError();
-  if (options.mutation && (session.mode === "account" || session.revision > 0) && claimedContext !== session.contextKey) throw new AccessError();
+  if (claimedContext !== null && claimedContext !== expectedContext) throw new AccessError();
+  if (options.mutation && (session.mode === "account" || session.revision > 0) && claimedContext !== expectedContext) throw new AccessError();
   if (options.claimedGroupId !== undefined && options.claimedGroupId !== session.groupId) throw new AccessError();
   if (target) {
     if (!Object.hasOwn(ownershipQueries, target.kind)) throw new AccessError();
