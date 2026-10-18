@@ -3,7 +3,7 @@ export const avatarPalette = [
   { name: "Teal", value: "#0f766e" }, { name: "Rose", value: "#be123c" },
   { name: "Amber", value: "#92400e" }, { name: "Slate", value: "#475569" },
 ] as const;
-export type Profile = { id: string; name: string; color: string };
+export type Profile = { id: string; name: string; color: string; inactive?: boolean };
 export type ProfileView = { members: Profile[]; activeMemberId: string | null };
 export type ProfileState =
   | { kind: "idle" }

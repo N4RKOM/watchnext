@@ -22,7 +22,7 @@ export async function accountBody(request: Request, operation: string): Promise<
   } finally { clearTimeout(timer); reader.releaseLock(); }
   let input: unknown;
   try { input = JSON.parse(Buffer.concat(chunks).toString("utf8")); } catch { throw new AuthError("Submit the form again."); }
-  const allowed = operation === "group-create" ? ["groupName","revision"] : operation === "group-switch" ? ["groupId","revision"] : operation === "group-join" || operation === "group-legacy" ? ["revision"] : operation === "register" ? ["username", "password", "confirmation"] : operation === "recover" ? ["username", "recoveryCode", "password", "confirmation"] : operation === "login" ? ["username", "password"] : [];
+  const allowed = operation === "group-remove" ? ["contextKey","memberId","membershipGeneration"] : operation === "group-rotate" ? ["contextKey","expectedGeneration"] : operation === "group-create" ? ["groupName","revision"] : operation === "group-switch" ? ["groupId","revision"] : operation === "group-join" || operation === "group-legacy" ? ["revision"] : operation === "register" ? ["username", "password", "confirmation"] : operation === "recover" ? ["username", "recoveryCode", "password", "confirmation"] : operation === "login" ? ["username", "password"] : [];
   if (!input || typeof input !== "object" || Array.isArray(input) || Object.keys(input).some(key => !allowed.includes(key))) throw new AuthError("Submit the form again.");
   return input as Record<string, unknown>;
 }

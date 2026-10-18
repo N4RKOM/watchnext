@@ -30,3 +30,17 @@ it("denies unknown/duplicate/tampered/expired cookies, foreign groups, forged ID
   expect((await call("create",request(a,{groupName:"Expired",revision:1}))).status).toBe(400);
   expect(JSON.stringify(db.prepare("SELECT * FROM groups").all())).toBe(before);
 });
+it("owner remove/rotate HTTP validates exact context/fields/authority and returns only private committed links",async()=>{
+  const created=await(await call("create",request(a,{groupName:"Managed HTTP",revision:0}))).json();
+  const intent=beginAccountInvite(db,created.inviteUrl.split("/").at(-1));await call("join",request(b,{revision:0},{cookie:`${accountCookieName}=${b}; ${pendingInviteCookieName}=${intent}`}));
+  const ownerHeaders={cookie:`${accountCookieName}=${a}; watchnext_access_mode=account`},memberHeaders={cookie:`${accountCookieName}=${b}; watchnext_access_mode=account`};
+  const contextKey=requestContext(db,request(a,{},ownerHeaders)).contextKey,memberContext=requestContext(db,request(b,{},memberHeaders)).contextKey;
+  const target=requestContext(db,request(b,{},memberHeaders)).activeMemberId;
+  expect((await call("remove",request(b,{contextKey:memberContext,memberId:target,membershipGeneration:1},memberHeaders))).status).toBe(400);
+  expect((await call("rotate",request(a,{contextKey,expectedGeneration:1,owner:true},ownerHeaders))).status).toBe(400);
+  expect((await call("rotate",request(a,{contextKey,expectedGeneration:1},{...ownerHeaders,origin:"https://foreign.example"}))).status).toBe(400);
+  expect((await call("rotate",request(a,{contextKey:"0".repeat(64),expectedGeneration:1},ownerHeaders))).status).toBe(400);
+  const rotated=await call("rotate",request(a,{contextKey,expectedGeneration:1},ownerHeaders));expect(rotated.status).toBe(200);expect(rotated.headers.get("cache-control")).toBe("private, no-store");expect(rotated.headers.get("referrer-policy")).toBe("no-referrer");const view=await rotated.json();expect(view.inviteUrl).toMatch(/\/invite\/[A-Za-z0-9_-]{43}$/);
+  const replay=await call("rotate",request(a,{contextKey,expectedGeneration:1},ownerHeaders));expect(replay.status).toBe(400);expect(await replay.text()).not.toContain(view.inviteUrl);
+  const removed=await call("remove",request(a,{contextKey,memberId:target,membershipGeneration:1},ownerHeaders));expect(removed.status).toBe(200);expect((await removed.json()).outcome).toBe("removed");expect(requestContext.bind(null,db,request(b,{},memberHeaders))).toThrow();
+});

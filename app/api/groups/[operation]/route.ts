@@ -3,6 +3,7 @@ import { getDatabase } from "../../../../db/server";
 import { accountBody, requireAccountPost } from "../../../../lib/accounts/http";
 import { accountGroups, createAccountGroup, joinAccountGroup, pendingInviteCookieName, switchAccountGroup, useLegacyMode } from "../../../../lib/accounts/groups";
 import { modeCookieName } from "../../../../lib/accounts/context";
+import { managementRequest, removeParticipant, rotateGroupInvite } from "../../../../lib/accounts/management";
 import { cookieOptions, AccessError } from "../../../../lib/sessions";
 import { AuthError } from "../../../../lib/accounts/security";
 import { GroupNameError, resolveAppOrigin } from "../../../../lib/groups";
@@ -12,10 +13,12 @@ export async function POST(request: Request, context: { params: Promise<{ operat
   try {
     requireAccountPost(request,process.env.WATCHNEXT_APP_ORIGIN);
     const { operation } = await context.params;
-    if (!["create","join","switch","legacy"].includes(operation)) throw new AccessError();
+    if (!["create","join","switch","legacy","remove","rotate"].includes(operation)) throw new AccessError();
     const input = await accountBody(request,"group-"+operation), db = getDatabase();
     let result;
-    if (operation === "create") result = createAccountGroup(db,request,input.groupName,input.revision,process.env.WATCHNEXT_APP_ORIGIN);
+    if (operation === "remove") result = removeParticipant(db,managementRequest(request,input.contextKey),input.memberId,input.membershipGeneration,process.env.WATCHNEXT_APP_ORIGIN);
+    else if (operation === "rotate") result = rotateGroupInvite(db,managementRequest(request,input.contextKey),input.expectedGeneration,process.env.WATCHNEXT_APP_ORIGIN);
+    else if (operation === "create") result = createAccountGroup(db,request,input.groupName,input.revision,process.env.WATCHNEXT_APP_ORIGIN);
     else if (operation === "join") result = joinAccountGroup(db,request,input.revision,process.env.WATCHNEXT_APP_ORIGIN);
     else if (operation === "switch") result = switchAccountGroup(db,request,input.groupId,input.revision,process.env.WATCHNEXT_APP_ORIGIN);
     else { useLegacyMode(db,request,input.revision,process.env.WATCHNEXT_APP_ORIGIN); result = accountGroups(db,request); }
