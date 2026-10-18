@@ -15,10 +15,12 @@ export function assertOwnedRoot(root) {
 function assertSentinelRoot(root) {
   if (dirname(resolve(root)) !== realpathSync.native(tmpdir()) || !/^watchnext-e2e-sentinels-[A-Za-z0-9]+$/.test(basename(root)) || lstatSync(root).isSymbolicLink() || realpathSync.native(root) !== resolve(root)) throw new Error("Refusing cleanup outside owned sentinel root");
 }
-export function safeDiagnostic(error, secrets, root) {
+export function safeDiagnostic(error, secrets, root, extraRoots = []) {
   let value = error instanceof Error ? `${error.name}: ${error.message.split("\n")[0]}` : "Unknown failure";
+  if (typeof error?.code === "string" && error.code.includes("SQLITE")) value = "DatabaseError: Expected isolated database invariant; observed database check failure. Run unit/schema checks for diagnostics.";
   for (const secret of secrets) if (secret) value = value.split(secret).join("<redacted>");
-  return value.replace(/\/invite\/[^\s"']+/g, "/invite/<redacted>").replace(/[A-Za-z0-9_-]{43}/g, "<redacted>").split(root).join("<fixture>").split(repo).join("<repo>").slice(0, 500);
+  for (const path of [root, ...extraRoots]) if (path) value = value.split(path).join("<fixture>");
+  return value.replace(/\/invite\/[^\s"']+/g, "/invite/<redacted>").replace(/[A-Za-z0-9_-]{43}/g, "<redacted>").split(repo).join("<repo>").slice(0, 500);
 }
 export async function createFixture() {
   const net = createServer(); await new Promise((done, fail) => { net.once("error", fail); net.listen(0, "127.0.0.1", done); }); const port = net.address().port; await new Promise(done => net.close(done));

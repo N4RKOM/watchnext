@@ -23,3 +23,8 @@ it("cleans a partially initialized fixture before build/server setup and allows 
   const first = await createFixture(); const firstRoot = first.root; await first.cleanup(); expect(existsSync(firstRoot)).toBe(false); expect(first.cleanupComplete).toBe(true); await first.cleanup();
   const next = await createFixture(); try { expect(next.root !== firstRoot).toBe(true); expect(existsSync(join(next.sentinelRoot, "normal-user.sqlite"))).toBe(true); expect(next.sentinelRoot.startsWith(next.root)).toBe(false); } finally { await next.cleanup(); } expect(existsSync(next.root)).toBe(false); expect(existsSync(next.sentinelRoot)).toBe(false);
 });
+it("does not expose raw SQLite failures or neighbouring sentinel paths", () => {
+  const root = join(realpathSync.native(tmpdir()), "watchnext-e2e-example"), sentinel = join(realpathSync.native(tmpdir()), "watchnext-e2e-sentinels-example");
+  const sql = safeDiagnostic(Object.assign(new Error("Sensitive statement at private database location"), { code: "ERR_SQLITE_ERROR" }), [], root, [sentinel]); expect(sql.includes("Sensitive statement")).toBe(false); expect(sql.includes("DatabaseError")).toBe(true);
+  const filesystem = safeDiagnostic(new Error(`Expected sentinel, observed missing at ${sentinel}`), [], root, [sentinel]); expect(filesystem.includes(sentinel)).toBe(false); expect(filesystem.includes("<fixture>")).toBe(true);
+});
