@@ -13,6 +13,7 @@
     "db:migrate:temp": "node scripts/db/migrate.mjs",
     "db:verify": "node scripts/db/verify.mjs",
     "db:init": "node --env-file-if-exists=.env.local scripts/db/init.mjs",
+    "demo:prepare": "node --env-file-if-exists=.env.local scripts/demo/prepare.mjs",
     "db:verify:persistence": "node scripts/db/persistence-check.mjs",
     "typecheck": "tsc --noEmit",
     "metadata:maintain": "node --env-file-if-exists=.env.local scripts/metadata-maintain.mjs"
