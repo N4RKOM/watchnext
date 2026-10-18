@@ -113,6 +113,8 @@ Rejoin matrix is generation-based, not discovery time: remove at generation g de
 
 ## Provider evidence and limits
 
+The [#36 YouTube discovery contract](youtube-discovery.md) records the October 19 primary-doc recheck, bounded title/link search and enriched candidate/pagination/review defaults. It is a PM contract for authorized implementation, not a claim that new lookup UI (#38) or authenticated provider access has been verified.
+
 Primary material inspected October 18, 2026:
 
 - [YouTube search.list](https://developers.google.com/youtube/data/reference/rest/v3/search/list) documents official title search, video restriction and page tokens. The currently inspected page describes a separate Search Queries bucket (100 calls/day and 1 unit); do not copy historical 100-unit-per-search claims without checking the current documentation. Actual project entitlement/console configuration may differ; no live-key verification occurred.
