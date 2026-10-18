@@ -19,5 +19,5 @@ finally {
   try { await fixture?.cleanup(); } catch (error) { failure ??= error; current = "cleanup/privacy audit"; }
   process.removeListener("SIGINT", interrupted); process.removeListener("SIGTERM", interrupted);
 }
-if (failure) { console.error(`FAIL ${current}: ${safeDiagnostic(failure, fixture?.secrets ?? [], fixture?.root ?? "<none>")}`); console.error("Owned processes/data cleanup attempted; no screenshots, traces, HAR or video retained."); process.exitCode = 1; }
+if (failure) { console.error(`FAIL ${current}: ${safeDiagnostic(failure, fixture?.secrets ?? [], fixture?.root ?? "<none>")}`); console.error(`Owned cleanup complete: ${fixture?.cleanupComplete ?? "no fixture created"}; no screenshots, traces, HAR or video retained.`); process.exitCode = 1; }
 else console.log(JSON.stringify({ pass: true, journeys: report, privacyScan: true, unrelatedSentinelsUnchanged: true, ownedProcessesAndDataCleaned: true }));

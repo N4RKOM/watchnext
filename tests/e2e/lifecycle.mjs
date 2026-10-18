@@ -12,19 +12,33 @@ export const repo = fileURLToPath(new URL("../../", import.meta.url));
 export function assertOwnedRoot(root) {
   if (dirname(resolve(root)) !== realpathSync.native(tmpdir()) || !/^watchnext-e2e-[A-Za-z0-9]+$/.test(basename(root)) || lstatSync(root).isSymbolicLink() || realpathSync.native(root) !== resolve(root)) throw new Error("Refusing cleanup outside owned E2E root");
 }
+function assertSentinelRoot(root) {
+  if (dirname(resolve(root)) !== realpathSync.native(tmpdir()) || !/^watchnext-e2e-sentinels-[A-Za-z0-9]+$/.test(basename(root)) || lstatSync(root).isSymbolicLink() || realpathSync.native(root) !== resolve(root)) throw new Error("Refusing cleanup outside owned sentinel root");
+}
 export function safeDiagnostic(error, secrets, root) {
   let value = error instanceof Error ? `${error.name}: ${error.message.split("\n")[0]}` : "Unknown failure";
   for (const secret of secrets) if (secret) value = value.split(secret).join("<redacted>");
   return value.replace(/\/invite\/[^\s"']+/g, "/invite/<redacted>").replace(/[A-Za-z0-9_-]{43}/g, "<redacted>").split(root).join("<fixture>").split(repo).join("<repo>").slice(0, 500);
 }
 export async function createFixture() {
-  const root = mkdtempSync(join(realpathSync.native(tmpdir()), "watchnext-e2e-")); assertOwnedRoot(root);
-  const path = join(root, "journey.sqlite"), secrets = [randomBytes(32).toString("base64url"), randomBytes(32).toString("base64url")], sentinels = ["normal-user.sqlite", "separate-demo.sqlite", "unrelated.txt"].map(name => join(root, name));
-  for (const path of sentinels) writeFileSync(path, "Unrelated synthetic sentinel: must stay byte-identical");
   const net = createServer(); await new Promise((done, fail) => { net.once("error", fail); net.listen(0, "127.0.0.1", done); }); const port = net.address().port; await new Promise(done => net.close(done));
+  const root = mkdtempSync(join(realpathSync.native(tmpdir()), "watchnext-e2e-")); assertOwnedRoot(root);
+  let sentinelRoot;
+  const path = join(root, "journey.sqlite"), secrets = [randomBytes(32).toString("base64url"), randomBytes(32).toString("base64url")], sentinels = [];
+  try {
+    sentinelRoot = mkdtempSync(join(realpathSync.native(tmpdir()), "watchnext-e2e-sentinels-")); assertSentinelRoot(sentinelRoot);
+    for (const name of ["normal-user.sqlite", "separate-demo.sqlite", "unrelated.txt"]) {
+      const file = join(sentinelRoot, name);
+      if (name.endsWith(".sqlite")) { const sentinel = new DatabaseSync(file); try { sentinel.exec("CREATE TABLE sentinel(value TEXT); INSERT INTO sentinel VALUES ('Unrelated synthetic sentinel')"); } finally { sentinel.close(); } }
+      else writeFileSync(file, "Unrelated synthetic sentinel");
+      sentinels.push({ file, original: readFileSync(file) });
+    }
+  } catch (error) {
+    assertOwnedRoot(root); rmSync(root, { recursive: true, force: true }); if (sentinelRoot) { assertSentinelRoot(sentinelRoot); rmSync(sentinelRoot, { recursive: true, force: true }); } throw error;
+  }
   const origin = `http://127.0.0.1:${port}`;
-  const environment = { ...process.env, WATCHNEXT_DATABASE_PATH: path, WATCHNEXT_APP_ORIGIN: origin, YOUTUBE_API_KEY: secrets[0], KINOPOISK_UNOFFICIAL_API_KEY: secrets[1], NEXT_TELEMETRY_DISABLED: "1" };
-  let server, building, browser, db, output = "", cleaned = false;
+  const environment = { ...process.env, HOME: join(root, "fake-home"), USERPROFILE: join(root, "fake-home"), LOCALAPPDATA: join(root, "normal-default"), XDG_DATA_HOME: join(root, "normal-default"), WATCHNEXT_DATABASE_PATH: path, WATCHNEXT_APP_ORIGIN: origin, YOUTUBE_API_KEY: secrets[0], KINOPOISK_UNOFFICIAL_API_KEY: secrets[1], NEXT_TELEMETRY_DISABLED: "1" };
+  let server, building, browser, db, output = "", cleaned = false, cleanupComplete = false;
   const capture = child => { child.stdout.on("data", value => { output += value; }); child.stderr.on("data", value => { output += value; }); child.on("error", () => {}); return child; };
   const stop = async child => {
     if (!child || child.exitCode !== null || child.signalCode !== null) return;
@@ -33,7 +47,7 @@ export async function createFixture() {
   };
   const files = directory => readdirSync(directory, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? files(join(directory, entry.name)) : [join(directory, entry.name)]);
   const fixture = {
-    root, path, origin, secrets, get db() { return db; }, get browser() { return browser; },
+    root, path, origin, secrets, sentinelRoot, get db() { return db; }, get browser() { return browser; }, get cleanupComplete() { return cleanupComplete; },
     async build() {
       initializeDatabase({ WATCHNEXT_DATABASE_PATH: path });
       db = new DatabaseSync(path, { readOnly: true }); db.exec("PRAGMA busy_timeout=5000;");
@@ -64,10 +78,11 @@ export async function createFixture() {
     },
     async audit() {
       if (secrets.some(secret => output.includes(secret))) throw new Error("Raw synthetic credential found in captured routine output");
-      for (const file of [...files(join(repo, ".next")), ...files(root)]) {
+      for (const file of [...(existsSync(join(repo, ".next")) ? files(join(repo, ".next")) : []), ...files(root)]) {
         const content = readFileSync(file); if (secrets.some(secret => content.includes(Buffer.from(secret)))) throw new Error("Raw synthetic credential found in generated artifacts/database");
       }
-      for (const file of sentinels) if (readFileSync(file, "utf8") !== "Unrelated synthetic sentinel: must stay byte-identical") throw new Error("Unrelated normal/demo/file sentinel changed");
+      for (const { file, original } of sentinels) if (!readFileSync(file).equals(original)) throw new Error("Unrelated normal/demo/file sentinel changed");
+      if (existsSync(join(root, "normal-default"))) throw new Error("Unexpected fallback to default storage");
     },
     async cleanup() {
       if (cleaned) return; cleaned = true;
@@ -75,7 +90,11 @@ export async function createFixture() {
       for (const action of [() => browser?.close(), () => stop(server), () => stop(building), () => db?.close()]) try { await action(); } catch (error) { errors.push(error); }
       try { await fixture.audit(); } catch (error) { errors.push(error); }
       assertOwnedRoot(root); rmSync(root, { recursive: true, force: true });
+      // Neighbouring sentinel data must survive data-root cleanup, too.
+      try { for (const { file, original } of sentinels) if (!readFileSync(file).equals(original)) throw new Error("Neighbour sentinel changed during cleanup"); } catch (error) { errors.push(error); }
+      assertSentinelRoot(sentinelRoot); rmSync(sentinelRoot, { recursive: true, force: true });
       if (errors.length) throw errors[0];
+      cleanupComplete = true;
     },
   };
   return fixture;

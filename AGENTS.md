@@ -5,6 +5,7 @@
 - `pnpm install --frozen-lockfile` - install dependencies
 - `pnpm dev` - start the local development server
 - `pnpm test` - run the whole suite once
+- `pnpm test:e2e` - build current source and run isolated serial production-browser journeys; first install Chromium as documented in `_docs/testing-guidelines.md`
 - `pnpm test tests/home.test.tsx` - run one test file
 - `pnpm typecheck` - check TypeScript types
 - `pnpm metadata:maintain` - explicitly clear expired imported fields/reviews in the initialized configured database; tests must use an isolated path
@@ -43,11 +44,11 @@ WatchNext is an academic web app that helps couples and friends choose something
 - Before grooming an issue, read `_docs/team/pm.md` and `_docs/task-template.md`.
 - Before implementing a groomed issue, read `_docs/team/software-engineer.md`.
 - Before checking finished work against an issue, read `_docs/team/qa-engineer.md`.
-- Before writing tests, read `_docs/testing-guidelines.md` when available.
+- Before writing tests, read `_docs/testing-guidelines.md`.
 - For anything touching the UI, read `_docs/design-system.md` when available.
 - Before adding or changing API behavior, read `_docs/api.md` when available.
 
-The design system and API guide are available at `_docs/design-system.md` and `_docs/api.md`; follow them for relevant work. Testing guidelines remain planned; check the current checkout rather than inventing their contents. Keep these guides consistent with approved or delegated project decisions.
+The design system, API guide and testing guidelines are available at `_docs/design-system.md`, `_docs/api.md` and `_docs/testing-guidelines.md`; follow them for relevant work. Keep these guides consistent with approved or delegated project decisions.
 
 ## Start each session
 

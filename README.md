@@ -31,6 +31,8 @@ pnpm db:verify:persistence
 
 `pnpm test` runs the suite once; `pnpm test:watch` watches for changes. The initial smoke test renders the home page in jsdom and checks its accessible heading; it does not launch a browser or require network access.
 
+For complete isolated production-browser journeys, install the pinned browser once with `pnpm exec playwright install chromium`, then run `pnpm test:e2e`. It builds current source, uses fresh temporary data and synthetic outbound provider responses, and cleans its own processes/data. See [testing guidelines](_docs/testing-guidelines.md) for exact local/CI setup, coverage, privacy and deliberate-failure cleanup verification.
+
 To serve a production build locally, run `pnpm build` followed by `pnpm start`, then open http://localhost:3000.
 
 Builds cap Next page/static worker concurrency at two via `experimental.cpus` in `next.config.mjs`, verified with pinned Next 16.4.1. This retains compilation, TypeScript validation and all static generation. During #16 verification, the default 11-worker build repeatedly exited on Windows with code 3221226505 while host committed memory was about 93%; no application exception was emitted. The same build passed with two workers. This supports a resource-pressure diagnosis, but the generic exit code alone does not establish the exact native failure. Keep verification sequential on constrained machines and recheck this experimental option when upgrading Next. It does not change request-serving concurrency or privacy settings.
