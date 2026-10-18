@@ -91,6 +91,8 @@ Use a separate bounded five-attempt/username/15-minute recovery counter and thir
 
 Successful reset clears the current browser account cookie for a fresh sign-in, but revokes only the recovered account's server sessions; unrelated accounts and the legacy cookie remain intact. Duplicate/tampered cookies never select the target account or grant reset proof. Replacement-code UI follows #32 private save/copy/clear-on-departure behavior, with Continue to /login. Do not put secrets in browser storage, URLs or retained test artifacts. Lost password plus lost code has no support/legacy-profile backdoor. Primary guidance rechecked October 18: [OWASP forgot password](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html), including its offline-method lifetime distinction, single-use codes, normal login afterward and session invalidation. No email channel or live security certification is claimed.
 
+The #33 implementation follows [the recovery API contract](api.md#private-offline-code-recovery--issue-33): no cookie-selected target, fixed-size proof comparison, digest-CAS reset/revoke-all, separate bounded attempt state and fresh login afterward. Malformed names share a bounded invalid-name admission bucket; invalid proof uses cheap digest work, with native password derivation only after valid proof. This is a reasoned bounded implementation choice, not an additional user answer. Real tests hold old-login work across reset, race two consumers and force revocation failure; no schema or business-history change is needed.
+
 ## Provider evidence and limits
 
 Primary material inspected October 18, 2026:

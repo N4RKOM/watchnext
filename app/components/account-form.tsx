@@ -26,7 +26,7 @@ export function AccountForm({ operation }: { operation: "register" | "login" | "
       if ((operation === "register" || operation === "recover") && typeof result.recoveryCode === "string") { setRecovery(result.recoveryCode); return; }
       // Only these fixed local destinations are supported; response targets grant no redirect authority.
       window.location.assign(operation === "logout" ? "/login" : "/account");
-    } catch { setMessage("We couldn’t reach WatchNext. Try again. Enter your password again if needed."); }
+    } catch { setMessage(operation === "recover" ? "We couldn’t confirm the reset. It may have completed: try signing in with your new password before retrying. A replacement code that wasn’t displayed cannot be retrieved." : "We couldn’t reach WatchNext. Try again. Enter your password again if needed."); }
     finally {
       for (const name of ["password", "confirmation", "recoveryCode"]) {
         const field = form.elements.namedItem(name); if (field instanceof HTMLInputElement) field.value = "";

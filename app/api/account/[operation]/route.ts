@@ -29,6 +29,6 @@ export async function POST(request: Request, context: { params: Promise<{ operat
     response.cookies.set(accountCookieName, result.credential, cookieOptions(resolveAppOrigin(process.env.WATCHNEXT_APP_ORIGIN).origin));
     return response;
   } catch (error) {
-    return NextResponse.json({ error: error instanceof AuthError ? error.message : "We couldn’t save your sign-in. Check that local storage is ready, then try again." }, { status: 400, headers: privateHeaders });
+    return NextResponse.json({ error: error instanceof AuthError ? error.message : "We couldn’t save your account change. Check that local storage is ready, then try again." }, { status: 400, headers: privateHeaders });
   }
 }
