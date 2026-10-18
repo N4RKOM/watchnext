@@ -22,12 +22,15 @@ export function requestContext(db: DatabaseSync, request: Request) {
   const hasMode = (raw ?? "").split(";").some(value => value.trim().startsWith(modeCookieName+"="));
   let groupId: string, groupName: string, activeMemberId: string | null, revision: number, tokenHash: string, accountId: string | undefined;
   let selectedMode: "account" | "legacy";
+  let membershipGeneration: number | undefined;
   if (mode === "account") {
     selectedMode = "account"; const session = accountSession(db, request);
-    const membership = db.prepare(`SELECT m.member_id,g.name FROM account_memberships m JOIN groups g ON g.id=m.group_id
+    const membership = db.prepare(`SELECT m.member_id,m.joined_invite_generation,g.name FROM account_memberships m JOIN groups g ON g.id=m.group_id
       WHERE m.account_id=? AND m.group_id=? AND m.status='active' AND g.access_mode='account'`).get(session.accountId, session.groupId);
     if (!membership) throw new AccessError();
     groupId = session.groupId!; groupName = membership.name as string; activeMemberId = membership.member_id as string;
+    // Rejoin strictly advances this persisted generation, invalidating all browser contexts.
+    membershipGeneration = membership.joined_invite_generation as number;
     revision = session.revision; tokenHash = session.tokenHash; accountId = session.accountId;
   } else if (mode === "legacy" || (!hasMode && hasLegacy && !hasAccount)) {
     selectedMode = "legacy"; const credential = readSessionCookie(raw), group = requireSession(db, credential);
@@ -35,7 +38,8 @@ export function requestContext(db: DatabaseSync, request: Request) {
     groupId = group.groupId; groupName = group.groupName; activeMemberId = group.activeMemberId;
     revision = row!.context_revision as number; tokenHash = credentialHash(credential!);
   } else throw new AccessError();
-  const contextKey = credentialHash(JSON.stringify([selectedMode,tokenHash,groupId,activeMemberId,revision]));
+  const identity = [selectedMode,tokenHash,groupId,activeMemberId,revision];
+  const contextKey = credentialHash(JSON.stringify(selectedMode === "account" ? [...identity,membershipGeneration] : identity));
   const pickerOwnerKey = selectedMode === "account" ? contextKey : credentialHash(JSON.stringify([selectedMode,tokenHash,groupId,revision]));
   return { groupId, groupName, activeMemberId, mode: selectedMode, accountId, revision, contextKey, ownerKey: contextKey, pickerOwnerKey };
 }

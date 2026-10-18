@@ -2,7 +2,8 @@
 import { DatabaseSync } from "node:sqlite";
 import { beforeEach, afterEach, expect, it } from "vitest";
 import { migrate } from "../../db/migrate";
-import { registerAccount, accountCookieName, logoutAccount } from "../../lib/accounts/service";
+import { credentialHash } from "../../lib/sessions";
+import { registerAccount, loginAccount, accountCookieName, logoutAccount } from "../../lib/accounts/service";
 import { security } from "../../lib/accounts/security";
 import { requestContext, accountSession } from "../../lib/accounts/context";
 import { createAccountGroup, beginAccountInvite, joinAccountGroup, pendingInviteCookieName, switchAccountGroup } from "../../lib/accounts/groups";
@@ -32,6 +33,7 @@ const provider: Providers["youtube"]={namespace:"youtube",async lookup(){return 
 const providers:Providers={youtube:provider,kinopoisk_unofficial:{namespace:"kinopoisk_unofficial",async lookup(){return{kind:"failure",code:"network_error"};}}};
 beforeEach(async()=>{
   db=new DatabaseSync(":memory:");migrate(db);security.signupTotal.clear("all");
+  for(const name of ["consumer.a","consumer.b","consumer.c"])security.signup.clear(name);
   const register=async(username:string)=>(await registerAccount(db,{username,password,confirmation:password})).credential;
   a=await register("Consumer.A");b=await register("Consumer.B");c=await register("Consumer.C");
   const one=createAccountGroup(db,req(a),"Group One",0,origin);g1=one.selectedGroupId!;join(b,one.inviteUrl);
@@ -89,5 +91,56 @@ it("provider completion after membership removal or session revocation returns n
     expect(db.prepare("SELECT * FROM metadata_reviews").all()).toEqual([]);
     db.prepare("UPDATE groups SET invite_generation=2 WHERE id=?").run(g1);
     db.exec("UPDATE account_memberships SET status='active',joined_invite_generation=2,removed_at=NULL,removed_invite_generation=NULL WHERE status='removed'");
+  }
+});
+
+it("another session's rejoin cannot revive old mutations, reviews, cycles or pending provider work",async()=>{
+  const second=(await loginAccount(db,{username:"Consumer.B",password})).credential;
+  switchTo(second,g1);
+  const old=req(second),oldContext=requestContext(db,old),claim=claims(second);
+  const review=await beginReview(db,old,"youtube","YtFixture01",providers,origin);
+  const form=pickForm(second);form.set("pageId","lifecycle-page");form.set("intentId","lifecycle-start");form.set("intent","start");form.set("cursor","");
+  const pick=pickFromForm(db,old,form,origin);expect(pick.kind).toBe("picked");
+  let release!:(value:Awaited<ReturnType<typeof provider.lookup>>)=>void,started!:()=>void;
+  const ready=new Promise<void>(resolve=>{started=resolve;}),waiting=new Promise<Awaited<ReturnType<typeof provider.lookup>>>(resolve=>{release=resolve;});
+  const delayed:Providers={...providers,youtube:{namespace:"youtube",async lookup(){started();return waiting;}}};
+  const pending=beginReview(db,old,"youtube","YtFixture01",delayed,origin);
+  // Attach a rejection observer before releasing the provider, without hiding unexpected success.
+  const outcome=pending.then(()=>"returned",()=>"denied");await ready;
+  const sessionBefore=db.prepare("SELECT * FROM account_sessions WHERE token_hash=?").get(credentialHash(second));
+  const historyBefore=JSON.stringify(["progress","ratings","notes"].map(table=>db.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all()));
+  db.prepare("UPDATE account_memberships SET status='removed',removed_at='now',removed_invite_generation=1 WHERE member_id=?").run(claim.memberId);
+  expect(()=>readWatchlist(db,old)).toThrow();
+  db.prepare("UPDATE groups SET invite_generation=2 WHERE id=?").run(g1);
+  // A real join through the first browser, leaving the second browser's session row unchanged.
+  const invite=Buffer.alloc(32,73).toString("base64url");db.prepare("INSERT INTO invitations(id,group_id,token_hash,generation) VALUES ('lifecycle-invite',?,?,2)").run(g1,credentialHash(invite));
+  join(b,origin+"/invite/"+invite);
+  expect(db.prepare("SELECT * FROM account_sessions WHERE token_hash=?").get(credentialHash(second))).toEqual(sessionBefore);
+  expect(()=>updateOwnRating(db,old,movie,{...claim,intent:"save_rating",score:"9"},origin)).toThrow();
+  expect(()=>saveReview(db,req(second),review.handle,fields("Old provider","youtube"),"","",undefined,origin)).toThrow();
+  expect(()=>pickFromForm(db,old,form,origin)).toThrow();
+  form.set("intent","next");form.set("intentId","lifecycle-next");if("cursor" in pick)form.set("cursor",pick.cursor!);
+  expect(pickFromForm(db,req(second),form,origin).kind).toBe("conflict");
+  release(await provider.lookup({kind:"detail",externalId:"YtFixture01"},{}));expect(await outcome).toBe("denied");
+  expect(db.prepare("SELECT count(*) AS n FROM metadata_reviews").get()?.n).toBe(1);
+  expect(JSON.stringify(["progress","ratings","notes"].map(table=>db.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all()))).toBe(historyBefore);
+  expect(requestContext(db,req(second)).activeMemberId).toBe(claim.memberId);
+  expect(requestContext(db,req(second)).contextKey).not.toBe(oldContext.contextKey);
+  expect(readWatchlist(db,req(second)).items).toHaveLength(2);
+  updateOwnRating(db,req(second),movie,{...claim,intent:"save_rating",score:"7"},origin);
+  expect(db.prepare("SELECT score FROM ratings WHERE title_id=? AND member_id=?").get(movie,claim.memberId)?.score).toBe(7);
+  expect((await beginReview(db,req(second),"youtube","YtFixture01",providers,origin)).handle).toBeTruthy();
+});
+
+it("pending provider results stay invalid after switching away, including away and back",async()=>{
+  for(const back of [false,true]){
+    switchTo(a,g1);const captured=req(a);
+    let release!:(value:Awaited<ReturnType<typeof provider.lookup>>)=>void,started!:()=>void;
+    const ready=new Promise<void>(resolve=>{started=resolve;}),waiting=new Promise<Awaited<ReturnType<typeof provider.lookup>>>(resolve=>{release=resolve;});
+    const delayed:Providers={...providers,youtube:{namespace:"youtube",async lookup(){started();return waiting;}}};
+    const outcome=beginReview(db,captured,"youtube","YtFixture01",delayed,origin).then(()=>"returned",()=>"denied");
+    await ready;switchTo(a,g2);if(back)switchTo(a,g1);
+    release(await provider.lookup({kind:"detail",externalId:"YtFixture01"},{}));expect(await outcome).toBe("denied");
+    expect(db.prepare("SELECT count(*) AS n FROM metadata_reviews").get()?.n).toBe(0);
   }
 });
