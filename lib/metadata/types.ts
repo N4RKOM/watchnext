@@ -2,11 +2,14 @@
 export type ProviderNamespace = "youtube" | "kinopoisk_unofficial";
 export type ProviderIdentity = { namespace: ProviderNamespace; externalId: string };
 export type ContentType = "movie" | "series" | "anime" | "youtube";
-export type SuggestionField = "title" | "year" | "contentType" | "duration" | "genres" | "coverUrl" | "sourceUrl" | "watchUrl";
-export type LookupQuery = { kind: "detail"; externalId: string } | { kind: "search"; text: string };
+export type SuggestionField = "title" | "year" | "contentType" | "duration" | "genres" | "coverUrl" | "sourceUrl" | "watchUrl" | "channelTitle";
+/** pageToken is server transport input, never accepted directly by a client action. */
+export type LookupQuery = { kind: "detail"; externalId: string } | { kind: "search"; text: string; pageToken?: string };
 export type FailureCode = "invalid_query" | "not_found_or_inaccessible" | "not_configured" | "quota_exhausted" | "rate_limited" | "network_error" | "timeout" | "provider_error" | "invalid_metadata" | "cancelled";
 export type LookupFailure = { kind: "failure"; code: FailureCode; message: string; retry: "never" | "user" | "after_configuration" | "after_delay" | "after_provider_reset"; retryAfterSeconds: number | null; manualFallback: true };
-export type Candidate = { identity: ProviderIdentity; title: string | null; year: number | null; contentType: ContentType | null; coverUrl: string | null };
+export type Candidate = { identity: ProviderIdentity; title: string | null; year: number | null; contentType: ContentType | null; coverUrl: string | null;
+  channelTitle?:string|null;duration?:{seconds:number|null;meaning:"full_item"|"typical_episode"|"unknown"};manualFields?:("title"|"contentType"|"duration")[];
+  provenance?:{provider:ProviderNamespace;retrievedAt:string;freshness:{policy:string;refreshBy:string|null;action:string}} };
 export type MetadataItem = Candidate & {
   duration: { seconds: number | null; meaning: "full_item" | "typical_episode" | "unknown" };
   genres: string[]; sourceUrl: string | null; watchUrl: string | null;
@@ -19,6 +22,7 @@ export type LookupResult = LookupFailure | { kind: "available" | "incomplete"; i
   | { kind: "candidates"; candidates: Candidate[]; requiresSelection: true; omittedInvalidCandidates: boolean }
   | { kind: "no_match"; candidates: []; manualFallback: true };
 /** Provider adapters map their response to these unknown-valued projections before validation. */
-export type ItemProjection = { externalId?: unknown; title?: unknown; year?: unknown; contentType?: unknown; coverUrl?: unknown; sourceUrl?: unknown; watchUrl?: unknown; genres?: unknown; duration?: { seconds?: unknown; meaning?: unknown; verified?: unknown }; uncertainFields?: unknown };
-export type ProviderReply = { kind: "item"; item: ItemProjection } | { kind: "search"; candidates: ItemProjection[] } | { kind: "failure"; code: FailureCode; retryAfterSeconds?: unknown };
+export type ItemProjection = { externalId?: unknown; title?: unknown; channelTitle?:unknown; year?: unknown; contentType?: unknown; coverUrl?: unknown; sourceUrl?: unknown; watchUrl?: unknown; genres?: unknown; duration?: { seconds?: unknown; meaning?: unknown; verified?: unknown }; uncertainFields?: unknown };
+export type ProviderPage={next?:string;previous?:string};
+export type ProviderReply = { kind: "item"; item: ItemProjection } | { kind: "search"; candidates: ItemProjection[]; navigation?:ProviderPage } | { kind: "failure"; code: FailureCode; retryAfterSeconds?: unknown };
 export type MetadataProvider = { namespace: ProviderNamespace; lookup(query: LookupQuery, context: { signal?: AbortSignal }): Promise<ProviderReply> };

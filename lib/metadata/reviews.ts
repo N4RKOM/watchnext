@@ -8,20 +8,24 @@ import { saveTitle } from "../shared-save";
 import { safeExternalUrl } from "../urls";
 import { ensureFreshMetadata, metadataColumns, storedFields, type StoredField } from "./lifecycle";
 import { lookupFailure, lookupMetadata } from "./lookup";
-import { youtubeVideoId } from "./youtube-input";
-import type { Candidate, LookupResult, MetadataItem, MetadataProvider, ProviderNamespace } from "./types";
+import { youtubeLookupQuery } from "./youtube-input";
+import { youtubeBudget } from "./admission";
+import type { Candidate, LookupResult, MetadataItem, MetadataProvider, ProviderNamespace,ProviderPage } from "./types";
 
 export type Providers = Record<ProviderNamespace, MetadataProvider>;
-type Snapshot = { kind: "item"; item: MetadataItem } | { kind: "candidates"; candidates: Candidate[] };
-export type ReviewResult = LookupResult & { handle?: string };
+type Chain={kind:"youtube_chain";text:string;visited:number};
+type SearchPage={provider:"youtube";text:string;number:number;navigation:ProviderPage;chainHash:string;expires:string};
+type Snapshot = { kind: "item"; item: MetadataItem } | { kind: "candidates"; candidates: Candidate[];page?:SearchPage } | Chain;
+export type ReviewResult = LookupResult & { handle?: string;page?:{number:number;next?:string;previous?:string;limitReached:boolean} };
 const sessionId = (db: DatabaseSync, request: Request) => authorizeRequest(db,request).ownerKey;
 const hash = (value: string) => credentialHash(value);
 const equal = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 export class ReviewLinkError extends Error { constructor(public field: "sourceUrl" | "coverUrl") { super("Use a complete HTTP or HTTPS link without credentials, or leave it blank."); } }
 function authorized(db: DatabaseSync, request: Request, origin?: string) { return requireTitleMember(db, request, { mutation: true, configuredOrigin: origin }); }
-function store(db: DatabaseSync, request: Request, payload: Snapshot, now: Date, origin?: string) {
+function store(db: DatabaseSync, request: Request, payload: Snapshot, now: Date, origin?: string,deadline?:string) {
   const context = authorized(db, request, origin), handle = randomBytes(32).toString("base64url");
-  const expires = new Date(now.getTime() + 10 * 60000).toISOString();
+  const expires = deadline??new Date(now.getTime() + 10 * 60000).toISOString();
+  if(expires<=now.toISOString())throw new AccessError();
   db.prepare("DELETE FROM metadata_reviews WHERE session_id=? AND handle_hash NOT IN (SELECT handle_hash FROM metadata_reviews WHERE session_id=? ORDER BY expires_at DESC LIMIT 19)").run(sessionId(db,request), sessionId(db,request));
   db.prepare("INSERT INTO metadata_reviews(handle_hash,group_id,member_id,session_id,expires_at,payload) VALUES (?,?,?,?,?,?)").run(hash(handle), context.groupId, context.activeMemberId!, sessionId(db,request), expires, JSON.stringify(payload));
   return handle;
@@ -33,7 +37,20 @@ function snapshot(db: DatabaseSync, request: Request, handle: unknown, now: Date
   const row = db.prepare("SELECT payload FROM metadata_reviews WHERE handle_hash=? AND group_id=? AND member_id=? AND session_id=? AND expires_at>?")
     .get(hash(handle), context.groupId, context.activeMemberId!, sessionId(db,request), now.toISOString());
   if (!row) throw new AccessError();
-  return JSON.parse(row.payload as string) as Snapshot;
+  const value=JSON.parse(row.payload as string) as Snapshot;
+  if(value.kind==="candidates"&&value.page)readChain(db,request,value.page.chainHash,now,origin);
+  return value;
+}
+function readChain(db:DatabaseSync,request:Request,chainHash:string,now:Date,origin?:string){
+  const current=authorized(db,request,origin),row=db.prepare("SELECT payload FROM metadata_reviews WHERE handle_hash=? AND group_id=? AND member_id=? AND session_id=? AND expires_at>?").get(chainHash,current.groupId,current.activeMemberId!,sessionId(db,request),now.toISOString());
+  if(!row)throw new AccessError();const chain=JSON.parse(row.payload as string) as Snapshot;if(chain.kind!=="youtube_chain")throw new AccessError();return chain;
+}
+function takeYoutube(current:ReturnType<typeof authorized>,now:Date){try{youtubeBudget.take(current.ownerKey,now.getTime());return null;}catch{return lookupFailure("rate_limited",900);}}
+function pageResult(db:DatabaseSync,request:Request,result:LookupResult,page:SearchPage,now:Date,origin?:string):ReviewResult{
+  if(result.kind!=="candidates"&&result.kind!=="no_match")return result;
+  const chain=readChain(db,request,page.chainHash,now,origin),limitReached=chain.visited>=5;
+  const handle=store(db,request,{kind:"candidates",candidates:result.candidates,page},now,origin,page.expires);
+  return {...result,handle,page:{number:page.number,limitReached,...(!limitReached&&page.navigation.next?{next:handle}:{}),...(!limitReached&&page.number>1&&page.navigation.previous?{previous:handle}:{})}};
 }
 function sameContext(db: DatabaseSync, request: Request, before: ReturnType<typeof authorized>, origin?: string) {
   const after = authorized(db, request, origin);
@@ -52,19 +69,44 @@ function resultWithReview(db: DatabaseSync, request: Request, result: LookupResu
 export async function beginReview(db: DatabaseSync, request: Request, source: unknown, query: unknown, providers: Providers, origin?: string, now = () => new Date()): Promise<ReviewResult> {
   const before = authorized(db, request, origin); ensureFreshMetadata(db, now());
   if (source !== "youtube" && source !== "kinopoisk_unofficial") return lookupFailure("invalid_query");
-  const id = source === "youtube" ? youtubeVideoId(query) : null;
-  if (source === "youtube" && !id) return lookupFailure("invalid_query");
-  const result = await lookupMetadata(providers[source], source === "youtube" ? { kind: "detail", externalId: id! } : { kind: "search", text: query as string }, { now, signal: request.signal });
+  const parsed=source==="youtube"?youtubeLookupQuery(query):{kind:"search" as const,text:query as string};
+  if(!parsed)return lookupFailure("invalid_query");
+  if(source==="youtube"){const denied=takeYoutube(before,now());if(denied)return denied;}
+  if(source==="youtube"&&parsed.kind==="search"){
+    // Superseding a query physically drops its old page data and invalidates pending work.
+    db.prepare("DELETE FROM metadata_reviews WHERE session_id=? AND (json_extract(payload,'$.kind')='youtube_chain' OR json_extract(payload,'$.page.provider')='youtube')").run(sessionId(db,request));
+    const expires=new Date(now().getTime()+600000).toISOString(),anchor=store(db,request,{kind:"youtube_chain",text:parsed.text,visited:1},now(),origin,expires),chainHash=hash(anchor);
+    let navigation:ProviderPage={};const result=await lookupMetadata(providers.youtube,parsed,{now,signal:request.signal,onPage:value=>{navigation=value;}});
+    sameContext(db,request,before,origin);readChain(db,request,chainHash,now(),origin);
+    if(result.kind!=="candidates"&&result.kind!=="no_match"){db.prepare("DELETE FROM metadata_reviews WHERE handle_hash=?").run(chainHash);return result;}
+    return pageResult(db,request,result,{provider:"youtube",text:parsed.text,number:1,navigation,chainHash,expires},now(),origin);
+  }
+  const result = await lookupMetadata(providers[source], parsed, { now, signal: request.signal });
   sameContext(db, request, before, origin);
   return resultWithReview(db, request, result, now(), origin);
 }
-export async function selectReviewCandidate(db: DatabaseSync, request: Request, handle: unknown, id: unknown, providers: Providers, origin?: string, now = () => new Date()) {
+export async function selectReviewCandidate(db: DatabaseSync, request: Request, handle: unknown, id: unknown, providers: Providers, origin?: string, now = () => new Date()):Promise<ReviewResult> {
   const before = authorized(db, request, origin), current = snapshot(db, request, handle, now(), origin);
-  if (current.kind !== "candidates" || !current.candidates.some(candidate => candidate.identity.namespace === "kinopoisk_unofficial" && candidate.identity.externalId === id)) throw new AccessError();
-  const result = await lookupMetadata(providers.kinopoisk_unofficial, { kind: "detail", externalId: id as string }, { now, signal: request.signal });
+  if (current.kind !== "candidates")throw new AccessError();
+  const selected=current.candidates.find(candidate=>candidate.identity.externalId===id);
+  if(!selected)throw new AccessError();const namespace=selected.identity.namespace;
+  if(namespace==="youtube"){const denied=takeYoutube(before,now());if(denied)return denied;}
+  const result = await lookupMetadata(providers[namespace], { kind: "detail", externalId: id as string }, { now, signal: request.signal });
   sameContext(db, request, before, origin);
   snapshot(db, request, handle, now(), origin);
   return resultWithReview(db, request, result, now(), origin);
+}
+/** Only opaque current-review handles and explicit direction reach this service. */
+export async function pageReview(db:DatabaseSync,request:Request,handle:unknown,direction:unknown,providers:Providers,origin?:string,now=()=>new Date()):Promise<ReviewResult>{
+  const before=authorized(db,request,origin),current=snapshot(db,request,handle,now(),origin);
+  if(current.kind!=="candidates"||!current.page||(direction!=="next"&&direction!=="previous"))throw new AccessError();
+  const page=current.page,token=page.navigation[direction];if(!token||(direction==="previous"&&page.number<=1))throw new AccessError();
+  const denied=takeYoutube(before,now());if(denied)return denied;
+  db.exec("BEGIN IMMEDIATE");
+  try{const chain=readChain(db,request,page.chainHash,now(),origin);if(chain.visited>=5)throw new AccessError();db.prepare("UPDATE metadata_reviews SET payload=? WHERE handle_hash=?").run(JSON.stringify({...chain,visited:chain.visited+1}),page.chainHash);db.exec("COMMIT");}catch(error){db.exec("ROLLBACK");throw error;}
+  let navigation:ProviderPage={};const result=await lookupMetadata(providers.youtube,{kind:"search",text:page.text,pageToken:token},{now,signal:request.signal,onPage:value=>{navigation=value;}});
+  sameContext(db,request,before,origin);snapshot(db,request,handle,now(),origin);
+  return pageResult(db,request,result,{...page,number:page.number+(direction==="next"?1:-1),navigation},now(),origin);
 }
 function values(item: MetadataItem): Record<StoredField, unknown> {
   return { title: item.title, contentType: item.contentType, duration: item.duration.seconds, genres: item.genres, sourceUrl: item.sourceUrl, watchUrl: item.watchUrl, coverUrl: item.coverUrl };

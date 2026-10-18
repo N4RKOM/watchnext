@@ -1,4 +1,17 @@
 import { providerIdentity } from "./lookup";
+import type { LookupQuery } from "./types";
+
+/** Explicit search intent; old string callers remain strict ID/link-only. */
+export function youtubeLookupQuery(value: unknown): LookupQuery | null {
+  if(typeof value==="string"){const id=youtubeVideoId(value);return id?{kind:"detail",externalId:id}:null;}
+  if(!value||typeof value!=="object"||Array.isArray(value))return null;
+  const input=value as Record<string,unknown>;
+  if(Object.keys(input).some(key=>key!=="kind"&&key!=="text"))return null;
+  if(input.kind!=="title"||typeof input.text!=="string"||/[\p{Cc}]/u.test(input.text))return null;
+  const text=input.text.trim();
+  if(!text||[...text].length>200||/^(?:[a-z][a-z\d+.-]*:\/\/|https?:|ftp:|file:|data:|javascript:|\/\/|(?:www\.|m\.)?(?:youtube\.com|youtu\.be)(?:[\/:?#]|$))/i.test(text))return null;
+  const id=youtubeVideoId(text);return id?{kind:"detail",externalId:id}:{kind:"search",text};
+}
 
 /** Only the listed single-video forms; never a network destination. */
 export function youtubeVideoId(value: unknown): string | null {

@@ -52,13 +52,13 @@ it("constructs one fixed official request, with key only in header, no redirects
   expect(JSON.stringify(result).includes(credential)).toBe(false);
   expect(result).toMatchObject({ kind: "available", item: { title: "Synthetic video", contentType: "youtube", duration: { seconds: 1440, meaning: "full_item" }, genres: [], sourceUrl: `https://www.youtube.com/watch?v=${id}`, watchUrl: `https://www.youtube.com/watch?v=${id}`, requirements: ["review_metadata", "choose_moods"], provenance: { retrievedAt: now().toISOString(), freshness: { refreshBy: "2026-11-15T12:00:00.000Z" } } } });
 });
-it("missing configuration, malformed detail IDs and unsupported search never fetch", async () => {
+it("missing configuration, malformed detail IDs and URL-like search never fetch", async () => {
   let calls = 0;
   const transport: Transport = async () => { calls++; throw new Error("Unexpected transport"); };
   for (const apiKey of [undefined, "", "   ", "bad\nvalue"]) expect(await lookup(transport, { apiKey })).toMatchObject({ code: "not_configured" });
   const provider = youtubeProvider({ apiKey: randomUUID(), transport });
   expect(await provider.lookup({ kind: "detail", externalId: "bad" }, {})).toMatchObject({ code: "invalid_query" });
-  expect(await provider.lookup({ kind: "search", text: "hello" }, {})).toMatchObject({ code: "invalid_query" });
+  expect(await provider.lookup({ kind: "search", text: "https://foreign.invalid/watch" }, {})).toMatchObject({ code: "invalid_query" });
   expect(calls).toBe(0);
 });
 it("missing title/unsafe thumbnail and unknown runtime remain editable incomplete suggestions", async () => {
@@ -111,8 +111,10 @@ it("network diagnostics and credential values never enter returned results or co
 it("caller abort is distinct from owned timeout and neither waits for uncooperative transport", async () => {
   const controller = new AbortController();
   let transportSignal: AbortSignal | null | undefined;
-  const transport: Transport = async (_input, init) => { transportSignal = init?.signal; return new Promise(() => {}); };
+  let started!:()=>void;const ready=new Promise<void>(resolve=>{started=resolve;});
+  const transport: Transport = async (_input, init) => { transportSignal = init?.signal;started(); return new Promise(() => {}); };
   const pending = lookup(transport, { signal: controller.signal });
+  await ready;
   controller.abort();
   expect(await pending).toMatchObject({ code: "cancelled" });
   expect(transportSignal?.aborted).toBe(true);
@@ -123,6 +125,6 @@ it("caller abort is distinct from owned timeout and neither waits for uncooperat
   expect(transportSignal?.aborted).toBe(true);
 });
 it("timeout also bounds stalled response-body parsing", async () => {
-  const transport: Transport = async () => ({ ok: true, json: () => new Promise(() => {}) }) as Response;
+  const transport: Transport = async () => new Response(new ReadableStream({pull(){return new Promise(()=>{});}}));
   expect(await lookup(transport, { timeoutMs: 5 })).toMatchObject({ code: "timeout" });
 });

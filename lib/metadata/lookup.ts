@@ -1,5 +1,6 @@
 import { safeExternalUrl } from "../urls";
-import type { Candidate, ContentType, FailureCode, ItemProjection, LookupFailure, LookupQuery, LookupResult, MetadataItem, MetadataProvider, ProviderIdentity, ProviderNamespace, SuggestionField } from "./types";
+import type { Candidate, ContentType, FailureCode, ItemProjection, LookupFailure, LookupQuery, LookupResult, MetadataItem, MetadataProvider, ProviderIdentity, ProviderNamespace, SuggestionField,ProviderPage } from "./types";
+import { youtubeThumbnail } from "./youtube-thumbnail";
 
 const failures: Record<FailureCode, [string, LookupFailure["retry"]]> = {
   invalid_query: ["Enter a supported title search or provider ID.", "never"],
@@ -42,7 +43,7 @@ function candidate(namespace: ProviderNamespace, raw: ItemProjection): Candidate
   const identity = providerIdentity(namespace, raw.externalId);
   if (!identity) return null;
   const uncertain = new Set(Array.isArray(raw.uncertainFields) ? raw.uncertainFields : []);
-  return { identity, title: uncertain.has("title") ? null : text(raw.title, 200), year: !uncertain.has("year") && typeof raw.year === "number" && Number.isInteger(raw.year) && raw.year >= 1 && raw.year <= 9999 ? raw.year : null, contentType: uncertain.has("contentType") ? null : contentType(namespace, raw.contentType), coverUrl: uncertain.has("coverUrl") ? null : publicUrl(raw.coverUrl) };
+  return { identity, title: uncertain.has("title") ? null : text(raw.title, 200), year: !uncertain.has("year") && typeof raw.year === "number" && Number.isInteger(raw.year) && raw.year >= 1 && raw.year <= 9999 ? raw.year : null, contentType: uncertain.has("contentType") ? null : contentType(namespace, raw.contentType), coverUrl: uncertain.has("coverUrl") ? null : namespace==="youtube"?youtubeThumbnail(raw.coverUrl):publicUrl(raw.coverUrl),...(namespace==="youtube"&&raw.channelTitle!==undefined?{channelTitle:text(raw.channelTitle,200)}:{}) };
 }
 function item(namespace: ProviderNamespace, raw: ItemProjection, now: Date): LookupResult {
   const base = candidate(namespace, raw);
@@ -85,6 +86,7 @@ function item(namespace: ProviderNamespace, raw: ItemProjection, now: Date): Loo
   if (base.year) acquiredFields.push("year");
   if (base.contentType) acquiredFields.push("contentType");
   if (validDuration) acquiredFields.push("duration");
+  if(base.channelTitle)acquiredFields.push("channelTitle");
   if (genres.length) acquiredFields.push("genres");
   for (const field of ["coverUrl", "sourceUrl", "watchUrl"] as const) if (urls[field]) acquiredFields.push(field);
   const refreshBy = new Date(now); refreshBy.setUTCDate(refreshBy.getUTCDate() + 30);
@@ -96,20 +98,28 @@ function item(namespace: ProviderNamespace, raw: ItemProjection, now: Date): Loo
 }
 
 /** Server orchestration boundary. Inject an adapter; this module performs no I/O or saves. */
-export async function lookupMetadata(provider: MetadataProvider, query: LookupQuery, context: { signal?: AbortSignal; now?: () => Date } = {}): Promise<LookupResult> {
+export async function lookupMetadata(provider: MetadataProvider, query: LookupQuery, context: { signal?: AbortSignal; now?: () => Date; onPage?:(navigation:ProviderPage)=>void } = {}): Promise<LookupResult> {
   try {
     if (provider.namespace !== "youtube" && provider.namespace !== "kinopoisk_unofficial") return lookupFailure("invalid_query");
     let safeQuery: LookupQuery;
     if (query.kind === "detail" && providerIdentity(provider.namespace, query.externalId)) safeQuery = { kind: "detail", externalId: query.externalId };
-    else if (query.kind === "search" && text(query.text, 200)) safeQuery = { kind: "search", text: text(query.text, 200)! };
+    else if (query.kind === "search" && text(query.text, 200) && (query.pageToken===undefined||(typeof query.pageToken==="string"&&query.pageToken.length>0&&query.pageToken.length<=1024&&!/[\p{Cc}\s]/u.test(query.pageToken)))) safeQuery = { kind: "search", text: text(query.text, 200)!,...(query.pageToken?{pageToken:query.pageToken}:{}) };
     else return lookupFailure("invalid_query");
     if (context.signal?.aborted) return lookupFailure("cancelled");
     const reply = await provider.lookup(safeQuery, { signal: context.signal });
     if (context.signal?.aborted) return lookupFailure("cancelled");
     if (reply.kind === "failure") return lookupFailure(reply.code, reply.retryAfterSeconds);
     if (reply.kind === "search" && safeQuery.kind === "search" && Array.isArray(reply.candidates)) {
+      if(provider.namespace==="youtube"&&reply.candidates.length>10)return lookupFailure("invalid_metadata");
+      const now=context.now?.()??new Date();if(!(now instanceof Date)||!Number.isFinite(now.getTime()))return lookupFailure("provider_error");
+      const navigation:ProviderPage={};for(const direction of ["next","previous"] as const){const token=reply.navigation?.[direction];if(typeof token==="string"&&token.length>0&&token.length<=1024&&!/[\p{Cc}\s]/u.test(token))navigation[direction]=token;}
+      context.onPage?.(navigation);
       if (!reply.candidates.length) return { kind: "no_match", candidates: [], manualFallback: true };
-      const candidates = reply.candidates.map(raw => candidate(provider.namespace, raw)).filter((value): value is Candidate => value !== null);
+      const candidates = reply.candidates.map(raw => {
+        if(provider.namespace!=="youtube")return candidate(provider.namespace,raw);
+        const normalized=item(provider.namespace,raw,now);if(normalized.kind!=="available"&&normalized.kind!=="incomplete")return null;
+        const value=normalized.item;return{identity:value.identity,title:value.title,year:value.year,contentType:value.contentType,coverUrl:value.coverUrl,channelTitle:value.channelTitle??null,duration:value.duration,manualFields:value.manualFields,provenance:value.provenance};
+      }).filter((value): value is Candidate => value !== null);
       return candidates.length ? { kind: "candidates", candidates, requiresSelection: true, omittedInvalidCandidates: candidates.length !== reply.candidates.length } : lookupFailure("invalid_metadata");
     }
     if (reply.kind !== "item" || safeQuery.kind !== "detail" || reply.item.externalId !== safeQuery.externalId) return lookupFailure("invalid_metadata");
