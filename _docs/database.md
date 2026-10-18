@@ -1,5 +1,7 @@
 # SQLite schema and migrations
 
+For an independent synthetic presentation database, use `pnpm demo:prepare`; see [demo data](demo-data.md) for owned paths, explicit reset, private invitation output and isolated checks. This does not change normal connection/init resolution or applied migration history.
+
 Issues: [#4](https://github.com/xiaodlb/watchnext/issues/4) supplies the schema; [#5](https://github.com/xiaodlb/watchnext/issues/5) supplies persistent local access. The foundation uses Node.js **24.15+ within 24.x**, TypeScript, built-in **`node:sqlite` / `DatabaseSync`**, and ordered SQL migrations. No ORM, driver, or dependency was added. Synchronous access suits this small local academic app; connections use a bounded five-second busy timeout. Node 24 strips the source TypeScript directly for CLI use. [Node SQLite documentation](https://nodejs.org/api/sqlite.html)
 
 ## Decisions and scope

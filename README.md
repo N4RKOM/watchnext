@@ -51,6 +51,8 @@ Dependencies use exact versions in `package.json`, with transitive versions capt
 
 ## Project documents
 
+For a separate synthetic presentation database, run `pnpm demo:prepare`. See [demo setup and exact scenarios](_docs/demo-data.md) for private invitation output, quoted startup commands and safe repeat/reset behavior. Normal user storage is not initialized or reset by this command.
+
 - [Project scope](_docs/plan.md)
 - [GitHub issue index](_docs/tasks.md)
 - [Work process](_docs/process.md)

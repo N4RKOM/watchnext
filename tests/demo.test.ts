@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { DatabaseSync } from "node:sqlite";
 import { copyFileSync, existsSync, linkSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { platform, tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { createIsolatedDemoRoot, demoPaths, ownerFile, testOwnerFile, validateOwnedDemo } from "../scripts/demo/paths.mjs";
@@ -68,7 +68,7 @@ it("actual ranker confirms documented exact order, mismatched fallback, catch-up
 }, 30000);
 it("normal/configured sentinel stays unchanged, and selecting the demo as normal storage is refused before reset", () => {
   const normal = join(root, "ordinary app with spaces.sqlite"); read(normal, db => db.exec("CREATE TABLE sentinel(value TEXT); INSERT INTO sentinel VALUES ('normal untouched')")); const bytes = readFileSync(normal);
-  const normalDefault = resolveDatabasePath(options().environment); mkdirSync(dirname(normalDefault), { recursive: true }); read(normalDefault, db => db.exec("CREATE TABLE sentinel(value TEXT); INSERT INTO sentinel VALUES ('default untouched')")); const defaultBytes = readFileSync(normalDefault);
+  const normalDefault = resolveDatabasePath(options().environment, process.cwd(), platform(), root); mkdirSync(dirname(normalDefault), { recursive: true }); read(normalDefault, db => db.exec("CREATE TABLE sentinel(value TEXT); INSERT INTO sentinel VALUES ('default untouched')")); const defaultBytes = readFileSync(normalDefault);
   const prepared = prepareDemo({ ...options(), environment: { ...options().environment, WATCHNEXT_DATABASE_PATH: normal } }); expect(readFileSync(normal).equals(bytes)).toBe(true);
   const before = readFileSync(prepared.path); expect(() => prepareDemo({ ...options(), reset: true, environment: { ...options().environment, WATCHNEXT_DATABASE_PATH: prepared.path } })).toThrow(); expect(readFileSync(prepared.path).equals(before)).toBe(true); expect(readFileSync(normal).equals(bytes)).toBe(true); expect(readFileSync(normalDefault).equals(defaultBytes)).toBe(true);
 }, 30000);
