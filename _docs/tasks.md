@@ -1,8 +1,8 @@
 # WatchNext backlog
 
-## Planned enhancement — implementation not started
+## Authorized enhancement — sequential implementation
 
-The user requested issues and clarification only. Read [the scope/explicit choices/defaults](account-discovery-enhancement.md). Do not start a new implementation run until separately requested. All ten issues are open/unimplemented; follow this order and each issue's dependencies:
+After the planning-only phase the user explicitly requested implementation of the remaining GitHub issues. Read [the scope/explicit choices/defaults and authorization](account-discovery-enhancement.md). Refresh PM grooming, then Engineer/independent QA one issue at a time; live issue state is authoritative. Follow this order and each issue's dependencies:
 
 1. [#31 Account and membership storage; legacy separation](https://github.com/xiaodlb/watchnext/issues/31)
 2. [#32 Registration, login, logout and sessions](https://github.com/xiaodlb/watchnext/issues/32)

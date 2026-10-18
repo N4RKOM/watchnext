@@ -2,7 +2,7 @@
 - Read the acceptance criteria before starting and before closing
 - Commit regularly
 
-Planning-only requests stop after PM documents and issues. Creating a groomed issue does not start the Engineer/QA lifecycle. The October 18 enhancement (#31–#40) is explicitly planning only; prior authorization for the completed #1–#30 run does not carry over to implementation of these issues. See `_docs/account-discovery-enhancement.md`.
+Planning-only requests stop after PM documents and issues. Creating a groomed issue does not start the Engineer/QA lifecycle. After that phase, the user explicitly authorized the October 18 enhancement (#31–#40): “выполни оставшиеся ишшюс на гитхабе” (implement the remaining GitHub issues). Refresh PM grooming and implement sequentially through the lifecycle below; closure requires fresh independent QA PASS. This supersedes the earlier planning pause, not the feature boundaries. See `_docs/account-discovery-enhancement.md`.
 
 ## Roles
 

@@ -1,8 +1,8 @@
-# Planned account and discovery enhancement
+# Account and discovery enhancement
 
-Date: October 18, 2026. Status: **planning only; not implemented**.
+Date: October 18, 2026. Status: **authorized for sequential implementation; delivery tracked by live issues**.
 
-The user requested clarification and groomed GitHub issues, explicitly postponing implementation. Original issues #1–#30 describe the completed legacy release. Their earlier backlog authorization does not start this enhancement. No Engineer/QA implementation run, database migration, server restart or application change is authorized by creating these issues. A later implementation request starts the normal PM → Engineer → independent QA process.
+The initial clarification/issues-only phase is complete. The user then explicitly said “выполни оставшиеся ишшюс на гитхабе” (implement the remaining GitHub issues), authorizing #31–#40 through sequential PM → Engineer → independent QA. This supersedes the planning pause and earlier planning-only issue comments/constraints. Each issue is refreshed before implementation and closed only after fresh QA PASS. Original #1–#30 remain the completed legacy release. Authorization does not imply any enhancement is already delivered and does not permit interrupting the user's server or migrating normal data for verification.
 
 This document supersedes first-release no-account restrictions **for the planned new authenticated mode only**. Current legacy behavior and the dated first-release completion audit remain historical/current-release evidence, not claims that this enhancement already works.
 
@@ -44,7 +44,7 @@ These are bounded project-fit choices under existing delegated authority. They m
 
 ## Delivery order and boundaries
 
-Each issue uses the four-section template and remains open/unimplemented. Later issues consume the named contracts; creating them does not authorize a backlog run.
+Each issue uses the four-section template. The newly authorized backlog run follows the order below; later issues consume the named contracts. Live issue state and fresh QA evidence determine delivery, not this index.
 
 | Order | Issue | Prerequisites |
 | --- | --- | --- |
@@ -87,8 +87,8 @@ Provider keys remain optional for manual operation, server-only and never inspec
 
 ## Future verification and preservation
 
-The application has not changed in this phase. Future implementation must use temporary DBs and isolated production-browser fixtures with outbound-provider mocks; no keys, purchases, live API dependency, normal-data initialization or hidden test bypasses. Verify 375px/1280px keyboard flows, direct forged/stale/revoked access, races/rollback, restart/backup state and legacy-value preservation.
+Implementation is now authorized but this PM authorization update changes documentation only. Each implementation must use temporary DBs and isolated production-browser fixtures with outbound-provider mocks; no keys, purchases, live API dependency, normal-data initialization or hidden test bypasses. Verify 375px/1280px keyboard flows, direct forged/stale/revoked access, races/rollback, restart/backup state and legacy-value preservation.
 
 Do not stop/restart the user's running development server, revert their existing next-env.d.ts, or write the same .next output while it is active. Use a separate owned checkout/build output and serial resource-bounded runs. Current Next build uses a two-worker CPU cap; Vitest does not have a configured automatic worker cap. Optional explicit test concurrency under resource pressure must not skip/weaken tests.
 
-The future #40 audit must name actual commands/results and map all twelve explicit requirements. The old completion audit covers only the legacy release. New issue comments currently record PM planning handoff, not engineering completion or QA PASS.
+The future #40 audit must name actual commands/results and map all twelve explicit requirements. The old completion audit covers only the legacy release. Earlier planning comments are historical; later PM/Engineer/QA comments record the authorized run without implying completion before verification.
