@@ -29,6 +29,15 @@ it("bounds and validates body, fields and content type including non-text values
     const response = await call("register", request(body)); expect(response.status).toBe(400); expect(await response.text()).not.toContain(password);
   }
 });
+it("cancels a stalled body after ten seconds even if its first chunk looked like valid JSON", async () => {
+  vi.useFakeTimers();
+  try {
+    const stream = new ReadableStream({ start(controller) { controller.enqueue(new TextEncoder().encode("{}")); } });
+    const req = new Request(origin, { method: "POST", headers: { "content-type": "application/json" }, body: stream, duplex: "half" } as RequestInit);
+    const rejected = expect(accountBody(req, "logout")).rejects.toThrow(/too long/);
+    await vi.advanceTimersByTimeAsync(10001); await rejected;
+  } finally { vi.useRealTimers(); }
+});
 it("returns a private once-only recovery view with secure browser-session cookie and safe login/logout", async () => {
   vi.stubEnv("WATCHNEXT_APP_ORIGIN", "https://watch.example");
   const req = (body: unknown, cookie?: string) => request(body, { origin: "https://watch.example", ...(cookie ? { cookie } : {}) });

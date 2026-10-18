@@ -79,6 +79,10 @@ The additive foundation is documented in [database.md](database.md#additive-acco
 
 Invite generation starts at 1; removal records the generation that bars old invitations, and reactivation requires a newer generation on the same membership. Group generations cannot decrease. SQL rejects cross-mode legacy sessions/account memberships and wrong-group member mappings. Actual token issuance, membership authorization, rotation and viewer filtering stay #34/#35. Existing groups remain legacy; no account creation, name matching, history claiming or conversion occurs during migration. These are reasoned implementation choices under delegated authority, not additional explicit user answers.
 
+## Account credential implementation contract — issue #32
+
+See [the actual API/security contract](api.md#account-registration-login-and-logout--issue-32). #32 uses the groomed exact scrypt defaults with native asynchronous work, a process-shared 2-active/8-waiting pool, 30-second queue deadline, bounded 15-minute attempt maps, one-time registration recovery reveal and separate seven-day hashed account sessions. Additional bounded delegated choices are a 4096-byte/ten-second JSON body limit, 2048-key throttle capacity, signup total admission of thirty attempts per window, fixed local navigation targets and clearing secret fields/recovery state on departure. These suit the local academic deployment and preserve legacy entry; they are not additional individual user answers or distributed-security claims. Reset remains #33 and live account-group authority #34; no password or code can claim an old profile.
+
 ## Provider evidence and limits
 
 Primary material inspected October 18, 2026:

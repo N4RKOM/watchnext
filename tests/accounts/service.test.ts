@@ -63,3 +63,13 @@ it("validates missing/confirmation/oversized values before writes and safely rej
   db.exec("UPDATE accounts SET password_n=16384");
   await expect(loginAccount(db, { username: "Validation.User", password })).rejects.toThrow("Username or password is incorrect.");
 });
+it("reserves at most five failed valid-name login attempts before expensive work and releases the window on success", async () => {
+  const key = "throttle.user"; security.login.clear(key);
+  await registerAccount(db, fields("Throttle.User"));
+  for (let i = 0; i < 5; i++) await expect(loginAccount(db, { username: "Throttle.User", password: "Wrong password value" })).rejects.toThrow("Username or password is incorrect.");
+  await expect(loginAccount(db, { username: "THROTTLE.USER", password })).rejects.toThrow(/15 minutes/);
+  security.login.clear(key);
+  await loginAccount(db, { username: "Throttle.User", password });
+  for (let i = 0; i < 5; i++) security.login.take(key);
+  expect(() => security.login.take(key)).toThrow(); security.login.clear(key);
+});
