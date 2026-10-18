@@ -1,5 +1,9 @@
 # Server operations
 
+## Planned account/discovery contract — not implemented
+
+The [enhancement scope](account-discovery-enhancement.md) and issues #31–#40 define future account credential/recovery sessions, account-owned group memberships, live removal/invite generations, provider candidate pagination/autofill/previews and Added by me. Current operations below describe the legacy release. A legacy group cookie/profile selector must never authorize an account-group own write. Account groups start fresh; no profile claiming or history reassignment. Server reviews remain account/membership/group-bound and field provenance/expiry stay enforced. All/Mine queries derive current membership server-side. No planned route or payload is claimed delivered until its owning issue passes independent QA; no application code is changed by this documentation.
+
 This document describes delivered application boundaries. Read it before changing behavior. Next.js Server Actions supply the server interface; generated IDs/multipart transport are not a stable public API. Setup, private backup/deadline handling and requirement evidence are linked in [local setup](local-setup.md), [backup/restore](backup-restore.md) and [completion audit](completion-audit.md). Historical increment boundaries below identify module ownership, not unfinished current features.
 
 ## Pick again/exhaustion — issue #27

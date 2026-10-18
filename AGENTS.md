@@ -29,6 +29,8 @@ The user approved the initial Next.js, React, TypeScript, type definitions, Vite
 
 ## Project context
 
+The October 18 account/discovery enhancement is **planned only**, following the user's explicit instruction to clarify and create issues without implementing. Read `_docs/account-discovery-enhancement.md` and issues #31–#40. Earlier backlog-run authorization covered #1–#30 and does not start these new tasks. New authenticated groups supersede the first-release no-account restriction only when separately implemented; legacy groups stay separate with no claiming/migration. Do not launch Engineer/QA implementation from these planning issues alone. Preserve the user's running dev server and existing `next-env.d.ts` changes.
+
 WatchNext is an academic web app that helps couples and friends choose something from their shared saved watchlist. The stack is Next.js, TypeScript and SQLite, served locally at configured `http://127.0.0.1:3000` by default. First-release feature implementation and verification are mapped in `_docs/completion-audit.md`; live issue QA/closure remains authoritative. Do not treat old task delivery boundaries as unimplemented features or reopen resolved delegated decisions.
 
 - Product requirements: `_docs/plan.md`.
@@ -38,6 +40,8 @@ WatchNext is an academic web app that helps couples and friends choose something
 - Task descriptions and live task state: GitHub issues linked from the backlog index.
 
 ## Documents
+
+- `_docs/account-discovery-enhancement.md` - planned account/multi-group/autofill/preview requirements, explicit answers versus engineering defaults, issue order, and preservation constraints; not a delivered-feature claim.
 
 - `_docs/process.md` - how work is organized.
 - `_docs/plan.md` - agreed product scope and unresolved decisions.

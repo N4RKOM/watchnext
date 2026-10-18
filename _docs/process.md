@@ -2,6 +2,8 @@
 - Read the acceptance criteria before starting and before closing
 - Commit regularly
 
+Planning-only requests stop after PM documents and issues. Creating a groomed issue does not start the Engineer/QA lifecycle. The October 18 enhancement (#31–#40) is explicitly planning only; prior authorization for the completed #1–#30 run does not carry over to implementation of these issues. See `_docs/account-discovery-enhancement.md`.
+
 ## Roles
 
 - PM - grooms a task before anyone implements it, follows _docs/team/pm.md

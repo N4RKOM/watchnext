@@ -1,5 +1,9 @@
 # WatchNext — Project Scope
 
+## Planned enhancement — October 18, 2026
+
+Original issues #1–#30 are complete. The user subsequently clarified real accounts, multi-group membership, creator controls, recovery codes, provider autofill/previews and Added by me, then explicitly requested **groomed issues only, no implementation**. The authoritative new scope is [account-discovery-enhancement.md](account-discovery-enhancement.md), with open planned issues #31–#40 in [tasks.md](tasks.md). It distinguishes twelve explicit answers from reasoned defaults. Earlier no-account decisions remain the legacy-release contract; new account groups start fresh without claiming/migrating legacy profiles or history. The earlier backlog authorization does not authorize starting this enhancement. The historical scope below and completion audit do not imply the new features are delivered.
+
 Date: October 15, 2026
 Status updated October 18, 2026: first-release features are implemented through #29; #30 supplies final setup/backup/document reconciliation and its own independent verification. [The completion audit](completion-audit.md) maps requirements and evidence; linked live issues remain authoritative for QA/closure. Historical planning rationale is retained below, without reopening resolved explicit/delegated decisions.
 
