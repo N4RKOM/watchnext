@@ -10,7 +10,7 @@ export function pnpmChild(args, cwd, env, collect) {
 export async function stopOwned(child) {
   if (!child || !child.pid || child.exitCode !== null || child.signalCode !== null) return;
   const ended = new Promise(done => child.once("exit", done));
-  if (platform() === "win32") await execute("taskkill.exe", ["/PID", String(child.pid), "/T", "/F"], { windowsHide: true, timeout: 15000 }).catch(() => { if (child.exitCode === null) throw new Error("Owned verification process tree could not stop"); });
+  if (platform() === "win32") await execute("taskkill.exe", ["/PID", String(child.pid), "/T", "/F"], { windowsHide: true, timeout: 15000 }).catch(() => { if (child.exitCode === null && child.signalCode === null) throw new Error("Owned verification process tree could not stop"); });
   else process.kill(-child.pid, "SIGTERM");
   let timer; try { await Promise.race([ended, new Promise((_, fail) => { timer = setTimeout(() => fail(new Error("Owned process shutdown exceeded 15 seconds")), 15000); })]); } finally { clearTimeout(timer); }
 }
