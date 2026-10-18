@@ -92,4 +92,3 @@ The application has not changed in this phase. Future implementation must use te
 Do not stop/restart the user's running development server, revert their existing next-env.d.ts, or write the same .next output while it is active. Use a separate owned checkout/build output and serial resource-bounded runs. Current Next build uses a two-worker CPU cap; Vitest does not have a configured automatic worker cap. Optional explicit test concurrency under resource pressure must not skip/weaken tests.
 
 The future #40 audit must name actual commands/results and map all twelve explicit requirements. The old completion audit covers only the legacy release. New issue comments currently record PM planning handoff, not engineering completion or QA PASS.
-
