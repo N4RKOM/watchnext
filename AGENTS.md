@@ -14,6 +14,8 @@
 - `pnpm db:verify` - run isolated SQLite migration and constraint acceptance checks
 - `pnpm db:init` - explicitly initialize/migrate the configured normal local database (not a test command)
 - `pnpm db:verify:persistence` - verify fresh-process persistence using isolated temporary files
+- `pnpm db:snapshot '<absolute source>' '<new absolute destination>'` - explicit private SQLite-consistent snapshot/restore; read `_docs/backup-restore.md`, never overwrite an existing destination
+- `pnpm db:verify:backup` - isolated WAL-aware snapshot/restore/expiry verification; never uses normal/demo storage
 - `pnpm start` - serve the production build locally
 
 Use Node.js 24.15.0 or newer within the 24.x release line and pnpm 11.25.0. This is a Next.js and TypeScript project; Python/uv/pytest commands do not apply.
@@ -26,7 +28,7 @@ The user approved the initial Next.js, React, TypeScript, type definitions, Vite
 
 ## Project context
 
-WatchNext is an academic web app that helps couples and friends choose something from their shared saved watchlist. The selected stack is Next.js, TypeScript, and SQLite, initially running locally at `http://localhost:3000`.
+WatchNext is an academic web app that helps couples and friends choose something from their shared saved watchlist. The stack is Next.js, TypeScript and SQLite, served locally at configured `http://127.0.0.1:3000` by default. First-release feature implementation and verification are mapped in `_docs/completion-audit.md`; live issue QA/closure remains authoritative. Do not treat old task delivery boundaries as unimplemented features or reopen resolved delegated decisions.
 
 - Product requirements: `_docs/plan.md`.
 - Work process: `_docs/process.md`.
@@ -40,6 +42,9 @@ WatchNext is an academic web app that helps couples and friends choose something
 - `_docs/plan.md` - agreed product scope and unresolved decisions.
 - `_docs/tasks.md` - links to the GitHub backlog issues.
 - `_docs/database.md` - SQLite schema, migrations, validation boundaries, and isolated verification commands.
+- `_docs/local-setup.md` - actual install/init/dev/production operation and troubleshooting.
+- `_docs/backup-restore.md` - explicit private WAL-safe snapshots and separate restore/deadline handling.
+- `_docs/completion-audit.md` - dated requirement/backlog evidence and verification limits.
 - `_docs/metadata-lifecycle.md` - trusted review/save, field origins, nullable metadata and refresh/expiry; read before touching metadata consumers.
 - Before grooming an issue, read `_docs/team/pm.md` and `_docs/task-template.md`.
 - Before implementing a groomed issue, read `_docs/team/software-engineer.md`.

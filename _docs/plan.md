@@ -1,7 +1,7 @@
 # WatchNext — Project Scope
 
 Date: October 15, 2026
-Status: Issue #1 provides the empty Next.js project and its first test. Issue #2 records approved behavior, proposed edge-case decisions, and unresolved integration questions in [decisions.md](decisions.md). Product features remain in the backlog.
+Status updated October 18, 2026: first-release features are implemented through #29; #30 supplies final setup/backup/document reconciliation and its own independent verification. [The completion audit](completion-audit.md) maps requirements and evidence; linked live issues remain authoritative for QA/closure. Historical planning rationale is retained below, without reopening resolved explicit/delegated decisions.
 
 ## Concept
 
@@ -60,7 +60,7 @@ Entries include a title or link, content type, duration, genre, and mood. Manual
 - Кинопоиск as the second database for title lookup and details.
 - Users can enter or correct details manually.
 
-The [metadata provider research](metadata-providers.md) records the documented routes: official YouTube Data API v3 and the third-party Kinopoisk API Unofficial service. Both are documented but not live-tested; credentials, actual access allowances, uncertain runtime semantics, and image permissions still require verification in the linked implementation tasks. This research does not claim official Кинопоиск API access. Support for automatic metadata from every streaming service is outside the agreed first release.
+The [metadata provider research](metadata-providers.md) records official YouTube Data API v3 and third-party Kinopoisk API Unofficial routes. Adapters and real lookup/review/save are implemented and verified with synthetic outbound responses. Actual credentials/account allowances, Kinopoisk runtime units and external image/persistence rights remain unverified live; missing evidence is disclosed rather than blocking delivered manual/local-academic workflows. See [lifecycle policy](metadata-lifecycle.md) and U01. This does not claim official Кинопоиск API access or automatic metadata from every streaming service.
 
 ### Moods and genres
 
@@ -150,7 +150,7 @@ Delegated D19–D20 (#25) return only one tier: exact mood-and-time fits first; 
 - Content opens through an external link.
 - Embedded YouTube playback is outside the first-release scope.
 - External viewing does not imply automatic progress synchronization.
-- Delegated D26 in issue #12 permits missing links (No viewing link saved), accepts only safe HTTP/HTTPS destinations, and labels series/anime destinations Open series without inventing an episode-specific URL. Contributor edit actions remain #14; picker eligibility remains #26.
+- Delegated D26 permits missing links, safe HTTP/HTTPS external destinations and series-level links without invented episode URLs. Details, contributor editing and guarded picker integration are delivered in #12/#14/#26.
 - Delegated D28 in issue #12 keeps group-authorized archived detail readable with an Archived banner and preserved history. Issue #15 adds real archive/detail restore actions and confirmed manual/trusted-provider restore-by-saving, retaining the same title identity and every member history value. Removing the final own contribution archives rather than deletes. These choices use the recorded autonomy directive, not a separate explicit user answer; rationale/examples remain in [decisions.md](decisions.md).
 
 ## Ratings and notes
@@ -197,10 +197,10 @@ Anna saves a title, then Max saves the same title. There is one entry listing bo
 - Framework: Next.js for the web interface and server logic.
 - Language: TypeScript.
 - Database: SQLite, stored locally and accessed through the application server.
-- Initial hosting: run locally on the demonstration computer, with a planned address of `http://localhost:3000`.
+- Hosting: local demonstration computer, bound to 127.0.0.1; configured/browser origin defaults to `http://127.0.0.1:3000`. Alternate aliases/ports must match exactly as described in [setup](local-setup.md).
 - Public hosting is not required for the initial setup. Any later online deployment will need hosting that supports persistent SQLite storage or a separate database strategy.
 - YouTube and Кинопоиск lookups require internet access; manual entries and existing local data do not depend on those lookup services.
-- Initial package versions are recorded in `package.json` and `pnpm-lock.yaml`; use Node.js 24 LTS and pnpm. Issue #4 selects built-in `node:sqlite` with plain versioned SQL migrations; see [the database guide](database.md). Styling tools remain undecided.
+- Exact package versions/lockfile are committed; use Node24.15+ within24.x and pnpm11.25.0. Built-in `node:sqlite`, versioned SQL and plain shared CSS are implemented; no ORM/styling framework is needed. Playwright is a pinned development-only browser dependency. See [database](database.md), [design](design-system.md) and [testing](testing-guidelines.md).
 
 The user authorized the backlog run on October 15, 2026. During that run, the user directed: “do not ask me.do all by yourself with the answers that you do will be best suitble”. This authorizes agents to choose suitable remaining product defaults and necessary dependencies without further approval questions within the agreed academic-project scope; it does not authorize purchases or unrelated scope expansion. D01 and D02 were explicitly approved separately. Record the rationale and source when resolving other proposed decisions before relying on them; this authorization does not silently change every untouched proposal's status.
 
@@ -210,16 +210,12 @@ Read [the first-release decision record](decisions.md) before implementing edge-
 
 [Issue #4](https://github.com/xiaodlb/watchnext/issues/4) records the [schema-affecting resolutions](decisions.md#schema-affecting-approval-gate) before implementing those contracts. Each entry retains its rationale/example and distinguishes explicit approval from delegated resolution. Historical approval questions are not requests to ask again. Follow the relevant issue prerequisite links to its decision IDs.
 
-## Remaining decisions before implementation
+## Implemented choices and remaining external verification
 
-- Complete the authenticated and field-semantics verification linked from [metadata provider research](metadata-providers.md); both documented provider routes remain untested with credentials.
-- Implement the resolved fixed moods, genre handling, manual timestamps/completion, next-episode semantics, numbering boundaries, and duplicate identity rules in their owning feature tasks; issue #4 supplies storage only.
-- Ranking ties/fallback tolerance are resolved in D18–D20/#25, and explicit cycle exhaustion/reset in D21–D22/#27 under delegated authority.
-- Implement the resolved title-level integer ratings and plain-text notes in their owning tasks.
-- Define external-link handling for individual episodes and entries without playable links.
-- Implement the resolved profile validation/session/group-switching contracts; invitation workflows remain in their owning tasks.
-- Design screens and layout.
-- Choose styling tools when required by their backlog tasks. Database access uses built-in `node:sqlite`, with normal connection lifecycle implemented in #5.
+- Authenticated provider availability/allowances and external runtime/rights questions remain disclosed in U01; no credentialed live verification is claimed.
+- Fixed moods/genres, duplicate/shared identities, both progress styles, independent completion, ratings/notes, archive/restore and missing-safe-link behavior are implemented in their owning completed feature increments.
+- D18–D22 ranking/fallback/cycle choices, profile/session/group guards and responsive plain-CSS screens are implemented and tested. Explicit versus delegated decision sources remain recorded.
+- See [the completion audit](completion-audit.md) for source/tests rather than treating this historical planning list as an unimplemented backlog.
 
 ## First-release completion checklist
 
@@ -237,7 +233,7 @@ Read [the first-release decision record](decisions.md) before implementing edge-
 - Individual 1–10 ratings and notes are visible to the group.
 - Stored group data and history persist between visits.
 
-This document records the agreed product scope. Items explicitly marked undecided are open questions, not finalized requirements.
+This document records the agreed scope. U01 remains an external live-verification limit; implemented core behavior is not silently deferred. Mixed sessions/playback/accounts/public hosting remain intentional scope boundaries.
 ## Delegated metadata integration choices — issue #19
 
 Under the October 15, 2026 autonomy directive recorded above, #19 adopts short-lived (10-minute, group/member/session-bound) server review snapshots, explicit proposal replacement, atomic shared-save provenance, per-field provider/user ownership and genuinely nullable expired imported metadata. Unchanged prefill remains provider-owned; independent user corrections/history are preserved. This is delegated implementation/product judgment, not individually explicit user approval.
@@ -248,4 +244,4 @@ The PM clarified [compatible NULL-type recovery](https://github.com/xiaodlb/watc
 
 ## Eligibility precedence delivered in issue #24
 
-Under the October 15 delegated authority, D06 Unknown blocking applies only to unfinished viewers. Completed viewers need no retained episode: rewatches off excludes them; on follows the least advanced known unfinished position, or restarts at episode 1 when everyone finished. Unfinished Unknown still blocks in both settings. This preserves independent completion and never writes progress. See [the pure eligibility contract and truth table](eligibility.md); ranking, time/mood fallback and picking UI remain issues #25–#27.
+Under the October 15 delegated authority, D06 Unknown blocking applies only to unfinished viewers. Completed viewers need no retained episode: rewatches off excludes them; on follows the least advanced known unfinished position, or restarts at episode 1 when everyone finished. Unfinished Unknown still blocks in both settings. This preserves independent completion and never writes progress. See [eligibility](eligibility.md); delivered #25–#27 ranking/fallback/UI/cycles consume this contract.
