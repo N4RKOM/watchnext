@@ -6,7 +6,7 @@ Verified against public provider documentation on **October 15, 2026** for [issu
 
 | Source | Exact route | Verification result |
 | --- | --- | --- |
-| YouTube | Google's official YouTube Data API **v3**, `videos.list` by extracted video ID | **Documented but not live-tested**: public documentation supports the required route; no project API key was provided or tested. |
+| YouTube | Google's official YouTube Data API **v3**, direct `videos.list` by extracted video ID; #36 adds explicit `search.list` title pages and batched `videos.list` enrichment | **Documented but not live-tested**: public documentation and offline fixtures support these routes; no project API key was inspected or tested. |
 | Кинопоиск metadata | **Kinopoisk API Unofficial**, `kinopoiskapiunofficial.tech`, OpenAPI document version **2.0.1**, `/api/v2.2/films` search and `/api/v2.2/films/{id}` details | **Documented but not live-tested**: a concrete third-party route exists; token access, current account allowance, runtime semantics, and image-use terms still need verification. |
 | Official Кинопоиск API | No official public metadata developer route established by this research | **Unavailable to this project**: no official API contract or access grant was found. This does not prove that private partner APIs do not exist. The third-party service must never be described as official. |
 
@@ -20,10 +20,11 @@ Lookup request shape, with the credential deliberately omitted:
 
 ```text
 GET https://www.googleapis.com/youtube/v3/videos
-    ?part=snippet,contentDetails,status&id=<VIDEO_ID>&key=<REDACTED>
+    ?part=snippet,contentDetails,status,liveStreamingDetails&id=<VIDEO_ID>
+X-Goog-Api-Key: <REDACTED>
 ```
 
-`videos.list` costs one quota unit. Google's overview currently documents a default 10,000-unit daily pool for endpoints other than the separate search/upload allocations; this project needs ID lookup, not keyword search. Requests, including invalid ones, consume quota. Check the actual project allocation before use. Treat this as a quota-based access route, not a paid-per-lookup plan: the cited setup documents require no purchase for this route and publish no per-request currency price. Additional quota follows Google's request/audit process, not an assumed paid upgrade. [Method](https://developers.google.com/youtube/v3/docs/videos/list), [quota overview](https://developers.google.com/youtube/v3/getting-started#quota), [quota extensions](https://developers.google.com/youtube/v3/guides/quota_and_compliance_audits)
+`videos.list` costs one quota unit. Google's overview currently documents a default 10,000-unit daily pool for endpoints other than the separate search/upload allocations; the initial #3 research covered ID lookup, while #36 title-search allocation is documented below. Requests, including invalid ones, consume quota. Check the actual project allocation before use. Treat this as a quota-based access route, not a paid-per-lookup plan: the cited setup documents require no purchase for this route and publish no per-request currency price. Additional quota follows Google's request/audit process, not an assumed paid upgrade. [Method](https://developers.google.com/youtube/v3/docs/videos/list), [quota overview](https://developers.google.com/youtube/v3/getting-started#quota), [quota extensions](https://developers.google.com/youtube/v3/guides/quota_and_compliance_audits)
 
 Imported public API metadata is non-authorized API data: Google's policy requires refresh or deletion within 30 calendar days. Future implementation must distinguish imported snapshots from user-authored notes/progress, refresh or clear expired provider fields, and keep manual entry usable offline. Do not download audiovisual media or treat metadata access as playback permission. [Developer policies, particularly III.E](https://developers.google.com/youtube/terms/developer-policies)
 
@@ -173,3 +174,7 @@ No source is labeled verified usable without an authenticated result. These outs
 See [metadata-contract.md](metadata-contract.md) for the #16 normalized projections, safe failures, synthetic fixture coverage and review/persistence handoff. These tests verify interface behavior only; actual provider availability, runtime semantics and rights remain unverified until the corresponding adapter work. No provider becomes authenticated or usable because a synthetic fixture passes.
 
 The [#18 Unofficial adapter](kinopoisk-adapter.md) records the October 16 OpenAPI 2.0.1 recheck and implemented search/detail transport with synthetic tests. Endpoint/header/status contracts follow public documentation. Runtime units, account allowances and external cover/persistence rights remain unverified. Runtime stays manual and covers absent. Delivered [#19 lifecycle](metadata-lifecycle.md) records the delegated local academic text-snapshot policy with a real app-chosen 30-day refresh/delete deadline; uncertainty is not an invented permanent save ban or verified-license claim.
+
+## YouTube discovery update — October 19 / issue #36
+
+The implemented route now also supports explicit title search through official search.list plus one videos.list enrichment batch per page, as documented in [discovery](youtube-discovery.md) and [adapter](youtube-adapter.md). Current primary [search](https://developers.google.com/youtube/data/reference/rest/v3/search/list) and [quota overview](https://developers.google.com/youtube/data/determine_quota_cost) publish a separate default 100 search calls/day at one/search; [videos.list](https://developers.google.com/youtube/data/reference/rest/v3/videos/list) costs one unit, and additional explicit pages incur another search call. Actual project entitlement remains unverified. No keys were inspected or live requests made; manual fallback remains independent. The original #3 research below/above is historical, with current behavior specified by the linked adapter. API keys are header-only in implementation, never query parameters.

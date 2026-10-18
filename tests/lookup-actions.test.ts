@@ -13,7 +13,7 @@ vi.mock("../lib/access", () => ({ getGroupRequest: async () => request }));
 vi.mock("../lib/metadata/providers", () => ({ configuredMetadataProviders: () => providers }));
 vi.mock("next/navigation", () => ({ redirect: (path: string) => { throw new Error("REDIRECT:" + path); } }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-import { lookupTitleAction, selectCandidateAction } from "../app/watchlist/add/lookup-actions";
+import { lookupTitleAction, selectCandidateAction,pageCandidatesAction } from "../app/watchlist/add/lookup-actions";
 import { saveTitleAction } from "../app/watchlist/add/actions";
 import { refreshMetadataAction } from "../app/watchlist/refresh-actions";
 const form = (values: Record<string, string>) => { const result = new FormData(); for (const [key, value] of Object.entries(values)) result.set(key, value); return result; };
@@ -49,4 +49,11 @@ it("review validation errors preserve the snapshot for retry and expose useful f
 });
 it("refresh action rejects unknown record ownership before provider access", async () => {
   expect(await refreshMetadataAction(undefined, "not-in-this-group", { kind: "idle" }, new FormData())).toMatchObject({ kind: "error" }); expect(calls).toBe(0);
+});
+it("explicit title/page action contract forwards only server-owned pages and allows contained YouTube selection",async()=>{
+  const queries:unknown[]=[];providers.youtube={namespace:"youtube",async lookup(query){queries.push(query);return query.kind==="search"?{kind:"search",candidates:[{externalId:"YtFixture01",title:"Synthetic candidate",channelTitle:"Synthetic channel",contentType:"youtube",duration:{seconds:120,meaning:"full_item",verified:true}}],navigation:{next:"RAW_PROVIDER_PAGE"}}:{kind:"item",item:{externalId:query.externalId,title:"Selected fresh detail",contentType:"youtube",duration:{seconds:120,meaning:"full_item",verified:true}}};}};
+  const initial=await lookupTitleAction(undefined,form({source:"youtube",queryKind:"title",query:"Funny title"}));expect(initial.kind).toBe("candidates");expect(queries[0]).toEqual({kind:"search",text:"Funny title"});expect(JSON.stringify(initial).includes("RAW_PROVIDER_PAGE")).toBe(false);
+  const page=await pageCandidatesAction(undefined,form({handle:initial.page!.next!,direction:"next"}));expect(page.page?.number).toBe(2);expect(queries[1]).toEqual({kind:"search",text:"Funny title",pageToken:"RAW_PROVIDER_PAGE"});
+  expect(await selectCandidateAction(undefined,form({handle:page.handle!,candidateId:"YtFixture01"}))).toMatchObject({kind:"available",item:{title:"Selected fresh detail"}});
+  const count=queries.length;expect(await pageCandidatesAction(undefined,form({handle:"RAW_PROVIDER_PAGE",direction:"next"}))).toMatchObject({kind:"failure"});expect(await lookupTitleAction(undefined,form({source:"youtube",queryKind:"arbitrary",query:"Title"}))).toMatchObject({kind:"failure"});expect(queries).toHaveLength(count);
 });

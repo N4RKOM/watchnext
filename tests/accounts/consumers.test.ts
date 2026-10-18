@@ -18,7 +18,9 @@ import { readOwnEpisodeProgress, updateEpisodeProgress } from "../../lib/episode
 import { readOwnRating, updateOwnRating } from "../../lib/ratings";
 import { readOwnNote, updateOwnNote } from "../../lib/notes";
 import { readPickerPage, pickFromForm } from "../../lib/picker/server";
-import { beginReview, saveReview, selectReviewCandidate, refreshTitleMetadata, type Providers } from "../../lib/metadata/reviews";
+import { beginReview, saveReview, selectReviewCandidate, refreshTitleMetadata,pageReview, type Providers } from "../../lib/metadata/reviews";
+import { youtubeProvider } from "../../lib/metadata/youtube-transport";
+import { removeParticipant,rotateGroupInvite } from "../../lib/accounts/management";
 let db: DatabaseSync, a:string,b:string,c:string,g1:string,g2:string,movie:string,series:string,foreign:string;
 const origin="https://watch.example", password="Synthetic account password";
 function req(token=a) { const request=new Request(origin,{method:"POST",headers:{origin,cookie:`${accountCookieName}=${token}; watchnext_access_mode=account`}});try {request.headers.set("x-watchnext-context",requestContext(db,request).contextKey);}catch{} return request; }
@@ -143,4 +145,19 @@ it("pending provider results stay invalid after switching away, including away a
     release(await provider.lookup({kind:"detail",externalId:"YtFixture01"},{}));expect(await outcome).toBe("denied");
     expect(db.prepare("SELECT count(*) AS n FROM metadata_reviews").get()?.n).toBe(0);
   }
+});
+
+it("real YouTube search pages reject cross-account/group, away-back and held remove/rejoin results",async()=>{
+  const transport:typeof fetch=async input=>{const url=new URL(String(input));return new Response(JSON.stringify(url.pathname.endsWith("/search")?{items:[{id:{kind:"youtube#video",videoId:"YtFixture01"}}],nextPageToken:"SYNTHETIC_PRIVATE_PAGE"}:{items:[{id:"YtFixture01",snippet:{title:"Real adapter proposal",channelTitle:"Synthetic channel",liveBroadcastContent:"none"},contentDetails:{duration:"PT2M"},status:{privacyStatus:"public"}}]}));};
+  const real:Providers={...providers,youtube:youtubeProvider({apiKey:"synthetic-discovery-credential",transport})};
+  const old=req(a),first=await beginReview(db,old,"youtube",{kind:"title",text:"Funny title"},real,origin);expect(first.kind).toBe("candidates");
+  for(const token of[b,c])await expect(pageReview(db,req(token),first.handle,"next",real,origin)).rejects.toThrow();
+  switchTo(a,g2);switchTo(a,g1);await expect(pageReview(db,old,first.handle,"next",real,origin)).rejects.toThrow();await expect(pageReview(db,req(a),first.handle,"next",real,origin)).rejects.toThrow();
+  const current=await beginReview(db,req(b),"youtube",{kind:"title",text:"New page"},real,origin),captured=req(b);
+  let started!:()=>void,release!:()=>void;const ready=new Promise<void>(resolve=>{started=resolve;}),gate=new Promise<void>(resolve=>{release=resolve;});
+  const delayed:Providers={...real,youtube:youtubeProvider({apiKey:"synthetic-discovery-credential",transport:async(input,init)=>{started();await gate;return transport(input,init);}})};
+  const pending=pageReview(db,captured,current.handle,"next",delayed,origin).then(()=>"returned",()=>"denied");await ready;
+  const memberId=member(b);removeParticipant(db,req(a),memberId,1,origin);const next=rotateGroupInvite(db,req(a),1,origin);join(b,next.inviteUrl);release();expect(await pending).toBe("denied");
+  await expect(pageReview(db,req(b),current.handle,"next",real,origin)).rejects.toThrow();expect((await beginReview(db,req(b),"youtube",{kind:"title",text:"Fresh context"},real,origin)).kind).toBe("candidates");
+  expect(db.prepare("SELECT count(*) AS n FROM titles").get()?.n).toBe(3);
 });

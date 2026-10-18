@@ -41,7 +41,7 @@ function projection(value:unknown,id:string):ItemProjection|null{
 export function youtubeProvider(options:Options):MetadataProvider{
   const timeoutMs=options.timeoutMs??10000;
   return {namespace:"youtube",async lookup(query,{signal}){
-    if(query.kind==="detail"?!providerIdentity("youtube",query.externalId):!youtubeLookupQuery({kind:"title",text:query.text})||(query.pageToken!==undefined&&!pageToken(query.pageToken)))return failure("invalid_query");
+    if(query.kind==="detail"?!providerIdentity("youtube",query.externalId):youtubeLookupQuery({kind:"title",text:query.text})?.kind!=="search"||(query.pageToken!==undefined&&!pageToken(query.pageToken)))return failure("invalid_query");
     if(signal?.aborted)return failure("cancelled");
     const key=options.apiKey?.trim();if(!key||/[\p{Cc}\s]/u.test(key)||!Number.isInteger(timeoutMs)||timeoutMs<1||timeoutMs>30000)return failure("not_configured");
     let release:()=>void;try{release=await(options.pool??youtubePool).acquire(signal);}catch(error){return failure(error instanceof LookupAdmissionError?error.code:"provider_error",30);}

@@ -14,7 +14,8 @@ afterEach(()=>vi.useRealTimers());
 it("uses explicit bounded Unicode title intent, keeps old strict links and never searches malformed URL-like input",()=>{
   expect(youtubeLookupQuery({kind:"title",text:"  Funny: коты 😀  "})).toEqual({kind:"search",text:"Funny: коты 😀"});expect(youtubeLookupQuery({kind:"title",text:"😀".repeat(200)})).toMatchObject({kind:"search"});
   for(const input of[{kind:"title",text:"x".repeat(201)},{kind:"title",text:"one\ntwo"},{kind:"title",text:"https://youtube.com/playlist?list=x"},{kind:"title",text:"https://foreign.example/video"},{kind:"title",text:"//foreign.example"},{kind:"title",text:"data:bad"},{kind:"title",text:"ok",pageToken:"forged"},"some title"]){expect(youtubeLookupQuery(input)).toBeNull();}
-  expect(youtubeLookupQuery(`https://youtu.be/${id}`)).toEqual({kind:"detail",externalId:id});expect(youtubeLookupQuery({kind:"title",text:id})).toEqual({kind:"detail",externalId:id});
+  expect(youtubeLookupQuery(`https://youtu.be/${id}`)).toEqual({kind:"detail",externalId:id});expect(youtubeLookupQuery({kind:"title",text:id})).toEqual({kind:"detail",externalId:id});expect(youtubeLookupQuery({kind:"title",text:`https://youtu.be/${id}`})).toEqual({kind:"detail",externalId:id});
+  for(const text of["https//youtube.com/watch","https%3A%2F%2Fyoutu.be/bad","youtu.be\\bad","www.foreign.example/video","/watch?v=bad","foreign.example/video"])expect(youtubeLookupQuery({kind:"title",text})).toBeNull();
 });
 it("searches once and batch-enriches deduplicated exact IDs in search order, retaining manual unknown live runtime",async()=>{
   const key=randomUUID(),calls:string[]=[];

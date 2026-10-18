@@ -9,8 +9,9 @@ export function youtubeLookupQuery(value: unknown): LookupQuery | null {
   if(Object.keys(input).some(key=>key!=="kind"&&key!=="text"))return null;
   if(input.kind!=="title"||typeof input.text!=="string"||/[\p{Cc}]/u.test(input.text))return null;
   const text=input.text.trim();
-  if(!text||[...text].length>200||/^(?:[a-z][a-z\d+.-]*:\/\/|https?:|ftp:|file:|data:|javascript:|\/\/|(?:www\.|m\.)?(?:youtube\.com|youtu\.be)(?:[\/:?#]|$))/i.test(text))return null;
-  const id=youtubeVideoId(text);return id?{kind:"detail",externalId:id}:{kind:"search",text};
+  const id=youtubeVideoId(text);if(id)return{kind:"detail",externalId:id};
+  if(!text||[...text].length>200||/^(?:[a-z][a-z\d+.-]*:\/\/|https?(?::|\/|%3a|%2f)|ftp:|file:|data:|javascript:|\/|www\.|(?:m\.)?(?:youtube\.com|youtu\.be)(?:[\/\\:?#\s]|$))/i.test(text)||/^[^\s/\\?#]+\.[a-z]{2,}(?:[/\\:?#]|$)/i.test(text))return null;
+  return{kind:"search",text};
 }
 
 /** Only the listed single-video forms; never a network destination. */

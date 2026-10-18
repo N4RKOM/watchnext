@@ -71,10 +71,13 @@ export async function beginReview(db: DatabaseSync, request: Request, source: un
   if (source !== "youtube" && source !== "kinopoisk_unofficial") return lookupFailure("invalid_query");
   const parsed=source==="youtube"?youtubeLookupQuery(query):{kind:"search" as const,text:query as string};
   if(!parsed)return lookupFailure("invalid_query");
-  if(source==="youtube"){const denied=takeYoutube(before,now());if(denied)return denied;}
+  if(source==="youtube"){
+    const denied=takeYoutube(before,now());if(denied)return denied;
+    // Every new YouTube query, including a switch to a link, supersedes old search pages.
+    db.prepare("DELETE FROM metadata_reviews WHERE session_id=? AND (json_extract(payload,'$.kind')='youtube_chain' OR json_extract(payload,'$.page.provider')='youtube')").run(sessionId(db,request));
+  }
   if(source==="youtube"&&parsed.kind==="search"){
     // Superseding a query physically drops its old page data and invalidates pending work.
-    db.prepare("DELETE FROM metadata_reviews WHERE session_id=? AND (json_extract(payload,'$.kind')='youtube_chain' OR json_extract(payload,'$.page.provider')='youtube')").run(sessionId(db,request));
     const expires=new Date(now().getTime()+600000).toISOString(),anchor=store(db,request,{kind:"youtube_chain",text:parsed.text,visited:1},now(),origin,expires),chainHash=hash(anchor);
     let navigation:ProviderPage={};const result=await lookupMetadata(providers.youtube,parsed,{now,signal:request.signal,onPage:value=>{navigation=value;}});
     sameContext(db,request,before,origin);readChain(db,request,chainHash,now(),origin);
@@ -148,6 +151,7 @@ export async function refreshTitleMetadata(db: DatabaseSync, request: Request, i
   contributor();
   const row = db.prepare("SELECT provider_namespace,provider_id FROM titles WHERE id=? AND group_id=?").get(id, before.groupId)!;
   if (row.provider_namespace !== "youtube" && row.provider_namespace !== "kinopoisk_unofficial") return lookupFailure("invalid_query");
+  if(row.provider_namespace==="youtube"){const denied=takeYoutube(before,now());if(denied)return denied;}
   const result = await lookupMetadata(providers[row.provider_namespace], { kind: "detail", externalId: row.provider_id as string }, { now, signal: request.signal });
   sameContext(db, request, before, origin); authorizeRequest(db, request, { kind: "title", id }, { mutation: true, configuredOrigin: origin });
   contributor();
