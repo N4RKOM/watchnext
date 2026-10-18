@@ -5,11 +5,11 @@ import { getGroupRequest } from "../../lib/access";
 import { RatingFieldError, updateOwnRating } from "../../lib/ratings";
 import type { RatingState } from "../../lib/rating-state";
 import { AccessError } from "../../lib/sessions";
-export async function ratingAction(id: string, _previous: RatingState, form: FormData): Promise<RatingState> {
+export async function ratingAction(contextKey: string | undefined, id: string, _previous: RatingState, form: FormData): Promise<RatingState> {
   try {
     const input: Record<string, unknown> = Object.create(null);
     for (const [key, value] of form) if (!key.startsWith("$ACTION_")) { if (Object.hasOwn(input, key)) throw new RatingFieldError("Submit one value for each rating field."); input[key] = value; }
-    const rating = updateOwnRating(getDatabase(), await getGroupRequest(true), id, input, process.env.WATCHNEXT_APP_ORIGIN);
+    const rating = updateOwnRating(getDatabase(), await getGroupRequest(true, contextKey), id, input, process.env.WATCHNEXT_APP_ORIGIN);
     revalidatePath(`/watchlist/${encodeURIComponent(id)}`);
     return { kind: "saved", rating, message: input.intent === "clear_rating" ? "Your rating is cleared. Not rated." : "Your whole-title rating is saved." };
   } catch (error) {

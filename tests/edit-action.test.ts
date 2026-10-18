@@ -20,13 +20,13 @@ beforeEach(() => {
 });
 afterEach(()=>{db.close();vi.clearAllMocks();vi.unstubAllEnvs();});
 function form(){const model=readEditableTitle(db,request,id),data=new FormData();for(const[key,value]of Object.entries(model.values))data.set(key,value);for(const mood of model.moods)data.append("moods",mood);data.set("revision",model.revision);return data;}
-it("saves valid edits then navigates to the actual detail route",async()=>{const data=form();data.set("minutes","60");await expect(editTitleAction(id,{kind:"idle"},data)).rejects.toThrow("FIXTURE_REDIRECT");expect(redirect).toHaveBeenCalledWith(`/watchlist/${id}`);expect(db.prepare("SELECT duration_seconds FROM titles WHERE id=?").get(id)?.duration_seconds).toBe(3600);});
+it("saves valid edits then navigates to the actual detail route",async()=>{const data=form();data.set("minutes","60");await expect(editTitleAction(undefined, id,{kind:"idle"},data)).rejects.toThrow("FIXTURE_REDIRECT");expect(redirect).toHaveBeenCalledWith(`/watchlist/${id}`);expect(db.prepare("SELECT duration_seconds FROM titles WHERE id=?").get(id)?.duration_seconds).toBe(3600);});
 it("maps validation to source/cover fields and preserves prior values after safe storage failure",async()=>{
-  const data=form();data.set("sourceUrl","javascript:x");expect(await editTitleAction(id,{kind:"idle"},data)).toMatchObject({kind:"invalid",errors:{sourceUrl:expect.any(String)}});
-  db.exec("CREATE TEMP TRIGGER fixture_failure BEFORE INSERT ON title_moods BEGIN SELECT RAISE(ABORT,'PRIVATE_FIXTURE'); END");const retry=form();retry.set("minutes","60");const result=await editTitleAction(id,{kind:"idle"},retry);expect(result.kind).toBe("error");expect(JSON.stringify(result)).not.toContain("PRIVATE_FIXTURE");expect(db.prepare("SELECT duration_seconds FROM titles WHERE id=?").get(id)?.duration_seconds).toBe(5400);
+  const data=form();data.set("sourceUrl","javascript:x");expect(await editTitleAction(undefined, id,{kind:"idle"},data)).toMatchObject({kind:"invalid",errors:{sourceUrl:expect.any(String)}});
+  db.exec("CREATE TEMP TRIGGER fixture_failure BEFORE INSERT ON title_moods BEGIN SELECT RAISE(ABORT,'PRIVATE_FIXTURE'); END");const retry=form();retry.set("minutes","60");const result=await editTitleAction(undefined, id,{kind:"idle"},retry);expect(result.kind).toBe("error");expect(JSON.stringify(result)).not.toContain("PRIVATE_FIXTURE");expect(db.prepare("SELECT duration_seconds FROM titles WHERE id=?").get(id)?.duration_seconds).toBe(5400);
 });
 it("rejects provider tampering, returns explicit identity confirmation and stale revision feedback",async()=>{
-  const tamper=form();tamper.set("providerId","stolen");expect((await editTitleAction(id,{kind:"idle"},tamper)).kind).toBe("error");
-  const stale=form(),data=form();data.set("title","New identity");expect(await editTitleAction(id,{kind:"idle"},data)).toMatchObject({kind:"confirmation",confirmation:expect.any(String)});
-  db.prepare("UPDATE titles SET duration_seconds=60 WHERE id=?").run(id);expect((await editTitleAction(id,{kind:"idle"},stale)).kind).toBe("stale");
+  const tamper=form();tamper.set("providerId","stolen");expect((await editTitleAction(undefined, id,{kind:"idle"},tamper)).kind).toBe("error");
+  const stale=form(),data=form();data.set("title","New identity");expect(await editTitleAction(undefined, id,{kind:"idle"},data)).toMatchObject({kind:"confirmation",confirmation:expect.any(String)});
+  db.prepare("UPDATE titles SET duration_seconds=60 WHERE id=?").run(id);expect((await editTitleAction(undefined, id,{kind:"idle"},stale)).kind).toBe("stale");
 });

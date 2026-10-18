@@ -8,14 +8,13 @@ import { rankCandidates, type RankingInput, type RankingTitle } from "./ranking"
 import type { EligibilityProgress } from "./types";
 import type { PickerPageView, PickState } from "./view-state";
 import { candidateIdentity, fingerprint, pageCycles, type CycleIntent } from "./cycle";
-import { credentialHash, readSessionCookie } from "../sessions";
 
 export function readPickerPage(db: DatabaseSync, request: Request): PickerPageView {
   const context = authorizeRequest(db, request);
   return { groupId: context.groupId, groupName: context.groupName, hasActiveProfile: context.activeMemberId !== null, members: members(db, context.groupId) };
 }
 function members(db: DatabaseSync, groupId: string): Profile[] {
-  return db.prepare("SELECT id,name,avatar_color FROM members WHERE group_id=? ORDER BY created_at,id").all(groupId).map(row => ({ id: row.id as string, name: row.name as string, color: row.avatar_color as string }));
+  return db.prepare("SELECT m.id,m.name,m.avatar_color FROM members m JOIN groups g ON g.id=m.group_id WHERE m.group_id=? AND (g.access_mode='legacy' OR EXISTS(SELECT 1 FROM account_memberships a WHERE a.member_id=m.id AND a.group_id=m.group_id AND a.status='active')) ORDER BY m.created_at,m.id").all(groupId).map(row => ({ id: row.id as string, name: row.name as string, color: row.avatar_color as string }));
 }
 function snapshot(db: DatabaseSync, groupId: string) {
   const titles: RankingTitle[] = db.prepare("SELECT id,title,content_type,duration_seconds,numbering_style,archived,created_at FROM titles WHERE group_id=? ORDER BY created_at,id").all(groupId).map(row => ({
@@ -76,7 +75,7 @@ export function pickFromForm(db: DatabaseSync, request: Request, form: FormData,
           tier: result.kind === "ranked" ? result.tier : "none", identities: result.kind === "ranked" ? result.candidates.map(candidate => candidateIdentity(candidate.titleId, candidate.target)) : [],
         };
         const planned = pageCycles.plan({ pageId: pageId as string, intentId: intentId as string, intent: intent as CycleIntent, cursor: cursor as string,
-          owner: fingerprint([context.groupId, credentialHash(readSessionCookie(request.headers.get("cookie"))!)]),
+          owner: fingerprint([context.groupId, context.ownerKey]),
           context: fingerprint([context.groupId, canonicalViewers, result.context.budgetSeconds, result.context.mood, result.context.rewatches]),
           semantic: fingerprint(dependencies), count: result.kind === "ranked" ? result.candidates.length : 0 });
         if (planned.kind === "conflict") { db.exec("COMMIT"); return { ...reply, kind: "conflict", message: planned.message }; }

@@ -21,26 +21,26 @@ beforeEach(() => {
 });
 afterEach(() => { db.close(); vi.unstubAllEnvs(); });
 it("real save/edit/clear action revalidates attributed history without completion or contribution", async () => {
-  expect(await ratingAction("title", { kind: "idle" }, form())).toMatchObject({ kind: "saved", rating: { memberId, score: 8 } }); expect(revalidatePath).toHaveBeenCalledWith("/watchlist/title");
-  expect(await ratingAction("title", { kind: "idle" }, form({ score: "10" }))).toMatchObject({ kind: "saved", rating: { score: 10 } });
-  expect(await ratingAction("title", { kind: "idle" }, form({ intent: "clear_rating", score: "invalid unsaved value" }))).toMatchObject({ kind: "saved", rating: { score: null } });
+  expect(await ratingAction(undefined, "title", { kind: "idle" }, form())).toMatchObject({ kind: "saved", rating: { memberId, score: 8 } }); expect(revalidatePath).toHaveBeenCalledWith("/watchlist/title");
+  expect(await ratingAction(undefined, "title", { kind: "idle" }, form({ score: "10" }))).toMatchObject({ kind: "saved", rating: { score: 10 } });
+  expect(await ratingAction(undefined, "title", { kind: "idle" }, form({ intent: "clear_rating", score: "invalid unsaved value" }))).toMatchObject({ kind: "saved", rating: { score: null } });
   expect(db.prepare("SELECT * FROM ratings").all()).toEqual([]); expect(db.prepare("SELECT * FROM progress").all()).toEqual([]); expect(db.prepare("SELECT * FROM contributors").all()).toEqual([]);
 });
 it("blank/malformed/nontext/duplicate scores give a specific field error and do not clear", async () => {
-  await ratingAction("title", { kind: "idle" }, form());
-  for (const score of ["", "0", "11", "7.5", "1e1"]) expect(await ratingAction("title", { kind: "idle" }, form({ score }))).toMatchObject({ kind: "invalid", error: expect.any(String) });
-  const file = form(); file.set("score", new Blob(["8"]), "rating.txt"); expect((await ratingAction("title", { kind: "idle" }, file)).kind).toBe("invalid");
-  const duplicate = form(); duplicate.append("score", "1"); expect((await ratingAction("title", { kind: "idle" }, duplicate)).kind).toBe("invalid");
+  await ratingAction(undefined, "title", { kind: "idle" }, form());
+  for (const score of ["", "0", "11", "7.5", "1e1"]) expect(await ratingAction(undefined, "title", { kind: "idle" }, form({ score }))).toMatchObject({ kind: "invalid", error: expect.any(String) });
+  const file = form(); file.set("score", new Blob(["8"]), "rating.txt"); expect((await ratingAction(undefined, "title", { kind: "idle" }, file)).kind).toBe("invalid");
+  const duplicate = form(); duplicate.append("score", "1"); expect((await ratingAction(undefined, "title", { kind: "idle" }, duplicate)).kind).toBe("invalid");
   expect(db.prepare("SELECT score FROM ratings").get()?.score).toBe(8);
 });
 it("insert/update/delete failures return safe retry feedback and never false success", async () => {
   for (const phase of ["INSERT", "UPDATE", "DELETE"]) {
-    if (phase !== "INSERT") await ratingAction("title", { kind: "idle" }, form());
+    if (phase !== "INSERT") await ratingAction(undefined, "title", { kind: "idle" }, form());
     const before = db.prepare("SELECT * FROM ratings").all(); db.exec(`CREATE TRIGGER fail_rating BEFORE ${phase} ON ratings BEGIN SELECT RAISE(ABORT,'PRIVATE SQL PATH C:/private'); END`);
-    const result = await ratingAction("title", { kind: "idle" }, form(phase === "DELETE" ? { intent: "clear_rating" } : { score: "9" })); expect(result).toMatchObject({ kind: "error", message: expect.stringContaining("try again") }); expect(JSON.stringify(result)).not.toMatch(/PRIVATE|SQL|private/); expect(db.prepare("SELECT * FROM ratings").all()).toEqual(before); db.exec("DROP TRIGGER fail_rating");
+    const result = await ratingAction(undefined, "title", { kind: "idle" }, form(phase === "DELETE" ? { intent: "clear_rating" } : { score: "9" })); expect(result).toMatchObject({ kind: "error", message: expect.stringContaining("try again") }); expect(JSON.stringify(result)).not.toMatch(/PRIVATE|SQL|private/); expect(db.prepare("SELECT * FROM ratings").all()).toEqual(before); db.exec("DROP TRIGGER fail_rating");
   }
 });
 it("forged/current-member claims and archived targets are denied before any write", async () => {
-  expect(await ratingAction("title", { kind: "idle" }, form({ memberId: "forged" }))).toMatchObject({ kind: "error" }); db.exec("UPDATE titles SET archived=1");
-  expect(await ratingAction("title", { kind: "idle" }, form())).toMatchObject({ kind: "error" }); expect(db.prepare("SELECT * FROM ratings").all()).toEqual([]);
+  expect(await ratingAction(undefined, "title", { kind: "idle" }, form({ memberId: "forged" }))).toMatchObject({ kind: "error" }); db.exec("UPDATE titles SET archived=1");
+  expect(await ratingAction(undefined, "title", { kind: "idle" }, form())).toMatchObject({ kind: "error" }); expect(db.prepare("SELECT * FROM ratings").all()).toEqual([]);
 });

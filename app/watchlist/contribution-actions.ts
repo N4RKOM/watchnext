@@ -6,11 +6,11 @@ import { getGroupRequest } from "../../lib/access";
 import { removeOwnContribution, restoreTitle } from "../../lib/contributions";
 import { AccessError } from "../../lib/sessions";
 import type { ContributionState } from "../../lib/contribution-state";
-export async function contributionAction(id: string, _previous: ContributionState, form: FormData): Promise<ContributionState> {
+export async function contributionAction(contextKey: string | undefined, id: string, _previous: ContributionState, form: FormData): Promise<ContributionState> {
   let removalMessage: string | undefined;
   try {
     const claims = { ...(form.has("memberId") ? { memberId: form.get("memberId") } : {}), ...(form.has("groupId") ? { groupId: form.get("groupId") } : {}) };
-    const request = await getGroupRequest(true), db = getDatabase();
+    const request = await getGroupRequest(true, contextKey), db = getDatabase();
     if (form.get("intent") === "remove_confirm") removalMessage = removeOwnContribution(db, request, id, claims, process.env.WATCHNEXT_APP_ORIGIN).message;
     else if (form.get("intent") === "restore") restoreTitle(db, request, id, claims, process.env.WATCHNEXT_APP_ORIGIN);
     else throw new AccessError();

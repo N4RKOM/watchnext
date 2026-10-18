@@ -1,6 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import { resolveAppOrigin } from "./groups";
-import { AccessError, readSessionCookie, requireSession } from "./sessions";
+import { AccessError } from "./sessions";
+import { requestContext } from "./accounts/context";
 
 export type RecordTarget = { kind: "title" | "member" | "group"; id: string };
 const ownershipQueries = {
@@ -19,7 +20,10 @@ export function authorizeRequest(
     if (!["POST", "PUT", "PATCH", "DELETE"].includes(request.method) || request.headers.get("origin") !== origin ||
         request.headers.get("sec-fetch-site") === "cross-site") throw new AccessError();
   }
-  const session = requireSession(db, readSessionCookie(request.headers.get("cookie")));
+  const session = requestContext(db, request);
+  const claimedContext = request.headers.get("x-watchnext-context");
+  if (claimedContext !== null && claimedContext !== session.contextKey) throw new AccessError();
+  if (options.mutation && (session.mode === "account" || session.revision > 0) && claimedContext !== session.contextKey) throw new AccessError();
   if (options.claimedGroupId !== undefined && options.claimedGroupId !== session.groupId) throw new AccessError();
   if (target) {
     if (!Object.hasOwn(ownershipQueries, target.kind)) throw new AccessError();

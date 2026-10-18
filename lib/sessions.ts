@@ -16,7 +16,7 @@ export function requireSession(db: DatabaseSync, credential: unknown): GroupSess
   if (!validCredential(credential)) throw new AccessError();
   const row = db.prepare(`SELECT s.group_id, g.name, m.id AS active_member_id FROM group_sessions s
     JOIN invitations i ON i.id = s.invitation_id AND i.group_id = s.group_id AND i.revoked_at IS NULL
-    JOIN groups g ON g.id = s.group_id
+    JOIN groups g ON g.id = s.group_id AND g.access_mode='legacy'
     LEFT JOIN members m ON m.id = s.active_member_id AND m.group_id = s.group_id
     WHERE s.token_hash = ?`).get(credentialHash(credential));
   if (!row) throw new AccessError();

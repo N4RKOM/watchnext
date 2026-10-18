@@ -20,21 +20,21 @@ beforeEach(() => {
 });
 afterEach(() => { db.close(); vi.unstubAllEnvs(); });
 it("real action normalizes/persists/revalidates and blank/explicit clear returns actual absence without progress", async () => {
-  expect(await noteAction("title", { kind: "idle" }, form())).toMatchObject({ kind: "saved", note: { memberId, body: "My note\nline two" } }); expect(revalidatePath).toHaveBeenCalledWith("/watchlist/title");
-  expect(await noteAction("title", { kind: "idle" }, form({ body: " \r\n\u00a0 " }))).toMatchObject({ kind: "saved", note: { body: null }, message: "Your note is cleared. No notes." });
-  expect(await noteAction("title", { kind: "idle" }, form({ intent: "clear_note", body: "ignored unsaved" }))).toMatchObject({ kind: "saved", note: { body: null } }); expect(db.prepare("SELECT * FROM notes").all()).toEqual([]); expect(db.prepare("SELECT * FROM progress").all()).toEqual([]);
+  expect(await noteAction(undefined, "title", { kind: "idle" }, form())).toMatchObject({ kind: "saved", note: { memberId, body: "My note\nline two" } }); expect(revalidatePath).toHaveBeenCalledWith("/watchlist/title");
+  expect(await noteAction(undefined, "title", { kind: "idle" }, form({ body: " \r\n\u00a0 " }))).toMatchObject({ kind: "saved", note: { body: null }, message: "Your note is cleared. No notes." });
+  expect(await noteAction(undefined, "title", { kind: "idle" }, form({ intent: "clear_note", body: "ignored unsaved" }))).toMatchObject({ kind: "saved", note: { body: null } }); expect(db.prepare("SELECT * FROM notes").all()).toEqual([]); expect(db.prepare("SELECT * FROM progress").all()).toEqual([]);
 });
 it("exact supplementary boundary succeeds; NUL, over-limit, nontext and duplicate inputs fail without changing it", async () => {
-  const boundary = "😀".repeat(2000); expect((await noteAction("title", { kind: "idle" }, form({ body: boundary }))).note?.body).toBe(boundary);
-  for (const body of ["NUL\0text", "😀".repeat(2001)]) expect(await noteAction("title", { kind: "idle" }, form({ body }))).toMatchObject({ kind: "invalid", error: expect.any(String) });
-  const file = form(); file.set("body", new Blob(["text"]), "note.txt"); expect((await noteAction("title", { kind: "idle" }, file)).kind).toBe("invalid"); const duplicate = form(); duplicate.append("body", "second"); expect((await noteAction("title", { kind: "idle" }, duplicate)).kind).toBe("invalid"); expect(db.prepare("SELECT body FROM notes").get()?.body).toBe(boundary);
+  const boundary = "😀".repeat(2000); expect((await noteAction(undefined, "title", { kind: "idle" }, form({ body: boundary }))).note?.body).toBe(boundary);
+  for (const body of ["NUL\0text", "😀".repeat(2001)]) expect(await noteAction(undefined, "title", { kind: "idle" }, form({ body }))).toMatchObject({ kind: "invalid", error: expect.any(String) });
+  const file = form(); file.set("body", new Blob(["text"]), "note.txt"); expect((await noteAction(undefined, "title", { kind: "idle" }, file)).kind).toBe("invalid"); const duplicate = form(); duplicate.append("body", "second"); expect((await noteAction(undefined, "title", { kind: "idle" }, duplicate)).kind).toBe("invalid"); expect(db.prepare("SELECT body FROM notes").get()?.body).toBe(boundary);
 });
 it("insert/update/delete failures return safe retry without false success or leaked exception details", async () => {
   for (const phase of ["INSERT", "UPDATE", "DELETE"]) {
-    if (phase !== "INSERT") await noteAction("title", { kind: "idle" }, form()); const before = db.prepare("SELECT * FROM notes").all(); db.exec(`CREATE TRIGGER fail_note BEFORE ${phase} ON notes BEGIN SELECT RAISE(ABORT,'PRIVATE SQL PATH C:/private'); END`);
-    const result = await noteAction("title", { kind: "idle" }, form(phase === "DELETE" ? { intent: "clear_note" } : { body: "Changed" })); expect(result).toMatchObject({ kind: "error", message: expect.stringContaining("try again") }); expect(JSON.stringify(result)).not.toMatch(/PRIVATE|SQL|private/); expect(db.prepare("SELECT * FROM notes").all()).toEqual(before); db.exec("DROP TRIGGER fail_note");
+    if (phase !== "INSERT") await noteAction(undefined, "title", { kind: "idle" }, form()); const before = db.prepare("SELECT * FROM notes").all(); db.exec(`CREATE TRIGGER fail_note BEFORE ${phase} ON notes BEGIN SELECT RAISE(ABORT,'PRIVATE SQL PATH C:/private'); END`);
+    const result = await noteAction(undefined, "title", { kind: "idle" }, form(phase === "DELETE" ? { intent: "clear_note" } : { body: "Changed" })); expect(result).toMatchObject({ kind: "error", message: expect.stringContaining("try again") }); expect(JSON.stringify(result)).not.toMatch(/PRIVATE|SQL|private/); expect(db.prepare("SELECT * FROM notes").all()).toEqual(before); db.exec("DROP TRIGGER fail_note");
   }
 });
 it("wrong member, unsupported authority and archived requests cannot save/clear notes", async () => {
-  expect((await noteAction("title", { kind: "idle" }, form({ memberId: "forged" }))).kind).toBe("error"); expect((await noteAction("title", { kind: "idle" }, form({ score: "10" }))).kind).toBe("invalid"); db.exec("UPDATE titles SET archived=1"); for (const intent of ["save_note", "clear_note"]) expect((await noteAction("title", { kind: "idle" }, form({ intent }))).kind).toBe("error"); expect(db.prepare("SELECT * FROM notes").all()).toEqual([]);
+  expect((await noteAction(undefined, "title", { kind: "idle" }, form({ memberId: "forged" }))).kind).toBe("error"); expect((await noteAction(undefined, "title", { kind: "idle" }, form({ score: "10" }))).kind).toBe("invalid"); db.exec("UPDATE titles SET archived=1"); for (const intent of ["save_note", "clear_note"]) expect((await noteAction(undefined, "title", { kind: "idle" }, form({ intent }))).kind).toBe("error"); expect(db.prepare("SELECT * FROM notes").all()).toEqual([]);
 });

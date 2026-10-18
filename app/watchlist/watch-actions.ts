@@ -5,11 +5,11 @@ import { getGroupRequest } from "../../lib/access";
 import { TimestampFieldError, updateWatchProgress } from "../../lib/watch-progress";
 import type { WatchState } from "../../lib/watch-progress-state";
 import { AccessError } from "../../lib/sessions";
-export async function watchProgressAction(id: string, _previous: WatchState, form: FormData): Promise<WatchState> {
+export async function watchProgressAction(contextKey: string | undefined, id: string, _previous: WatchState, form: FormData): Promise<WatchState> {
   try {
     const input: Record<string, unknown> = Object.create(null);
     for (const [key, value] of form) if (!key.startsWith("$ACTION_")) { if (Object.hasOwn(input, key)) throw new TimestampFieldError("Submit one value for each watch progress field."); input[key] = value; }
-    const progress = updateWatchProgress(getDatabase(), await getGroupRequest(true), id, input, process.env.WATCHNEXT_APP_ORIGIN);
+    const progress = updateWatchProgress(getDatabase(), await getGroupRequest(true, contextKey), id, input, process.env.WATCHNEXT_APP_ORIGIN);
     revalidatePath(`/watchlist/${encodeURIComponent(id)}`);
     return { kind: "saved", progress, message: input.intent === "complete" ? "Marked complete. Your stored timestamp is unchanged." : input.intent === "undo_completion" ? "Completion undone. Your stored timestamp is unchanged." : input.intent === "clear_timestamp" || progress.timestampSeconds === null ? "Timestamp cleared. Completion is unchanged." : "Timestamp saved. Completion is unchanged." };
   } catch (error) {

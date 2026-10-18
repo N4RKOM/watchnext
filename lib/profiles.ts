@@ -17,8 +17,8 @@ export function normalizeProfileName(value: unknown): string {
 
 export function getProfileView(db: DatabaseSync, request: Request): ProfileView {
   const context = authorizeRequest(db, request);
-  return { activeMemberId: context.activeMemberId, members: db.prepare("SELECT id,name,avatar_color FROM members WHERE group_id=? ORDER BY created_at,id")
-    .all(context.groupId).map((row) => ({ id: row.id as string, name: row.name as string, color: row.avatar_color as string })) };
+  return { activeMemberId: context.activeMemberId, members: db.prepare("SELECT id,name,avatar_color FROM members WHERE group_id=? AND (?='legacy' OR EXISTS(SELECT 1 FROM account_memberships a WHERE a.member_id=members.id AND a.group_id=members.group_id AND a.status='active')) ORDER BY created_at,id")
+    .all(context.groupId,context.mode).map((row) => ({ id: row.id as string, name: row.name as string, color: row.avatar_color as string })) };
 }
 
 export function changeProfile(
@@ -27,7 +27,7 @@ export function changeProfile(
   configuredOrigin: string | undefined,
 ): ProfileView {
   // Deny forged access/origins before any validation response or write.
-  authorizeRequest(db, request, undefined, { mutation: true, claimedGroupId: input.groupId, configuredOrigin });
+  if (authorizeRequest(db, request, undefined, { mutation: true, claimedGroupId: input.groupId, configuredOrigin }).mode !== "legacy") throw new AccessError();
   if (input.intent !== "create" && input.intent !== "select") throw new AccessError();
   db.exec("BEGIN IMMEDIATE");
   try {

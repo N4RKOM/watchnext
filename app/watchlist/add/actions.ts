@@ -9,7 +9,7 @@ import type { ManualTitleInput } from "../../../lib/manual-titles";
 import type { TitleFormState } from "../../../lib/title-state";
 import { ReviewLinkError, saveReview } from "../../../lib/metadata/reviews";
 
-export async function saveTitleAction(_previous: TitleFormState, form: FormData): Promise<TitleFormState> {
+export async function saveTitleAction(contextKey: string | undefined, _previous: TitleFormState, form: FormData): Promise<TitleFormState> {
   let destination: string;
   try {
     const input = Object.fromEntries(["title", "contentType", "minutes", "seconds", "numberingStyle", "genres", "watchUrl"].map((key) => [key, form.get(key)])) as ManualTitleInput;
@@ -19,8 +19,8 @@ export async function saveTitleAction(_previous: TitleFormState, form: FormData)
     const intent = form.get("intent");
     if (intent !== null && intent !== "save" && intent !== "confirm") throw new AccessError();
     const confirmation = intent === "confirm" ? form.get("confirmationId") : undefined;
-    const result = form.has("reviewHandle") ? saveReview(getDatabase(), await getGroupRequest(true), form.get("reviewHandle"), { ...input, typicalDurationConfirmed: form.get("typicalDurationConfirmed") }, form.get("sourceUrl"), form.get("coverUrl"), confirmation, process.env.WATCHNEXT_APP_ORIGIN)
-      : saveTitle(getDatabase(), await getGroupRequest(true), { kind: "manual", fields: input, ...(confirmation === undefined ? {} : { confirmationId: confirmation }) }, process.env.WATCHNEXT_APP_ORIGIN);
+    const result = form.has("reviewHandle") ? saveReview(getDatabase(), await getGroupRequest(true, contextKey), form.get("reviewHandle"), { ...input, typicalDurationConfirmed: form.get("typicalDurationConfirmed") }, form.get("sourceUrl"), form.get("coverUrl"), confirmation, process.env.WATCHNEXT_APP_ORIGIN)
+      : saveTitle(getDatabase(), await getGroupRequest(true, contextKey), { kind: "manual", fields: input, ...(confirmation === undefined ? {} : { confirmationId: confirmation }) }, process.env.WATCHNEXT_APP_ORIGIN);
     if (result.kind === "confirmation_required") return { ...result, kind: "confirmation" };
     if (result.kind === "archived_match") return { ...result, kind: "restore_confirmation" };
     if (result.kind === "identity_conflict") return { ...result, kind: "conflict" };

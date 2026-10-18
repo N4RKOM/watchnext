@@ -5,14 +5,14 @@ import { getGroupRequest } from "../../lib/access";
 import { EpisodeFieldError, updateEpisodeProgress } from "../../lib/episode-progress";
 import type { EpisodeState } from "../../lib/episode-progress-state";
 import { AccessError } from "../../lib/sessions";
-export async function episodeProgressAction(id: string, _previous: EpisodeState, form: FormData): Promise<EpisodeState> {
+export async function episodeProgressAction(contextKey: string | undefined, id: string, _previous: EpisodeState, form: FormData): Promise<EpisodeState> {
   try {
     const input: Record<string, unknown> = Object.create(null);
     for (const [key, value] of form) if (!key.startsWith("$ACTION_")) {
       if (Object.hasOwn(input, key)) throw new EpisodeFieldError("positionState", "Submit one value for each progress field.");
       input[key] = value;
     }
-    const progress = updateEpisodeProgress(getDatabase(), await getGroupRequest(true), id, input, process.env.WATCHNEXT_APP_ORIGIN);
+    const progress = updateEpisodeProgress(getDatabase(), await getGroupRequest(true, contextKey), id, input, process.env.WATCHNEXT_APP_ORIGIN);
     revalidatePath(`/watchlist/${encodeURIComponent(id)}`);
     return { kind: "saved", progress, message: input.intent === "complete" ? "Marked complete. Your stored episode position is unchanged." : input.intent === "undo_completion" ? "Completion undone. Your stored episode position is unchanged." : "Episode progress saved. Completion is unchanged." };
   } catch (error) {

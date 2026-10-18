@@ -22,22 +22,22 @@ beforeEach(() => {
 });
 afterEach(() => { db.close(); vi.unstubAllEnvs(); });
 it("real actions persist/revalidate timestamp, completion/undo and clear independently", async () => {
-  expect(await watchProgressAction("title", { kind: "idle" }, form())).toMatchObject({ kind: "saved", progress: { timestampSeconds: 4200, completed: false, fullDurationSeconds: 5400 } });
+  expect(await watchProgressAction(undefined, "title", { kind: "idle" }, form())).toMatchObject({ kind: "saved", progress: { timestampSeconds: 4200, completed: false, fullDurationSeconds: 5400 } });
   expect(revalidatePath).toHaveBeenCalledWith("/watchlist/title");
   db.exec("UPDATE titles SET duration_seconds=3600");
-  expect(await watchProgressAction("title", { kind: "idle" }, form({ intent: "complete", timestamp: "invalid" }))).toMatchObject({ kind: "saved", progress: { timestampSeconds: 4200, completed: true, beyondDuration: true } });
-  expect(await watchProgressAction("title", { kind: "idle" }, form({ intent: "undo_completion" }))).toMatchObject({ kind: "saved", progress: { timestampSeconds: 4200, completed: false } });
-  expect(await watchProgressAction("title", { kind: "idle" }, form({ intent: "clear_timestamp" }))).toMatchObject({ kind: "saved", progress: { timestampSeconds: null, completed: false } });
+  expect(await watchProgressAction(undefined, "title", { kind: "idle" }, form({ intent: "complete", timestamp: "invalid" }))).toMatchObject({ kind: "saved", progress: { timestampSeconds: 4200, completed: true, beyondDuration: true } });
+  expect(await watchProgressAction(undefined, "title", { kind: "idle" }, form({ intent: "undo_completion" }))).toMatchObject({ kind: "saved", progress: { timestampSeconds: 4200, completed: false } });
+  expect(await watchProgressAction(undefined, "title", { kind: "idle" }, form({ intent: "clear_timestamp" }))).toMatchObject({ kind: "saved", progress: { timestampSeconds: null, completed: false } });
 });
 it("nontext/duplicate/invalid/out-of-range values and episode fields give safe field validation", async () => {
-  for (const extra of [{ timestamp: "1e2:00" }, { timestamp: "1:30:01" }, { nextEpisode: "3" }] as Record<string, string>[]) expect(await watchProgressAction("title", { kind: "idle" }, form(extra))).toMatchObject({ kind: "invalid", error: expect.any(String) });
-  const file = form(); file.set("timestamp", new Blob(["3:00"]), "position.txt"); expect((await watchProgressAction("title", { kind: "idle" }, file)).kind).toBe("invalid");
-  const duplicate = form(); duplicate.append("timestamp", "0:00"); expect((await watchProgressAction("title", { kind: "idle" }, duplicate)).kind).toBe("invalid");
+  for (const extra of [{ timestamp: "1e2:00" }, { timestamp: "1:30:01" }, { nextEpisode: "3" }] as Record<string, string>[]) expect(await watchProgressAction(undefined, "title", { kind: "idle" }, form(extra))).toMatchObject({ kind: "invalid", error: expect.any(String) });
+  const file = form(); file.set("timestamp", new Blob(["3:00"]), "position.txt"); expect((await watchProgressAction(undefined, "title", { kind: "idle" }, file)).kind).toBe("invalid");
+  const duplicate = form(); duplicate.append("timestamp", "0:00"); expect((await watchProgressAction(undefined, "title", { kind: "idle" }, duplicate)).kind).toBe("invalid");
   expect(db.prepare("SELECT * FROM progress").all()).toEqual([]);
 });
 it("storage/access errors keep prior state and serialize no private exception details", async () => {
   db.exec("CREATE TRIGGER fail_watch BEFORE INSERT ON progress BEGIN SELECT RAISE(ABORT,'PRIVATE SQL PATH C:/private'); END");
-  const result = await watchProgressAction("title", { kind: "idle" }, form()); expect(result).toMatchObject({ kind: "error", message: expect.stringContaining("try again") }); expect(JSON.stringify(result)).not.toMatch(/PRIVATE|SQL|private/);
+  const result = await watchProgressAction(undefined, "title", { kind: "idle" }, form()); expect(result).toMatchObject({ kind: "error", message: expect.stringContaining("try again") }); expect(JSON.stringify(result)).not.toMatch(/PRIVATE|SQL|private/);
   expect(db.prepare("SELECT * FROM progress").all()).toEqual([]); db.exec("DROP TRIGGER fail_watch");
-  expect(await watchProgressAction("title", { kind: "idle" }, form({ memberId: "forged" }))).toMatchObject({ kind: "error", message: expect.stringContaining("profile") });
+  expect(await watchProgressAction(undefined, "title", { kind: "idle" }, form({ memberId: "forged" }))).toMatchObject({ kind: "error", message: expect.stringContaining("profile") });
 });

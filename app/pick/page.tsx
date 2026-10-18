@@ -1,5 +1,5 @@
 import { getDatabase } from "../../db/server";
-import { getGroupRequest } from "../../lib/access";
+import { getGroupRequest, getActionContext } from "../../lib/access";
 import { AccessError } from "../../lib/sessions";
 import { readPickerPage } from "../../lib/picker/server-only";
 import { AccessErrorMessage } from "../components/access-error";
@@ -8,6 +8,6 @@ import { pickAction } from "./actions";
 import { PickerLoadError } from "./load-error";
 export const dynamic = "force-dynamic";
 export default async function PickPage() {
-  try { const view = readPickerPage(getDatabase(), await getGroupRequest()); return <Picker key={view.groupId} view={view} action={pickAction} />; }
+  try { const contextKey=await getActionContext(); const view = readPickerPage(getDatabase(), await getGroupRequest()); return <Picker key={contextKey} view={view} action={pickAction.bind(null,contextKey)} />; }
   catch (error) { return error instanceof AccessError ? <AccessErrorMessage /> : <PickerLoadError />; }
 }

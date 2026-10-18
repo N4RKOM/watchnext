@@ -5,11 +5,11 @@ import { getGroupRequest } from "../../lib/access";
 import { NoteFieldError, updateOwnNote } from "../../lib/notes";
 import type { NoteState } from "../../lib/note-state";
 import { AccessError } from "../../lib/sessions";
-export async function noteAction(id: string, _previous: NoteState, form: FormData): Promise<NoteState> {
+export async function noteAction(contextKey: string | undefined, id: string, _previous: NoteState, form: FormData): Promise<NoteState> {
   try {
     const input: Record<string, unknown> = Object.create(null);
     for (const [key, value] of form) if (!key.startsWith("$ACTION_")) { if (Object.hasOwn(input, key)) throw new NoteFieldError("Submit one value for each note field."); input[key] = value; }
-    const note = updateOwnNote(getDatabase(), await getGroupRequest(true), id, input, process.env.WATCHNEXT_APP_ORIGIN);
+    const note = updateOwnNote(getDatabase(), await getGroupRequest(true, contextKey), id, input, process.env.WATCHNEXT_APP_ORIGIN);
     revalidatePath(`/watchlist/${encodeURIComponent(id)}`);
     return { kind: "saved", note, message: note.body === null ? "Your note is cleared. No notes." : "Your whole-title note is saved." };
   } catch (error) {

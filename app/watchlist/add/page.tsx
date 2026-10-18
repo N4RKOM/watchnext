@@ -13,9 +13,11 @@ export const dynamic = "force-dynamic";
 export default async function AddTitlePage({ searchParams }: { searchParams: Promise<{ saved?: string | string[] }> }) {
   let saved: SavedTitle | undefined;
   let memberName: string;
+  let contextKey: string, accountMode: boolean;
   try {
     const db = getDatabase(), request = await getGroupRequest();
     const context = requireTitleMember(db, request);
+    contextKey=context.contextKey; accountMode=context.mode === "account";
     const id = (await searchParams).saved;
     if (id !== undefined) { if (typeof id !== "string") throw new Error(); saved = readSavedTitle(db, request, id); }
     memberName = db.prepare("SELECT name FROM members WHERE id=? AND group_id=?").get(context.activeMemberId!, context.groupId)!.name as string;
@@ -24,7 +26,7 @@ export default async function AddTitlePage({ searchParams }: { searchParams: Pro
     try { if (!authorizeRequest(getDatabase(), await getGroupRequest()).activeMemberId) return <div className="page-content"><h1>Choose a profile first</h1><p>Select who is saving this title.</p><Link className="button" href="/group">Open group and select a profile</Link></div>; } catch { return <AccessErrorMessage />; }
     return <AccessErrorMessage />;
   }
-  return <div className="page-content"><div className="page-heading"><h1>Add a title</h1><p className="page-introduction">Saving as <strong className="profile-name">{memberName}</strong>. Enter the details yourself; no lookup is needed.</p><Link href="/group">Change profile</Link></div>
+  return <div className="page-content"><div className="page-heading"><h1>Add a title</h1><p className="page-introduction">Saving as <strong className="profile-name">{memberName}</strong>. Enter the details yourself; no lookup is needed.</p><Link href="/group">{accountMode ? "Group members" : "Change profile"}</Link></div>
     {saved && <section className="placeholder saved-summary" aria-labelledby="saved-heading"><h2 id="saved-heading">Title saved</h2><p className="saved-title-name">{saved.title ?? "Metadata unavailable"}</p>
       <dl><dt>Content type</dt><dd>{contentTypes.find((type) => type.value === saved.contentType)?.label ?? "Content type unavailable"}</dd>
         <dt>{saved.numberingStyle === "none" ? "Full duration" : "Typical episode duration"}</dt><dd>{durationLabel(saved.durationSeconds)}</dd>
@@ -33,6 +35,6 @@ export default async function AddTitlePage({ searchParams }: { searchParams: Pro
         <dt>Watch link</dt><dd>{saved.watchUrl ? <a href={saved.watchUrl} rel="noreferrer">{saved.watchUrl}</a> : "Not provided"}</dd>
         <dt>Added by</dt><dd>{saved.contributors.join(", ")}</dd></dl><Link href={`/watchlist/add?saved=${encodeURIComponent(saved.id)}`}>Reopen saved summary</Link>{" · "}<Link href={`/watchlist/${encodeURIComponent(saved.id)}`}>Open details, refresh or correct metadata</Link>
     </section>}
-    <section className="placeholder" aria-labelledby="details-heading"><h2 id="details-heading">{saved ? "Add another title" : "Title details"}</h2><TitleForm key={saved?.id ?? "new"} action={saveTitleAction} lookup={lookupTitleAction} select={selectCandidateAction} /></section>
+    <section className="placeholder" aria-labelledby="details-heading"><h2 id="details-heading">{saved ? "Add another title" : "Title details"}</h2><TitleForm key={contextKey+(saved?.id ?? "new")} action={saveTitleAction.bind(null,contextKey)} lookup={lookupTitleAction.bind(null,contextKey)} select={selectCandidateAction.bind(null,contextKey)} /></section>
   </div>;
 }

@@ -6,9 +6,9 @@ import { changeProfile, ProfileFieldError } from "../../lib/profiles";
 import { AccessError } from "../../lib/sessions";
 import type { ProfileState } from "../../lib/profile-state";
 
-export async function profileAction(_previous: ProfileState, form: FormData): Promise<ProfileState> {
+export async function profileAction(contextKey: string | undefined, _previous: ProfileState, form: FormData): Promise<ProfileState> {
   try {
-    const result = changeProfile(getDatabase(), await getGroupRequest(true), {
+    const result = changeProfile(getDatabase(), await getGroupRequest(true, contextKey), {
       intent: form.get("intent"), name: form.get("name"), color: form.get("color"), memberId: form.get("memberId"),
       groupId: form.has("groupId") ? form.get("groupId") : undefined,
     }, process.env.WATCHNEXT_APP_ORIGIN);

@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import { requireTitleMember } from "../title-access";
 import { authorizeRequest } from "../request-access";
-import { AccessError, credentialHash, readSessionCookie } from "../sessions";
+import { AccessError, credentialHash } from "../sessions";
 import { TitleFieldError, validateManualTitle, type ManualTitleInput } from "../title-validation";
 import { saveTitle } from "../shared-save";
 import { safeExternalUrl } from "../urls";
@@ -14,7 +14,7 @@ import type { Candidate, LookupResult, MetadataItem, MetadataProvider, ProviderN
 export type Providers = Record<ProviderNamespace, MetadataProvider>;
 type Snapshot = { kind: "item"; item: MetadataItem } | { kind: "candidates"; candidates: Candidate[] };
 export type ReviewResult = LookupResult & { handle?: string };
-const sessionId = (request: Request) => credentialHash(readSessionCookie(request.headers.get("cookie")) ?? "");
+const sessionId = (db: DatabaseSync, request: Request) => authorizeRequest(db,request).ownerKey;
 const hash = (value: string) => credentialHash(value);
 const equal = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 export class ReviewLinkError extends Error { constructor(public field: "sourceUrl" | "coverUrl") { super("Use a complete HTTP or HTTPS link without credentials, or leave it blank."); } }
@@ -22,8 +22,8 @@ function authorized(db: DatabaseSync, request: Request, origin?: string) { retur
 function store(db: DatabaseSync, request: Request, payload: Snapshot, now: Date, origin?: string) {
   const context = authorized(db, request, origin), handle = randomBytes(32).toString("base64url");
   const expires = new Date(now.getTime() + 10 * 60000).toISOString();
-  db.prepare("DELETE FROM metadata_reviews WHERE session_id=? AND handle_hash NOT IN (SELECT handle_hash FROM metadata_reviews WHERE session_id=? ORDER BY expires_at DESC LIMIT 19)").run(sessionId(request), sessionId(request));
-  db.prepare("INSERT INTO metadata_reviews(handle_hash,group_id,member_id,session_id,expires_at,payload) VALUES (?,?,?,?,?,?)").run(hash(handle), context.groupId, context.activeMemberId!, sessionId(request), expires, JSON.stringify(payload));
+  db.prepare("DELETE FROM metadata_reviews WHERE session_id=? AND handle_hash NOT IN (SELECT handle_hash FROM metadata_reviews WHERE session_id=? ORDER BY expires_at DESC LIMIT 19)").run(sessionId(db,request), sessionId(db,request));
+  db.prepare("INSERT INTO metadata_reviews(handle_hash,group_id,member_id,session_id,expires_at,payload) VALUES (?,?,?,?,?,?)").run(hash(handle), context.groupId, context.activeMemberId!, sessionId(db,request), expires, JSON.stringify(payload));
   return handle;
 }
 function snapshot(db: DatabaseSync, request: Request, handle: unknown, now: Date, origin?: string): Snapshot {
@@ -31,13 +31,13 @@ function snapshot(db: DatabaseSync, request: Request, handle: unknown, now: Date
   ensureFreshMetadata(db, now);
   if (typeof handle !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(handle)) throw new AccessError();
   const row = db.prepare("SELECT payload FROM metadata_reviews WHERE handle_hash=? AND group_id=? AND member_id=? AND session_id=? AND expires_at>?")
-    .get(hash(handle), context.groupId, context.activeMemberId!, sessionId(request), now.toISOString());
+    .get(hash(handle), context.groupId, context.activeMemberId!, sessionId(db,request), now.toISOString());
   if (!row) throw new AccessError();
   return JSON.parse(row.payload as string) as Snapshot;
 }
 function sameContext(db: DatabaseSync, request: Request, before: ReturnType<typeof authorized>, origin?: string) {
   const after = authorized(db, request, origin);
-  if (before.groupId !== after.groupId || before.activeMemberId !== after.activeMemberId) throw new AccessError();
+  if (before.ownerKey !== after.ownerKey) throw new AccessError();
 }
 function projectPolicy(item: MetadataItem): MetadataItem {
   if (item.identity.namespace !== "kinopoisk_unofficial") return item;
@@ -100,14 +100,20 @@ export function saveReview(db: DatabaseSync, request: Request, handle: unknown, 
 /** Only still-provider-owned fields are refreshed; concurrent manual corrections win. */
 export async function refreshTitleMetadata(db: DatabaseSync, request: Request, id: string, providers: Providers, origin?: string, now = () => new Date()): Promise<LookupResult> {
   const before = authorized(db, request, origin); authorizeRequest(db, request, { kind: "title", id }, { mutation: true, configuredOrigin: origin }); ensureFreshMetadata(db, now());
+  const contributor = () => {
+    if (before.mode === "account" && !db.prepare("SELECT 1 FROM contributors c JOIN titles t ON t.id=c.title_id WHERE c.title_id=? AND c.group_id=? AND c.member_id=? AND t.archived=0").get(id,before.groupId,before.activeMemberId!)) throw new AccessError();
+  };
+  contributor();
   const row = db.prepare("SELECT provider_namespace,provider_id FROM titles WHERE id=? AND group_id=?").get(id, before.groupId)!;
   if (row.provider_namespace !== "youtube" && row.provider_namespace !== "kinopoisk_unofficial") return lookupFailure("invalid_query");
   const result = await lookupMetadata(providers[row.provider_namespace], { kind: "detail", externalId: row.provider_id as string }, { now, signal: request.signal });
   sameContext(db, request, before, origin); authorizeRequest(db, request, { kind: "title", id }, { mutation: true, configuredOrigin: origin });
+  contributor();
   if (result.kind !== "available" && result.kind !== "incomplete") { ensureFreshMetadata(db, now()); return result; }
   const item = projectPolicy(result.item), fresh = values(item), expires = item.provenance.freshness.refreshBy ?? new Date(new Date(item.provenance.retrievedAt).getTime() + 30 * 86400000).toISOString();
   db.exec("BEGIN IMMEDIATE");
   try {
+    authorized(db,request,origin); contributor();
     for (const field of storedFields) {
       if (!item.provenance.acquiredFields.includes(field) || !db.prepare("SELECT 1 FROM metadata_fields WHERE title_id=? AND field=? AND origin='provider'").get(id, field)) continue;
       if (field === "genres") {
