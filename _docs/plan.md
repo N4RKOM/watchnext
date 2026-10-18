@@ -206,7 +206,7 @@ The user authorized the backlog run on October 15, 2026. During that run, the us
 
 ## Decision record and implementation gates
 
-Read [the first-release decision record](decisions.md) before implementing edge-case behavior. Its Approved baseline preserves the choices in this plan. D01/D02 are explicitly approved; D03–D17, D23–D25, and D27 are resolved delegated choices for issue #4's schema foundation. D18–D20 are resolved under delegated authority in #25; D21–D22 remain for #27. Other decisions state their owning feature resolution below. U01 identifies the remaining live access, semantics, and rights checks following provider research.
+Read [the first-release decision record](decisions.md) before implementing edge-case behavior. Its Approved baseline preserves the choices in this plan. D01/D02 are explicitly approved; D03–D17, D23–D25, and D27 are resolved delegated choices for issue #4's schema foundation. D18–D20 are resolved under delegated authority in #25; D21–D22 are resolved under that authority in #27; see [the page-cycle contract](picking-cycle.md). Other decisions state their owning feature resolution below. U01 identifies the remaining live access, semantics, and rights checks following provider research.
 
 [Issue #4](https://github.com/xiaodlb/watchnext/issues/4) records the [schema-affecting resolutions](decisions.md#schema-affecting-approval-gate) before implementing those contracts. Each entry retains its rationale/example and distinguishes explicit approval from delegated resolution. Historical approval questions are not requests to ask again. Follow the relevant issue prerequisite links to its decision IDs.
 

@@ -102,5 +102,5 @@ export function pickFromForm(db: DatabaseSync, request: Request, form: FormData,
       }
     }
     db.exec("COMMIT"); commitCycle?.(); return response;
-  } catch (error) { db.exec("ROLLBACK"); throw error; }
+  } catch (error) { if (db.isTransaction) db.exec("ROLLBACK"); throw error; }
 }

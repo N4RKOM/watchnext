@@ -34,7 +34,7 @@ Return only the chosen ordered tier. Never mix tiers, permit +301 seconds, relax
 
 Multiple categories are returned in this fixed order when relevant, without copying foreign identifiers or untrusted text into messages. Actions are suggestions, not mutations; viewer input validation remains distinct from no-match. Safe per-title exclusions retain affected selected IDs/coordinates for later useful explanations.
 
-#27 consumes this **single tier**. It must not append fallback candidates to an exact cycle or append the lower fallback tier to an overrun cycle. Exhaustion/reset/no-repeat presentation belongs to #27; #26 owns actual controls/results/actions. No local or persistent cycle state is implemented here. D21/D22 remain for #27.
+#27 consumes this **single tier**. It never appends fallback candidates to an exact cycle or the lower fallback tier to an overrun cycle. [The delivered page-cycle protocol](picking-cycle.md) implements D21/D22 exhaustion/reset/no-repeat with fresh server validation; #26 supplies actual controls/results/actions. This pure ranking module itself holds no cycle state.
 
 ## Verification
 

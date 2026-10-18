@@ -50,7 +50,7 @@ The remaining picker and external-link proposals gate their feature issues rathe
 
 ## Detailed behavior decisions
 
-Each entry states its own status. D01/D02 retain the exact recommendations explicitly approved in the planning answers on October 15, 2026. The schema-affecting delegated entries adopt their existing recommendations because their recorded rationale suits a small manual-entry academic app; their original approval questions remain as historical context, not pending requests. D26/D28 are resolved in issue #12 below. D18–D20 are delegated resolutions in #25; D21–D22 remain Proposed for #27.
+Each entry states its own status. D01/D02 retain the exact recommendations explicitly approved in the planning answers on October 15, 2026. The schema-affecting delegated entries adopt their existing recommendations because their recorded rationale suits a small manual-entry academic app; their original approval questions remain as historical context, not pending requests. D26/D28 are resolved in issue #12 below. D18–D20 are delegated resolutions in #25; D21–D22 are delegated resolutions in #27, with the bounded protocol in [picking-cycle.md](picking-cycle.md).
 
 ### D01. Fixed moods
 
