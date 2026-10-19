@@ -143,6 +143,8 @@ The [#39 Added by me contract](added-by-me.md) defines live account-derived cont
 
 ## Future verification and preservation
 
+The [#40 final verification contract](enhancement-verification.md) requires a supported portable full authenticated/legacy E2E command, twelve-answer audit, fresh isolated setup/upgrade and authenticated restart/backup/expiry evidence. It is a task contract, not a QA/completion claim; the user's actual server/database are never the verification target.
+
 Implementation is now authorized but this PM authorization update changes documentation only. Each implementation must use temporary DBs and isolated production-browser fixtures with outbound-provider mocks; no keys, purchases, live API dependency, normal-data initialization or hidden test bypasses. Verify 375px/1280px keyboard flows, direct forged/stale/revoked access, races/rollback, restart/backup state and legacy-value preservation.
 
 Do not stop/restart the user's running development server, revert their existing next-env.d.ts, or write the same .next output while it is active. Use a separate owned checkout/build output and serial resource-bounded runs. Current Next build uses a two-worker CPU cap; Vitest does not have a configured automatic worker cap. Optional explicit test concurrency under resource pressure must not skip/weaken tests.
