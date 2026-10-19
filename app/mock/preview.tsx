@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createMockService, pendingDomains } from "../../frontend/mock/service";
 import type { ContextIdentity, MockContext, MockScenario, SelectionResult, ServiceResult } from "../../frontend/service/contracts";
+import { MockGroups } from "./groups";
 import { MockAccounts } from "./accounts";
 import styles from "./preview.module.css";
 type View = { kind: "idle" } | { kind: "pending"; action: "load" | "reset" } | ServiceResult<MockContext>;
@@ -13,6 +14,7 @@ export function MockEntry({ selection }: { selection: SelectionResult }) {
 }
 function Preview({ scenario: initialScenario }: { scenario: MockScenario }) {
   const [service] = useState(createMockService);
+  const [groupEpoch, setGroupEpoch] = useState(0);
   const [accountEpoch, setAccountEpoch] = useState(0);
   const [scenario, setScenario] = useState<MockScenario>(initialScenario);
   const [view, setView] = useState<View>({ kind: "idle" });
@@ -30,7 +32,7 @@ function Preview({ scenario: initialScenario }: { scenario: MockScenario }) {
   async function run(action: "load" | "reset") {
     const current = ++sequence.current;
     running.current?.abort(); const controller = new AbortController(); running.current = controller;
-    if (action === "reset") setAccountEpoch(value => value + 1);
+    if (action === "reset") { setAccountEpoch(value => value + 1); setGroupEpoch(value => value + 1); }
     setView({ kind: "pending", action });
     const result = action === "load" ? await service.context.read({ scenario, signal: controller.signal }) : await service.context.reset(identity.current, { signal: controller.signal });
     if (current !== sequence.current) return;
@@ -40,5 +42,5 @@ function Preview({ scenario: initialScenario }: { scenario: MockScenario }) {
   }
   const pending = view.kind === "pending";
   const message = view.kind === "idle" ? "Load the synthetic preview to begin." : view.kind === "pending" ? view.action === "reset" ? "Resetting only this demo…" : "Loading the synthetic preview…" : view.kind === "success" ? "Synthetic preview ready." : view.kind === "failure" ? view.error.message : view.message;
-  return <><section className={styles.card} aria-labelledby="preview-controls"><h2 id="preview-controls">Try the preview</h2><p>Choose a simulated response, then load the preview. Reset affects only this open preview’s temporary state. Reloading starts a fresh demo; nothing is saved to browser storage.</p><label className={styles.field}>Simulated response<select className="field" value={scenario} onChange={event => { if (pending) cancel(); setScenario(event.target.value as MockScenario); }}><option value="ready">Ready</option><option value="slow">Slow</option><option value="unavailable">Unavailable</option></select></label><div className={styles.controls}><button className="button" disabled={pending} onClick={() => void run("load")}>Load preview</button><button className={`button ${styles.secondary}`} disabled={pending && view.action === "reset"} onClick={() => void run("reset")}>Reset demo</button>{pending && <button className={`button ${styles.secondary}`} onClick={cancel}>Cancel request</button>}</div><p role={view.kind === "failure" || view.kind === "stale" ? "alert" : "status"} tabIndex={-1} ref={feedback} aria-live="polite">{message}</p>{context && <div className={styles.context} aria-label="Synthetic context"><h3>{context.label}</h3><p>Demo revision: {context.identity.revision}</p><p>{context.account ? `Synthetic account: ${context.account.username}` : "No account is signed in."} Group actions are not available yet.</p></div>}</section><MockAccounts key={accountEpoch} service={service} identity={identity} scenario={scenario} changed={setContext} /><section className={styles.card} aria-labelledby="upcoming-previews"><h2 id="upcoming-previews">Upcoming previews</h2><p>These screens are not available in this foundation.</p><ul className={styles.domains}>{pendingDomains.map(domain => <li key={domain.key}><strong>{domain.label}</strong><span>Not available yet</span></li>)}</ul></section></>;
+  return <><section className={styles.card} aria-labelledby="preview-controls"><h2 id="preview-controls">Try the preview</h2><p>Choose a simulated response, then load the preview. Reset affects only this open preview’s temporary state. Reloading starts a fresh demo; nothing is saved to browser storage.</p><label className={styles.field}>Simulated response<select className="field" value={scenario} onChange={event => { if (pending) cancel(); setScenario(event.target.value as MockScenario); }}><option value="ready">Ready</option><option value="slow">Slow</option><option value="unavailable">Unavailable</option></select></label><div className={styles.controls}><button className="button" disabled={pending} onClick={() => void run("load")}>Load preview</button><button className={`button ${styles.secondary}`} disabled={pending && view.action === "reset"} onClick={() => void run("reset")}>Reset demo</button>{pending && <button className={`button ${styles.secondary}`} onClick={cancel}>Cancel request</button>}</div><p role={view.kind === "failure" || view.kind === "stale" ? "alert" : "status"} tabIndex={-1} ref={feedback} aria-live="polite">{message}</p>{context && <div className={styles.context} aria-label="Synthetic context"><h3>{context.label}</h3><p>Demo revision: {context.identity.revision}</p><p>{context.account ? `Synthetic account: ${context.account.username}` : "No account is signed in."} Group actions are not available yet.</p></div>}</section><MockAccounts key={`accounts-${accountEpoch}`} service={service} identity={identity} scenario={scenario} changed={value => { setContext(value); setGroupEpoch(epoch => epoch + 1); }} departed={() => setGroupEpoch(epoch => epoch + 1)} /><MockGroups key={`groups-${groupEpoch}`} service={service} identity={identity} scenario={scenario} changed={() => { setContext(undefined); setAccountEpoch(epoch => epoch + 1); }} /><section className={styles.card} aria-labelledby="upcoming-previews"><h2 id="upcoming-previews">Upcoming previews</h2><p>These screens are not available in this foundation.</p><ul className={styles.domains}>{pendingDomains.map(domain => <li key={domain.key}><strong>{domain.label}</strong><span>Not available yet</span></li>)}</ul></section></>;
 }

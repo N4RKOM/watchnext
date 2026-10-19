@@ -3,7 +3,7 @@ export type FieldErrors = Readonly<Partial<Record<"mode" | "scenario" | "context
 export type ServiceFailure = Readonly<{
   kind: "failure";
   error: Readonly<{
-    code: "invalid_selection" | "demo_unavailable" | "invalid_account" | "invalid_credentials" | "invalid_proof";
+    code: "invalid_selection" | "demo_unavailable" | "invalid_account" | "invalid_credentials" | "invalid_proof" | "group_access" | "group_input" | "invite_invalid";
     message: string;
     retryable: boolean;
     fields?: FieldErrors;
@@ -20,7 +20,7 @@ export type MockContext = Readonly<{
   identity: ContextIdentity;
   label: "Synthetic workspace";
   account: AccountSummary | null;
-  group: null;
+  group: GroupSummary | null;
 }>;
 export interface ContextService {
   readonly initialIdentity: ContextIdentity;
@@ -31,7 +31,36 @@ export interface FrontendService {
   readonly mode: "mock";
   readonly context: ContextService;
   readonly accounts: AccountService;
+  readonly groups: GroupService;
   // Domain namespaces will be added by #55–#60, never fabricated as successful here.
+}
+
+export const avatarColors = ["blue", "purple", "teal", "rose", "amber", "slate"] as const;
+export type AvatarColor = typeof avatarColors[number];
+export type GroupSummary = Readonly<{ id: string; name: string; kind: "account" | "legacy"; generation: number }>;
+export type MemberSummary = Readonly<{ id: string; accountId: string | null; name: string; color: AvatarColor; owner: boolean; you: boolean; active: boolean; generation: number; removedAtGeneration: number | null; references: Readonly<{ contributions: readonly string[]; history: readonly string[] }> }>;
+export type GroupWorkspace = Readonly<{
+  mode: "account" | "legacy";
+  memberships: readonly GroupSummary[];
+  selected: GroupSummary | null;
+  members: readonly MemberSummary[];
+  profileId: string | null;
+  canManage: boolean;
+  pending: Readonly<{ needsAccount: boolean; groupName: string | null }> | null;
+}>;
+export type InviteDisclosure = Readonly<{ invite: string; kind: "account" | "legacy" }>;
+export interface GroupService {
+  read(options?: RequestOptions): Promise<ServiceResult<GroupWorkspace>>;
+  create(name: string, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<InviteDisclosure>>;
+  select(id: string, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<GroupWorkspace>>;
+  resolve(invite: string, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<GroupWorkspace>>;
+  join(expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<GroupWorkspace>>;
+  mode(mode: "account" | "legacy", expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<GroupWorkspace>>;
+  remove(memberId: string, memberGeneration: number, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<GroupWorkspace>>;
+  rotate(generation: number, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<InviteDisclosure>>;
+  createLegacy(name: string, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<InviteDisclosure>>;
+  createProfile(name: string, color: AvatarColor, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<GroupWorkspace>>;
+  selectProfile(id: string, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<GroupWorkspace>>;
 }
 export type DemoSelection = Readonly<{ mode: "mock"; scenario: MockScenario }>;
 export type SelectionResult = Readonly<{ kind: "success"; value: DemoSelection }> | ServiceFailure;

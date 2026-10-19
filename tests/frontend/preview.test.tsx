@@ -13,7 +13,7 @@ const choose = (value: string) => fireEvent.change(screen.getByLabelText("Simula
 it("uses actual async read/reset state, retains the warning and marks all domains unavailable", async () => {
   render(<MockEntry selection={selectDemo(undefined, undefined)} />);
   expect(screen.getByLabelText("Synthetic demo notice").textContent).toContain("not real authentication");
-  expect(screen.getAllByText("Not available yet")).toHaveLength(5); expect(screen.queryByRole("link")).toBeNull();
+  expect(screen.getAllByText("Not available yet")).toHaveLength(4); expect(screen.queryByRole("link")).toBeNull();
   click("Load preview"); expect((screen.getByRole("button", { name: "Load preview" }) as HTMLButtonElement).disabled).toBe(true);
   expect(screen.getAllByRole("status")[0].textContent).toContain("Loading"); expect(screen.queryByText("Demo revision: 0")).toBeNull();
   await advance(80); expect(screen.getByText("Demo revision: 0")).toBeTruthy();

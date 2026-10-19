@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ContextIdentity, FrontendService, MockContext, MockScenario, PrivateDisclosure, ServiceResult } from "../../frontend/service/contracts";
 import styles from "./preview.module.css";
 type Screen = "entry" | "register" | "signin" | "recover" | "reveal" | "account";
-export function MockAccounts({ service, identity, scenario, changed }: { service: FrontendService; identity: { current: ContextIdentity }; scenario: MockScenario; changed: (context: MockContext | undefined) => void }) {
+export function MockAccounts({ service, identity, scenario, changed, departed }: { service: FrontendService; identity: { current: ContextIdentity }; scenario: MockScenario; changed: (context: MockContext | undefined) => void; departed?: () => void }) {
   const [screen, setScreen] = useState<Screen>("entry");
   const [account, setAccount] = useState<MockContext["account"]>(null);
   const [disclosure, setDisclosure] = useState<PrivateDisclosure>();
@@ -14,7 +14,7 @@ export function MockAccounts({ service, identity, scenario, changed }: { service
   const running = useRef<AbortController | undefined>(undefined), sequence = useRef(0);
   function clear() { form.current?.reset(); setDisclosure(undefined); setCopy(""); }
   function cancel() { sequence.current++; running.current?.abort(); running.current = undefined; setPending(false); form.current?.reset(); setMessage("Account request canceled. No change was committed."); }
-  function navigate(next: Screen) { cancel(); clear(); setScreen(next); setMessage("Choose a synthetic account action."); }
+  function navigate(next: Screen) { departed?.(); cancel(); clear(); setScreen(next); setMessage("Choose a synthetic account action."); }
   useEffect(() => {
     const leave = () => { sequence.current++; running.current?.abort(); form.current?.reset(); setDisclosure(undefined); setScreen("entry"); setPending(false); setMessage("Private disclosure cleared on departure."); };
     const restore = (event: PageTransitionEvent) => { if (event.persisted) leave(); };
@@ -51,7 +51,7 @@ export function MockAccounts({ service, identity, scenario, changed }: { service
       <button className="button" disabled={pending} type="submit">{screen === "register" ? "Create account" : screen === "recover" ? "Replace password" : "Sign in to demo"}</button>
     </form>}
     {screen === "reveal" && disclosure && <div className={styles.form}><h3>Save your synthetic recovery code</h3><p>This is the only disclosure. Leaving this view discards it. Explicit copying cannot erase an external clipboard.</p><label className={styles.field}>One-time synthetic recovery code<input className="field" readOnly value={disclosure.code} onFocus={event => event.currentTarget.select()} /></label><button className="button" onClick={() => { const value = disclosure.code; void navigator.clipboard?.writeText(value).then(() => setCopy("Copied explicitly. Keep it private."), () => setCopy("Copy unavailable. Select the code and copy it manually.")); if (!navigator.clipboard) setCopy("Copy unavailable. Select the code and copy it manually."); }}>Copy code</button><p role="status">{copy || "You can select the code and copy manually."}</p><button className="button" onClick={() => { const next = disclosure.next; clear(); if (next === "account") void run("read"); else navigate("signin"); }}>Continue</button></div>}
-    {screen === "account" && account && <div><h3>Account: {account.username}</h3><p>{account.seeded ? "Seeded synthetic account" : "New synthetic account"}</p>{account.memberships.length ? <><h4>Read-only sample memberships</h4><ul>{account.memberships.map(name => <li key={name}>{name}</li>)}</ul><p>Group actions are not available yet.</p></> : <p>No groups yet. Group actions are not available yet.</p>}<button className="button" disabled={pending} onClick={() => void run("signout")}>Sign out</button></div>}
+    {screen === "account" && account && <div><h3>Account: {account.username}</h3><p>{account.seeded ? "Seeded synthetic account" : "New synthetic account"}</p>{account.memberships.length ? <><h4>Read-only sample memberships</h4><ul>{account.memberships.map(name => <li key={name}>{name}</li>)}</ul><p>Group controls are in the separate synthetic groups panel.</p></> : <p>No groups yet. Group controls are in the separate synthetic groups panel.</p>}<button className="button" disabled={pending} onClick={() => void run("signout")}>Sign out</button></div>}
     {screen === "entry" && <button className={`button ${styles.secondary}`} disabled={pending} onClick={() => void run("signout")}>Sign out</button>}
     {pending && <button className={`button ${styles.secondary}`} onClick={cancel}>Cancel account request</button>}
     <p ref={feedback} tabIndex={-1} role="status" aria-live="polite">{message}</p>

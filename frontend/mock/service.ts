@@ -1,9 +1,9 @@
+import { createMockGroups } from "./groups";
 import { sameContext, selectDemo } from "../service/contracts";
 import type { ContextIdentity, FrontendService, MockContext, MockScenario, RequestOptions, ServiceResult, AccountInput, AccountSummary, PrivateDisclosure, FieldErrors } from "../service/contracts";
 let instances = 0;
 export const scenarioDelays: Readonly<Record<MockScenario, number>> = Object.freeze({ ready: 80, slow: 1200, unavailable: 300 });
 export const pendingDomains = Object.freeze([
-  { key: "groups", label: "Groups, invitations and legacy access", issue: 56 },
   { key: "library", label: "Shared library, details and archive", issue: 57 },
   { key: "entry", label: "Manual entry and provider review", issue: 58 },
   { key: "personal", label: "Personal progress, ratings and notes", issue: 59 },
@@ -21,20 +21,23 @@ function wait(delay: number, signal?: AbortSignal): Promise<boolean> {
   });
 }
 /** Pure, per-instance browser state. No storage, cookies, fetch, native imports or credentials. */
-export function createMockService(): FrontendService {
+export function createMockService(options: { now?: () => number } = {}): FrontendService {
   const instance = `synthetic-preview-${++instances}`;
   let revision = 0, codeCounter = 0;
   type Record = { summary: AccountSummary; password: string; proof: string };
   const records = new Map<string, Record>();
   const seed = () => { records.clear(); records.set("demo.viewer", { summary: { id: "seeded-viewer", username: "Demo.Viewer", seeded: true, memberships: ["Synthetic Friday friends", "Synthetic weekend pair"] }, password: "synthetic password", proof: "SYNTHETIC-SEED-PROOF" }); };
-  seed();
+  const seedAccounts = seed;
+  seedAccounts();
+  const seedOwner = () => records.set("demo.owner", { summary: { id: "seeded-owner", username: "Demo.Owner", seeded: true, memberships: ["Synthetic Friday friends"] }, password: "synthetic password", proof: "SYNTHETIC-OWNER-PROOF" });
+  seedOwner();
   let current: AccountSummary | null = null;
   const code = () => `SYNTHETIC-${instance}-${++codeCounter}`;
 
   const identity = (): ContextIdentity => Object.freeze({ mode: "mock", instance, revision });
   const result = (): ServiceResult<MockContext> => {
     const snapshot = identity();
-    return { kind: "success", value: Object.freeze({ identity: snapshot, label: "Synthetic workspace", account: current, group: null }), context: snapshot };
+    return { kind: "success", value: Object.freeze({ identity: snapshot, label: "Synthetic workspace", account: current ? { ...current, memberships: groups.memberships(current.id).map(g => g.name) } : null, group: groups.current() }), context: snapshot };
   };
   async function gate<T>(expected: ContextIdentity, options: RequestOptions, commit: () => ServiceResult<T>): Promise<ServiceResult<T>> {
     if (options.signal?.aborted) return cancelled();
@@ -55,15 +58,17 @@ export function createMockService(): FrontendService {
     return fields;
   };
   const read = async (options: RequestOptions = {}) => gate(identity(), options, result);
-  return Object.freeze({ mode: "mock", accounts: Object.freeze({
+  const groups = createMockGroups({ account: () => current, identity, bump: () => { revision++; }, code, now: options.now ?? Date.now, gate });
+  return Object.freeze({ mode: "mock", groups: groups.service, accounts: Object.freeze({
     read,
     async register(input: AccountInput, expected: ContextIdentity, options: RequestOptions = {}): Promise<ServiceResult<PrivateDisclosure>> {
       return gate<PrivateDisclosure>(expected, options, () => {
         const fields = validate(input); if (Object.keys(fields).length) return invalid(fields);
         const key = input.username.trim().toLowerCase();
         if (records.has(key)) return invalid({ username: "That synthetic username is already registered." });
+        const before = current;
         const proof = code(); current = Object.freeze({ id: `account-${records.size}`, username: input.username.trim(), seeded: false, memberships: Object.freeze([]) });
-        records.set(key, { summary: current, password: input.password, proof }); revision++;
+        records.set(key, { summary: current, password: input.password, proof }); revision++; groups.accountChanged(before, current);
         return { kind: "success", value: { code: proof, next: "account" }, context: identity() };
       });
     },
@@ -71,11 +76,11 @@ export function createMockService(): FrontendService {
       return gate(expected, options, () => {
         const record = records.get(input.username.trim().toLowerCase());
         if (!record || record.password !== input.password) return { kind: "failure", error: { code: "invalid_credentials", message: "Username or password is incorrect.", retryable: true } };
-        current = record.summary; revision++; return result();
+        const before = current; current = record.summary; revision++; groups.accountChanged(before, current); return result();
       });
     },
     async signOut(expected: ContextIdentity, options: RequestOptions = {}): Promise<ServiceResult<MockContext>> {
-      return gate(expected, options, () => { current = null; revision++; return result(); });
+      return gate(expected, options, () => { const before = current; current = null; revision++; groups.accountChanged(before, current); return result(); });
     },
     async recover(input: AccountInput, expected: ContextIdentity, options: RequestOptions = {}): Promise<ServiceResult<PrivateDisclosure>> {
       return gate<PrivateDisclosure>(expected, options, () => {
@@ -83,8 +88,9 @@ export function createMockService(): FrontendService {
         const record = records.get(input.username.trim().toLowerCase());
         if (!record || record.proof !== input.proof) return { kind: "failure", error: { code: "invalid_proof", message: "Username or recovery code is incorrect or no longer valid.", retryable: true } };
         const proof = code(); record.password = input.password; record.proof = proof;
+        const before = current;
         if (current?.id === record.summary.id) current = null;
-        revision++; return { kind: "success", value: { code: proof, next: "signin" }, context: identity() };
+        revision++; groups.accountChanged(before, current); return { kind: "success", value: { code: proof, next: "signin" }, context: identity() };
       });
     },
   }), context: Object.freeze({
@@ -104,7 +110,7 @@ export function createMockService(): FrontendService {
       if (!sameContext(expected, before)) return stale();
       if (!await wait(scenarioDelays.ready, options.signal)) return cancelled();
       if (!sameContext(before, identity())) return stale();
-      seed(); current = null; revision++;
+      seed(); seedOwner(); groups.reset(); current = null; revision++;
       return result();
     },
   }) });
