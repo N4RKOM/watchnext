@@ -9,7 +9,7 @@ async function proposal(title="Provider video",handle="synthetic-review"):Promis
 const save=async():Promise<TitleFormState>=>({kind:"error",message:"Synthetic storage failure; details kept."});
 function source(value="youtube"){fireEvent.change(screen.getByLabelText("Entry method"),{target:{value}});}
 const input=(name:string)=>screen.getByLabelText(name,{exact:true}) as HTMLInputElement;
-const click=(name:string)=>fireEvent.click(screen.getByRole("button",{name,exact:true}));
+const click=(name:string)=>fireEvent.click(screen.getByRole("button",{name}));
 const edit=(name:string,value:string)=>fireEvent.change(input(name),{target:{value}});
 const lookup=()=>click("Look up video");
 const handle=()=>document.querySelector<HTMLInputElement>('input[name="reviewHandle"]')?.value;
@@ -21,7 +21,7 @@ it("dirty metadata offers explicit decline/replace without changing identity or 
  render(<TitleForm action={save} lookup={()=>proposal()} select={vi.fn()}/>);edit("Title","My draft");fireEvent.click(input("Funny"));source();lookup();await screen.findByText("Replace your edited details?");expect(input("Title").value).toBe("My draft");expect(handle()).toBeUndefined();click("Keep my details");expect(handle()).toBeUndefined();lookup();await screen.findByText("Replace your edited details?");click("Replace details");expect(input("Title").value).toBe("Provider video");expect(input("Funny").checked).toBe(true);click("Save title");await screen.findByText("Synthetic storage failure; details kept.");expect(input("Title").value).toBe("Provider video");expect(handle()).toBe("synthetic-review");
 });
 it("edits while detail is pending require new consent and editing a staged replacement invalidates it",async()=>{
- let finish!:(value:ReviewResult)=>void;render(<TitleForm action={save} lookup={()=>new Promise(done=>{finish=done;})} select={vi.fn()}/>);source();lookup();edit("Title","While waiting");await act(async()=>finish(await proposal()));expect(input("Title").value).toBe("While waiting");expect(handle()).toBeUndefined();await screen.findByRole("button",{name:"Replace details"});edit("Title","Newer still");expect(screen.queryByRole("button",{name:"Replace details"})).toBeNull();expect(handle()).toBeUndefined();
+ let finish!:(value:ReviewResult)=>void;render(<TitleForm action={save} lookup={()=>new Promise(done=>{finish=done;})} select={vi.fn()}/>);source();lookup();edit("Title","While waiting");input("Title").focus();await act(async()=>finish(await proposal()));expect(input("Title").value).toBe("While waiting");expect(document.activeElement).toBe(input("Title"));expect(handle()).toBeUndefined();await screen.findByRole("button",{name:"Replace details"});edit("Title","Newer still");expect(screen.queryByRole("button",{name:"Replace details"})).toBeNull();expect(handle()).toBeUndefined();
 });
 it("reverting to the baseline during the await still cannot grant stale replacement consent",async()=>{
  let finish!:(value:ReviewResult)=>void;render(<TitleForm action={save} lookup={()=>new Promise(done=>{finish=done;})} select={vi.fn()}/>);source();lookup();edit("Title","Changed");edit("Title","");await act(async()=>finish(await proposal()));await screen.findByRole("button",{name:"Replace details"});expect(handle()).toBeUndefined();click("Keep my details");expect(input("Title").value).toBe("");
@@ -44,4 +44,14 @@ it("YouTube title intent and both providers use explicit candidate and opaque pa
 });
 it("explicit candidate selection fills clean form without assigning moods",async()=>{
  const find=vi.fn(async()=>({kind:"candidates",handle:"search",requiresSelection:true,omittedInvalidCandidates:false,candidates:[{identity:{namespace:"kinopoisk_unofficial",externalId:"1001"},title:"Same",year:2001,contentType:"movie",coverUrl:null}]} as ReviewResult));const select=vi.fn(async(_form:FormData)=>proposal("Chosen"));render(<TitleForm action={save} lookup={find} select={select}/>);source("kinopoisk_unofficial");click("Search titles");await screen.findByRole("button",{name:"Review Same (2001)"});expect(select).not.toHaveBeenCalled();click("Review Same (2001)");await waitFor(()=>expect(input("Title").value).toBe("Chosen"));expect(select.mock.calls[0][0].get("candidateId")).toBe("1001");expect(input("Funny").checked).toBe(false);
+});
+
+it("saving while lookup is pending prevents its late success from attaching identity or replacing submitted details",async()=>{
+ let finishLookup!:(value:ReviewResult)=>void,finishSave!:(value:TitleFormState)=>void;render(<TitleForm action={()=>new Promise(done=>{finishSave=done;})} lookup={()=>new Promise(done=>{finishLookup=done;})} select={vi.fn()}/>);edit("Title","Submitted manual draft");source();lookup();click("Save title");await screen.findByRole("button",{name:"Saving title…"});expect(input("Entry method").closest("fieldset")?.disabled).toBe(true);await act(async()=>finishLookup(await proposal()));expect(input("Title").value).toBe("Submitted manual draft");expect(handle()).toBeUndefined();await act(async()=>finishSave({kind:"error",message:"Safe retry"}));await screen.findByText("Safe retry");expect(input("Title").value).toBe("Submitted manual draft");expect(screen.getByRole("button",{name:"Save title"})).toBeTruthy();
+});
+it("a late failure from an invalidated request cannot replace a newer accepted success",async()=>{
+ const requests:{resolve:(value:ReviewResult)=>void;reject:(reason:Error)=>void}[]=[];render(<TitleForm action={save} lookup={()=>new Promise((resolve,reject)=>requests.push({resolve,reject}))} select={vi.fn()}/>);source();lookup();edit("YouTube video link or ID","new");lookup();await act(async()=>requests[1].resolve(await proposal("Current","current-handle")));await act(async()=>requests[0].reject(new Error("Old transport failure")));expect(input("Title").value).toBe("Current");expect(handle()).toBe("current-handle");expect(screen.queryByText(/Lookup could not finish/)).toBeNull();
+});
+it("returning to the last accepted baseline removes dirty confirmation for a deliberate later lookup",async()=>{
+ render(<TitleForm action={save} lookup={()=>proposal()} select={vi.fn()}/>);source();lookup();await waitFor(()=>expect(handle()).toBe("synthetic-review"));edit("Title","Correction");edit("Title","Provider video");lookup();await screen.findByText(/Lookup finished/);expect(screen.queryByRole("button",{name:"Replace details"})).toBeNull();expect(handle()).toBe("synthetic-review");
 });

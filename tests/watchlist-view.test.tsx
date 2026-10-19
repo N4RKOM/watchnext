@@ -43,3 +43,8 @@ it("unsupported authored URLs render fallback; a changed safe URL resets failed-
  rerender(<Cover url="https://i.ytimg.com/vi/YtFixture01/default.jpg" title="Video"/>);const image=screen.getByRole("img");expect(image.getAttribute("referrerpolicy")).toBe("no-referrer");expect(image.parentElement?.className).toContain("video-cover");fireEvent.error(image);expect(screen.queryByRole("img")).toBeNull();
  rerender(<Cover url="https://kinopoiskapiunofficial.tech/images/posters/kp/301.jpg" title="Poster"/>);expect(screen.getByRole("img").getAttribute("src")).toContain("/301.jpg");expect(screen.getByRole("img").parentElement?.className).not.toContain("video-cover");
 });
+
+it("detects an already cached image failure at hydration and keeps an honest stable fallback",()=>{
+ const complete=vi.spyOn(HTMLImageElement.prototype,"complete","get").mockReturnValue(true),width=vi.spyOn(HTMLImageElement.prototype,"naturalWidth","get").mockReturnValue(0);
+ try{render(<Cover url="https://i.ytimg.com/vi/YtFixture01/default.jpg" title="Cached failure"/>);expect(screen.queryByRole("img")).toBeNull();expect(screen.getByText("No cover")).toBeTruthy();}finally{complete.mockRestore();width.mockRestore();}
+});

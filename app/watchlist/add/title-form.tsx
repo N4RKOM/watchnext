@@ -20,7 +20,10 @@ export function TitleForm({ action, lookup, select, page }: { action: (previous:
   current.current = values;
   const [lookupReset,setLookupReset]=useState(0),[resetConfirm,setResetConfirm]=useState(false);
   const [selected,setSelected]=useState<MetadataItem|null>(null);
-  const [replacement,setReplacement]=useState<{handle:string;item:MetadataItem;revision:number}|null>(null);
+  const [replacement,setReplacement]=useState<{handle:string;item:MetadataItem;revision:number;focus:boolean}|null>(null);
+  const reviewFocus=useRef<HTMLElement>(null),replacementFocus=useRef<HTMLElement>(null);
+  useEffect(()=>{if(reviewHandle)reviewFocus.current?.focus();},[reviewHandle]);
+  useEffect(()=>{if(replacement?.focus)replacementFocus.current?.focus();},[replacement]);
   const dirty=()=>JSON.stringify(current.current)!==JSON.stringify(baseline.current);
   useEffect(()=>{if(!pending)saving.current=false;},[pending,state]);
   const [dismissed, setDismissed] = useState<TitleFormState | null>(null);
@@ -32,15 +35,15 @@ export function TitleForm({ action, lookup, select, page }: { action: (previous:
   }
   function receive(handle:string,item:MetadataItem,started:number) {
     if(saving.current)return;
-    if(dirty()||revision.current!==started)setReplacement({handle,item,revision:revision.current});else apply(handle,item);
+    if(dirty()||revision.current!==started)setReplacement({handle,item,revision:revision.current,focus:started===revision.current});else apply(handle,item);
   }
   function freshManual(){
     revision.current++;current.current=initialValues;baseline.current=initialValues;setValues(initialValues);setMoods([]);setReviewHandle(null);setSelected(null);setReplacement(null);setTypicalConfirmed(false);setDismissed(state);setResetConfirm(false);setLookupReset(value=>value+1);
   }
   // Keep controlled fields across action errors and never attach a late identity to edits.
   return <>{lookup && select && <fieldset className="form-fields" disabled={pending}><legend className="visually-hidden">Optional metadata lookup</legend><LookupPanel lookup={lookup} select={select} page={page} revision={()=>revision.current} invalidate={()=>setReplacement(null)} reset={lookupReset} apply={receive}/></fieldset>}
-    {replacement&&<section className="save-confirmation" aria-labelledby="replace-heading"><h3 id="replace-heading">Replace your edited details?</h3><p>Use {replacement.item.title??"the selected title"} instead? This replaces title, type, runtime, numbering, genres and links. Your moods stay.</p><button className="button" type="button" disabled={pending} onClick={()=>{if(!saving.current&&replacement.revision===revision.current)apply(replacement.handle,replacement.item);else setReplacement(null);}}>Replace details</button>{" "}<button className="button button-secondary" type="button" disabled={pending} onClick={()=>setReplacement(null)}>Keep my details</button></section>}
-    {reviewHandle&&<section className="lookup-review" aria-label="Selected lookup review"><Cover url={values.coverUrl} title={values.title} video={values.contentType==="youtube"}/><div><h3>Review your selected title</h3><p>{selected?.channelTitle??(selected?.year?`Year ${selected.year}`:"")}</p><p>A lookup review is active for 10 minutes. Edit any detail before saving; choose your own moods.</p>{selected?.duration.interpretation==="app_minutes_to_seconds"&&<p>Movie runtime interprets the supplied number as minutes. Check and edit it if needed.</p>}{!values.minutes&&!values.seconds&&<p>Runtime is unknown. Enter a finite duration before saving.</p>}<button className="button button-secondary" type="button" disabled={pending} onClick={()=>{if(dirty())setResetConfirm(true);else freshManual();}}>Start a fresh manual entry (clear details)</button></div></section>}
+    {replacement&&<section ref={replacementFocus} tabIndex={-1} className="save-confirmation" aria-labelledby="replace-heading"><h3 id="replace-heading">Replace your edited details?</h3><p>Use {replacement.item.title??"the selected title"} instead? This replaces title, type, runtime, numbering, genres and links. Your moods stay.</p><button className="button" type="button" disabled={pending} onClick={()=>{if(!saving.current&&replacement.revision===revision.current)apply(replacement.handle,replacement.item);else setReplacement(null);}}>Replace details</button>{" "}<button className="button button-secondary" type="button" disabled={pending} onClick={()=>setReplacement(null)}>Keep my details</button></section>}
+    {reviewHandle&&<section ref={reviewFocus} tabIndex={-1} className="lookup-review" aria-label="Selected lookup review"><Cover url={values.coverUrl} title={values.title} video={values.contentType==="youtube"}/><div><h3>Review your selected title</h3><p>{selected?.channelTitle??(selected?.year?`Year ${selected.year}`:"")}</p><p>A lookup review is active for 10 minutes. Edit any detail before saving; choose your own moods.</p>{selected?.duration.interpretation==="app_minutes_to_seconds"&&<p>Movie runtime interprets the supplied number as minutes. Check and edit it if needed.</p>}{!values.minutes&&!values.seconds&&<p>Runtime is unknown. Enter a finite duration before saving.</p>}<button className="button button-secondary" type="button" disabled={pending} onClick={()=>{if(dirty())setResetConfirm(true);else freshManual();}}>Start a fresh manual entry (clear details)</button></div></section>}
     {resetConfirm&&<section className="save-confirmation" aria-label="Clear edited details"><p>Clear your edited details, moods and imported identity to start manually?</p><button className="button" type="button" disabled={pending} onClick={freshManual}>Clear details and start manually</button>{" "}<button className="button button-secondary" type="button" disabled={pending} onClick={()=>setResetConfirm(false)}>Keep editing</button></section>}
     <form action={submit} onSubmit={()=>{saving.current=true;setReplacement(null);setResetConfirm(false);setLookupReset(value=>value+1);}} onReset={event=>event.preventDefault()} noValidate aria-busy={pending}>
     {reviewHandle && <input type="hidden" name="reviewHandle" value={reviewHandle} />}
