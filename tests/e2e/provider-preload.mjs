@@ -21,9 +21,9 @@ globalThis.fetch = async (input, init) => {
     return json({ items: [{ id, snippet: { title: "Synthetic YouTube proposal", liveBroadcastContent: "none" }, contentDetails: { duration: "PT2M" }, status: { privacyStatus: "public", uploadStatus: "processed" } }] });
   }
   if (url.origin === "https://kinopoiskapiunofficial.tech") {
-    const film = { kinopoiskId: 1001, nameRu: "Synthetic ambiguous film", year: 2001, type: "FILM", filmLength: 120, genres: [{ genre: "Drama" }] };
+    const film = { kinopoiskId: 1001, nameRu: "Synthetic ambiguous film", year: 2001, type: "FILM", filmLength: 120, genres: [{ genre: "Drama" }], posterUrl: "https://kinopoiskapiunofficial.tech/images/posters/kp/1001.jpg", posterUrlPreview: "https://kinopoiskapiunofficial.tech/images/posters/kp_small/1001.jpg" };
     const unknown = { ...film, kinopoiskId: 1002, year: 2020, type: "DOCUMENTARY", filmLength: null };
-    if (url.pathname === "/api/v2.2/films") return json({ items: [film, unknown] });
+    if (url.pathname === "/api/v2.2/films") return json({ totalPages: 1, items: [film, unknown] });
     if (url.pathname === "/api/v2.2/films/1002") return json(unknown);
     if (url.pathname === "/api/v2.2/films/1001") return json(film);
     return json({}, 404);

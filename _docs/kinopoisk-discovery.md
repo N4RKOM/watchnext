@@ -1,6 +1,6 @@
 # Kinopoisk discovery contract — issue #37
 
-PM refresh October 19, 2026; authorized server work, not implementation/live-access evidence. [#38](https://github.com/xiaodlb/watchnext/issues/38) owns actual search/review/list/detail image UI and automatic field application. No key inspection, API-key requests, purchase or media/image download was performed.
+Implemented server contract, October 19, 2026; synthetic/offline verification, not authenticated live-access evidence. [#38](https://github.com/xiaodlb/watchnext/issues/38) owns actual search/review/list/detail image UI and automatic field application. No key inspection, API-key requests, purchase or media/image download was performed.
 
 ## Primary evidence
 
@@ -22,3 +22,11 @@ The [provider OpenAPI](https://kinopoiskapiunofficial.tech/documentation/api/ope
 #37 supplies offline-tested real adapter/normalized/paging/review behavior. #38 applies fields automatically and exposes editable review/mood/missing-runtime validation and image UI; no UI completion is claimed here. Update older adapter/research statements (runtime always unknown/covers absent) to distinguish historical behavior from current mapping. Keep manual fallback for missing keys/errors.
 
 Fixtures cover movie mapping, all unknown/episodic boundaries, name/type/genre/year/poster variants, status/response limits, selected-ID mismatch, bounded paging/empty pages, query/context replay/stale async/expiry, safe URLs and credential exclusion. Preserve YouTube/account/legacy/lifecycle regression. Work only in owned C checkout/disposable fixtures; no user M server/build/data changes or real provider requests.
+
+## Implemented bounds and safe URL paths
+
+The central `kinopoiskPoster` validator accepts only actual HTTPS URLs, default/443 port, no credentials/fragment/query/whitespace/backslash and no normalized traversal. Published path shapes are `/images/posters/kp/<positive ID>.(jpg|jpeg|png|webp)` or `kp_small` on kinopoiskapiunofficial.tech; and `/get-kinopoisk-image/<positive numeric bucket>/<8–100 ASCII alphanumeric-or-hyphen image key>/(orig|<1–4 digit width>x[<1–4 digit height>])` on avatars.mds.yandex.net. Other hosts/private URLs fail closed. These are conservative app allowlists, not a claim every provider image path is supported or licensed.
+
+The native Kinopoisk pool is independent from YouTube: 2 active, 8 queued, 30-second queue deadline, then shared ten-second fetch/body deadline; successful response bodies cap at 262144 bytes and twenty rows. Service admission caps twenty requests/context/fifteen minutes. `totalPages` must be nonnegative integral and consistent when supplied; page>1 requires it, page navigation caps at20 even for larger totals, and zero total cannot contain rows. First-page legacy responses without totals have no navigation. No automatic retries, unbounded enrichment or provider quota evasion occur.
+
+Detailed durations mark `app_minutes_to_seconds` when interpreted, rather than pretending the provider verified units. Search candidates retain missing-duration indicators. Pure normalization still reports unverified external policy; actual review/save records the explicitly app-chosen academic thirty-day policy. Real snapshot and saved-field expiry tests verify removal of poster/title bytes with retained contributions/history. New preview presentation and automatic apply remain #38.
