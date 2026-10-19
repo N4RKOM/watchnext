@@ -46,7 +46,7 @@ export function createMockEntry(h:Hooks){
        if(epoch!==request)return failure("A newer lookup superseded this response.");const error=outcomeError(options);if(error)return failure(error);
        if(source!=="youtube"&&source!=="kinopoisk")return failure("Choose one of the two synthetic providers.");
        if(!["normal","not-configured","quota","deadline","empty","missing-runtime","unavailable-item"].includes(options.outcome??"normal"))return failure("Unsupported synthetic provider outcome.");
-       const id=source==="youtube"?syntheticVideoId(query):null;if(kind==="link"||id){if(source!=="youtube"||!id)return failure("Use an exact supported HTTPS YouTube watch/shorts/short-link or 11-character video ID.");return review(source,/^SYNTHVID00[1-6]$/.test(id)?Number(id.slice(-1))-1:0,options,id);}
+       if(kind==="link"){const id=source==="youtube"?syntheticVideoId(query):null;if(!id)return failure("Use an exact supported HTTPS YouTube watch/shorts/short-link or 11-character video ID.");return review(source,/^SYNTHVID00[1-6]$/.test(id)?Number(id.slice(-1))-1:0,options,id);}
        if(kind!=="title"||!query.trim()||[...query.trim()].length>200||/[\p{Cc}]/u.test(query)||/^(?:\w+:|https?(?::|\/|%3a|%2f)|www\.|\/|(?:m\.)?(?:youtube\.com|youtu\.be)(?:[\/\\:?#\s]|$))/i.test(query)||/^[^\s/\\?#]+\.[a-z]{2,}(?:[/\\:?#]|$)/i.test(query))return failure("Enter a 1-200 character title without controls; malformed links are not title searches.");
        return result(makePage(source,query.trim(),0,1,now()+600000,options.outcome??"normal"));
      });
