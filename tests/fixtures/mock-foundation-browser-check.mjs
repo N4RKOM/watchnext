@@ -2,11 +2,12 @@ import { mockEntryJourney } from "./mock-entry-journey.mjs";
 import { mockLibraryJourney } from "./mock-library-journey.mjs";
 import { mockPersonalJourney } from "./mock-personal-journey.mjs";
 import { mockPickerJourney } from "./mock-picker-journey.mjs";
+import { mockIntegrationJourney } from "./mock-integration-journey.mjs";
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
-import { mkdtempSync, realpathSync, lstatSync, readFileSync, writeFileSync, existsSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, realpathSync, lstatSync, readFileSync, writeFileSync, existsSync, rmSync, statSync } from "node:fs";
 import { tmpdir, platform } from "node:os";
-import { join, dirname, basename, resolve } from "node:path";
+import { join, dirname, basename, resolve, isAbsolute, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "playwright";
 import { stopOwned } from "./guide-process.mjs";
@@ -27,9 +28,29 @@ async function cleanup() {
   if (neighbor) { unchanged(); owned(neighbor, "watchnext-mock-sentinels-"); rmSync(neighbor, { recursive: true, force: true }); }
   if (errors.length) throw errors[0];
 }
+/** #61 opt-in synthetic evidence: an absolute, not-yet-existing directory outside the repository; anything else is refused. */
+const evidenceFamilies = ["sign-in", "groups", "legacy", "library", "add", "detail", "pick"];
+function evidenceTarget(value) {
+  if (value === undefined) return null;
+  if (!isAbsolute(value)) throw Error("WATCHNEXT_MOCK_EVIDENCE_DIR must be an absolute path");
+  const target = resolve(value); if (existsSync(target)) throw Error("WATCHNEXT_MOCK_EVIDENCE_DIR must not exist yet");
+  let parent = dirname(target); while (!existsSync(parent)) parent = dirname(parent);
+  const inside = path => { const rel = relative(realpathSync.native(repo), path); return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel)); };
+  if (inside(target) || inside(realpathSync.native(parent))) throw Error("WATCHNEXT_MOCK_EVIDENCE_DIR must be outside the repository");
+  return target;
+}
+/** Exact width, bounded height/size and no textual/EXIF chunks that could carry paths or hosts. */
+function auditPng(path, width) {
+  const bytes = readFileSync(path); check(bytes.subarray(1, 4).toString() === "PNG", "evidence is PNG");
+  const chunks = []; for (let at = 8; at < bytes.length; at += 12 + bytes.readUInt32BE(at)) chunks.push(bytes.subarray(at + 4, at + 8).toString("latin1"));
+  check(bytes.readUInt32BE(16) === width && bytes.readUInt32BE(20) <= 2400, "evidence is exactly the viewport width and at most 2400 px tall");
+  check(bytes.length <= 500 * 1024, "evidence file is at most 500 KB"); check(!chunks.some(type => ["tEXt", "iTXt", "zTXt", "eXIf"].includes(type)), "evidence has no text or EXIF chunks");
+  return bytes.length;
+}
 const interrupted = () => { void cleanup().then(() => process.exit(1), () => process.exit(1)); };
 process.once("SIGINT", interrupted); process.once("SIGTERM", interrupted);
 try {
+  const evidence = evidenceTarget(process.env.WATCHNEXT_MOCK_EVIDENCE_DIR), evidenceFiles = [];
   root = mkdtempSync(join(realpathSync.native(tmpdir()), "watchnext-mock-")); neighbor = mkdtempSync(join(realpathSync.native(tmpdir()), "watchnext-mock-sentinels-"));
   owned(root, "watchnext-mock-"); owned(neighbor, "watchnext-mock-sentinels-");
   for (const name of ["normal.sqlite", "demo.sqlite", "unrelated.txt"]) writeFileSync(join(neighbor, name), sentinel);
@@ -48,13 +69,25 @@ try {
     while (Date.now() < deadline) { if (server.exitCode !== null) throw Error("Owned server exited before readiness"); try { if ((await fetch(origin + "/mock", { signal: AbortSignal.timeout(1000) })).ok) { ready = true; break; } } catch {} await new Promise(done => setTimeout(done, 100)); }
     check(ready, "owned server ready before deadline"); browser = await chromium.launch({ headless: true, args: ["--disable-background-networking"] });
   });
-  const screenshots = [];
+  const screenshots = [], traffic = {};
   for (const width of [375, 1280]) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, serviceWorkers: "block" }); context.setDefaultTimeout(10000);
-    let mockPhase = true; const unexpected = [], external = [];
+    let mockPhase = true; const unexpected = [], external = [], nonGet = [], serverActions = [], setCookies = [];
     await context.route("**/*", route => { const url = new URL(route.request().url()); if (url.origin !== origin) { external.push(url.hostname); return route.abort(); } return route.continue(); });
+    context.on("request", request => { if (!mockPhase) return; if (request.method() !== "GET") nonGet.push(new URL(request.url()).pathname); if (request.headers()["next-action"]) serverActions.push(new URL(request.url()).pathname); });
+    context.on("response", response => { setCookies.push(response.headerValue("set-cookie").then(value => value === null ? null : new URL(response.url()).pathname, () => null)); });
     context.on("request", request => { const url = new URL(request.url()); if (mockPhase && (!(["/mock", "/favicon.ico", "/mock-cover.svg"].includes(url.pathname) || url.pathname.startsWith("/_next/")) || request.method() !== "GET")) unexpected.push(url.pathname); });
     const page = await context.newPage();
+    const capture = !evidence ? async () => {} : async (family, region, { keep = "top" } = {}) => {
+      check(evidenceFamilies.includes(family), "known evidence family"); mkdirSync(evidence, { recursive: true });
+      check(await page.getByLabel(/One-time synthetic recovery code|Private synthetic invite/).count() === 0 && await page.locator('input[type="password"]').evaluateAll(inputs => inputs.every(input => !input.value)), "no recovery code, invite or typed password on screen");
+      await region.scrollIntoViewIfNeeded(); const box = await region.boundingBox(), scroll = await page.evaluate(() => scrollY), document = await page.evaluate(() => window.document.documentElement.scrollHeight);
+      let y = Math.max(0, Math.floor(box.y + scroll - 16)); const bottom = Math.min(document, Math.ceil(box.y + scroll + box.height + 16));
+      if (keep === "bottom") y = Math.max(y, bottom - 2400);
+      const path = join(evidence, `${family}-${width}.png`); check(!existsSync(path), "evidence file is new");
+      await page.screenshot({ path, fullPage: true, clip: { x: 0, y, width, height: Math.min(bottom - y, 2400) } });
+      evidenceFiles.push({ file: basename(path), bytes: auditPng(path, width), natural: bottom - Math.max(0, Math.floor(box.y + scroll - 16)), keep });
+    };
     await step(`${width}: explicit shell, real service pending/failure/retry/cancel/reset and tab isolation`, async () => {
       await page.goto(origin + "/mock?memberId=forged&scenario=slow"); await page.getByRole("heading", { name: "WatchNext preview", exact: true }).waitFor();
       await page.getByLabel("Synthetic demo notice").waitFor(); check(await page.getByText("Not available yet", { exact: true }).count() === 0, "no pending domain remains after the picker (#60), no pretend working forms");
@@ -129,6 +162,7 @@ try {
     await step(`${width}: actual manual/provider entry, review, shared save, refresh and expiry`, async()=>{await mockEntryJourney({page,origin,width,check,onAction:name=>{phase=`${width}: entry ${name}`;},snapshot:async panel=>{if(process.env.WATCHNEXT_VISUAL_CHECK === "1"){const path=join(root,`entry-${width}.png`);await panel.screenshot({path});screenshots.push(path);}}});check(unexpected.length===0&&external.length===0,"entry has no production/provider/external traffic");unchanged();});
     await step(`${width}: actual personal progress, completion, rating, note and group-visible history`, async()=>{await mockPersonalJourney({page,origin,width,check,onAction:name=>{phase=`${width}: personal ${name}`;}});check(unexpected.length===0&&external.length===0,"personal records have no production/provider/external traffic");check((await context.cookies()).length===0&&await page.evaluate(()=>localStorage.length===0&&sessionStorage.length===0),"personal records have no cookies or browser storage");unchanged();});
     await step(`${width}: actual picker, Pick again cycle, refresh/no-refresh, failures, conflict and weekend/legacy picks`, async()=>{await mockPickerJourney({page,origin,width,check,onAction:name=>{phase=`${width}: picker ${name}`;}});check(unexpected.length===0&&external.length===0,"picker has no production/provider/external traffic and never follows the external link");check((await context.cookies()).length===0&&await page.evaluate(()=>localStorage.length===0&&sessionStorage.length===0),"picker cycles have no cookies or browser storage");unchanged();});
+    await step(`${width}: connected all-domain journey, stable IDs across domains, stale/cancel sweep and Reset (#61)`, async()=>{await mockIntegrationJourney({page,origin,width,check,capture,onAction:name=>{phase=`${width}: integration ${name}`;}});check(unexpected.length===0&&external.length===0&&nonGet.length===0&&serverActions.length===0,"integration journey makes only GET /mock, framework-asset and local cover requests");check((await context.cookies()).length===0&&await page.evaluate(()=>localStorage.length===0&&sessionStorage.length===0),"integration journey has no cookies or browser storage");unchanged();});
     mockPhase = false;
     await step(`${width}: production default and forged query stay production, without initialization`, async () => {
       await page.goto(origin); await page.getByRole("heading", { name: "Your private account", exact: true }).waitFor(); const home = await page.locator("main").innerText();
@@ -137,11 +171,26 @@ try {
       await page.goto(origin + "/watchlist"); await page.getByRole("heading", { name: "Couldn’t load your watchlist", exact: true }).waitFor(); const library = await page.locator("main").innerText();
       await page.goto(origin + "/watchlist?mode=mock&memberId=forged"); await page.getByRole("heading", { name: "Couldn’t load your watchlist", exact: true }).waitFor(); check(await page.locator("main").innerText() === library, "production storage/access path unchanged by forged query"); check(await page.getByLabel("Synthetic demo notice").count() === 0, "production never silently falls back to demo"); unchanged();
     });
+    await step(`${width}: eleven production routes ignore forged mode/scenario/member queries; /mock?mode=http is refused (#61)`, async () => {
+      for (const route of ["/", "/watchlist", "/watchlist?filter=mine", "/archive", "/watchlist/add", "/pick", "/group", "/account", "/login", "/register", "/recover"]) {
+        const read = async target => { await page.goto(origin + target, { waitUntil: "networkidle" }); await page.locator("main").first().waitFor(); return { path: new URL(page.url()).pathname, text: await page.locator("main").first().innerText() }; };
+        const plain = await read(route), forged = await read(`${route}${route.includes("?") ? "&" : "?"}mode=mock&scenario=slow&member=friday-owner`);
+        check(forged.path === plain.path && forged.text === plain.text, `${route} renders the same main text with forged mock/persona query`);
+        check(await page.getByLabel("Synthetic demo notice").count() === 0 && !/Synthetic workspace|Demo\.Owner|Demo\.Viewer|synthetic preview/i.test(forged.text), `${route} shows no synthetic content`);
+      }
+      await page.goto(origin + "/mock?mode=http"); await page.getByRole("alert").filter({ hasText: "Unsupported preview selection" }).waitFor(); check(await page.getByRole("button").count() === 0, "/mock?mode=http has no working demo controls");
+      check(!existsSync(env.WATCHNEXT_DATABASE_PATH), "configured database path still absent"); unchanged();
+    });
+    const cookieResponses = (await Promise.all(setCookies)).filter(Boolean);
+    check((await context.cookies()).length === 0 && cookieResponses.length === 0, `${width}: zero cookies and no Set-Cookie response over the whole run`);
+    traffic[width] = { nonGetDuringMock: nonGet.length, serverActions: serverActions.length, outsideMock: unexpected.length, external: external.length, setCookie: cookieResponses.length, cookies: 0 };
     await context.close();
   }
+  if (evidence) { check(evidenceFiles.length === 14 && evidenceFiles.reduce((sum, file) => sum + file.bytes, 0) <= 4 * 1024 * 1024, "exactly 14 evidence images, at most 4 MB in total"); console.log(`EVIDENCE ${evidence}`); console.log(JSON.stringify(evidenceFiles)); }
   if (screenshots.length) { console.log(`VISUAL ${root}`); await new Promise(done => setTimeout(done, 30000)); }
+  globalThis.mockTraffic = traffic;
   check(!output.includes("YOUTUBE_API_KEY=") && !output.includes("KINOPOISK_UNOFFICIAL_API_KEY="), "no credential diagnostics");
 } catch (error) { failure = error; }
 finally { try { await cleanup(); } catch (error) { failure ??= error; } process.removeListener("SIGINT", interrupted); process.removeListener("SIGTERM", interrupted); }
 if (failure) { const message = (failure instanceof Error ? failure.message.split("\n")[0] + (failure.message.match(/waiting for ([^\n]+)/)?.[1] ? "; " + failure.message.match(/waiting for ([^\n]+)/)[1] : "") : "Unknown failure").split(root ?? "<root>").join("<fixture>").slice(0, 350); console.error(`FAIL ${phase}: ${message}`); process.exitCode = 1; }
-else console.log(JSON.stringify({ pass: true, widths: [375,1280], typedServiceState: true, noMockProductionRequestsOrStorage: true, productionDefaultUnchanged: true, sentinelsUnchanged: true, ownedCleanup: cleaned }));
+else console.log(JSON.stringify({ pass: true, widths: [375,1280], traffic: globalThis.mockTraffic, typedServiceState: true, noMockProductionRequestsOrStorage: true, productionDefaultUnchanged: true, sentinelsUnchanged: true, ownedCleanup: cleaned }));
