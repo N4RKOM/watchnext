@@ -1,6 +1,6 @@
 # Graded MVP plan
 
-October 19, 2026 · **First step only: documentation and backlog created. New implementation is not started or authorized by this plan.**
+October 19, 2026 · **Frontend request now authorizes #41 reference/inventory and #42 full typed mock UI after prerequisites. Later architecture stages remain planned, not implemented/authorized by this plan.**
 
 ## Baseline and goal
 
@@ -22,7 +22,7 @@ Mock UI uses only clearly synthetic data and makes no real-security claim. Memor
 
 ## Sequential backlog and phase gates
 
-Thirteen new required issues carry mvp; optional #52 carries post-mvp. All remain open. Their creation does not begin implementation; after a new request, PM refreshes the selected issue, then Engineer and QA work one issue at a time.
+Thirteen required issues carry mvp; optional #52 carries post-mvp. Creation alone did not authorize implementation. The user subsequently requested frontend work and supplied Lovable editor/public-preview references; PM [refreshed #41](https://github.com/xiaodlb/watchnext/issues/41#issuecomment-6265752332) and recorded the accessible-preview correction. This authorizes #41 and #42 only, sequentially through PM/Engineer/independent QA. #41 supplies [the full operation inventory](operation-inventory.md), [observed design pack](design-references.md) and [source-mapped matrix](submission-matrix.md); it does not implement #42. #43 onward still need their owning authorization/prerequisites. Live issues remain authoritative.
 
 | Order | Issue | Phase/evidence |
 | --- | --- | --- |

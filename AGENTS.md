@@ -29,7 +29,7 @@ The user approved the initial Next.js, React, TypeScript, type definitions, Vite
 
 ## Project context
 
-Current graded first-step authorization is **documentation/backlog/workflow only**. Read `_docs/graded-mvp.md` and `_docs/specification.md`; new issues #41–#54 are planned, not an authorized implementation run. Baseline tag `graded-baseline-2026-10-19` preserves the completed app. For new `mvp`/`user-test-bug` issues, QA adds regression cases during genuine bug grooming and closes only after actual PASS; `_docs/process.md` scopes this exception without rewriting historical closures. Preserve user M-drive runtime/data.
+The initial graded step was documentation/backlog/workflow only. A subsequent user frontend request and Lovable reference authorize **#41 reference/inventory, then #42 typed mock frontend after prerequisites**, through PM/Engineer/independent QA. Read `_docs/graded-mvp.md`, `_docs/operation-inventory.md`, `_docs/design-references.md` and `_docs/specification.md`; #43–#54 remain planned, not authorized by this frontend request. Baseline tag `graded-baseline-2026-10-19` preserves the completed app. For new `mvp`/`user-test-bug` issues, QA adds regression cases during genuine bug grooming and closes only after actual PASS; `_docs/process.md` scopes this exception without rewriting historical closures. Preserve user M-drive runtime/data.
 
 The completed October 18 account/discovery enhancement (#31–#40) was **authorized for sequential implementation**: after the planning-only phase, the user explicitly said “выполни оставшиеся ишшюс на гитхабе” (implement the remaining GitHub issues). This supersedes the planning pause; all issues #1–#40 are now closed after independent QA; final #40 PASS is https://github.com/xiaodlb/watchnext/issues/40#issuecomment-6263933927. The completed baseline is 441fcaae660e273d6fc373f8757be562d9139b78. That earlier run is finished and does not authorize new graded implementation. Read `_docs/account-discovery-enhancement.md`, then refresh the selected issue through PM → Engineer → independent QA, one issue at a time. New authenticated groups supersede the first-release no-account restriction only within this enhancement; legacy groups stay separate with no claiming/migration. Preserve the user's running dev server and existing `next-env.d.ts` changes; use a separate owned checkout/build output for verification.
 
@@ -45,7 +45,9 @@ WatchNext is an academic web app that helps couples and friends choose something
 
 - `_docs/specification.md` - consolidated current requirements and baseline limits.
 - `_docs/graded-mvp.md` - planned graded stages and scoped QA workflow; not implemented architecture.
-- `_docs/submission-matrix.md` - living evidence checklist; planned/tested/user-confirmed are distinct.
+- `_docs/submission-matrix.md` - teacher-source mapped evidence checklist; planned/tested/user-confirmed are distinct.
+- `_docs/operation-inventory.md` - complete route/action/FR/NFR map and bounded #42 synthetic mock-service handoff.
+- `_docs/design-references.md` - actually observed Lovable screenshots/access limits and baseline source priority.
 
 - `_docs/account-discovery-enhancement.md` - authorized account/multi-group/autofill/preview requirements, explicit answers versus engineering defaults and preservation constraints.
 - `_docs/enhancement-audit.md` - current twelve-answer/source/verification map; independent issue QA remains authoritative.

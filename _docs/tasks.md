@@ -1,8 +1,8 @@
 # WatchNext backlog
 
-## Planned graded iteration — implementation not started
+## Graded iteration — staged issue index
 
-Read [graded-mvp.md](graded-mvp.md), [specification](specification.md) and scoped QA-owned closure rules. Labels: `mvp`, `post-mvp`, `user-test-bug`. This first step creates plan/issues only; baseline #1–#40 remains closed.
+Read [graded-mvp.md](graded-mvp.md), [specification](specification.md) and scoped QA-owned closure rules. Labels: `mvp`, `post-mvp`, `user-test-bug`. The initial step created plan/issues only; the subsequent frontend request authorizes #41 then #42 through their prerequisites/roles. Later stages remain planned, not authorized by reference access or issue creation. [Operation inventory](operation-inventory.md) maps complete coverage; baseline #1–#40 remains closed.
 
 1. [#41 Operation inventory/reference pack](https://github.com/xiaodlb/watchnext/issues/41)
 2. [#42 Complete typed mock frontend](https://github.com/xiaodlb/watchnext/issues/42)
