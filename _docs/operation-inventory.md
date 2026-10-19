@@ -150,8 +150,17 @@ Only the context/result/scenario/read-reset and explicit isolated `/mock` entry 
 
 ## Account increment #55
 
-A01-A05 and account portions of U02/U06 are implemented through the typed client-only account namespace and internal `/mock` forms; [actual behavior/verification](mock-accounts.md). Independent QA is pending. This does not implement group/legacy operations or remaining domain rows; #56-#61 stay pending before #43. Earlier foundation-only statements describe the #42 delivery boundary.
+A01-A05 and account portions of U02/U06 are implemented through the typed client-only account namespace and internal `/mock` forms; [actual behavior/verification](mock-accounts.md). Independently QA-accepted at `269abbc`. Earlier foundation-only statements describe the #42 delivery boundary.
 
-Current frontend increment: #55 accounts are QA-accepted; [#56 group/legacy operations](mock-groups.md) are implemented and Engineer-tested, awaiting independent QA. #57-#61/full mock phase remain pending; the original per-issue delivery boundaries above are historical, not a complete-phase claim. No backend/OpenAPI/ORM stage is implemented by #56.
+Current frontend state: #42 and #55–#60 are independently QA-accepted (#55 `269abbc`, #56 `391d312`, #57 `1a95c60`, #58 `89deec3`, #59 `033c656`, #60 `b6132ad`); #61 integration below is Engineer-tested with independent QA pending. Earlier per-issue counts and boundaries above are historical. No backend, OpenAPI or ORM stage is implemented.
 
-Current frontend increment: #56 is independently accepted; [#57 saved library](mock-library.md) is implemented and Engineer-tested, awaiting independent QA. This adds six W operations and readonly M06 availability only; #58-#61 remain pending before #43. Older per-issue counts/boundaries above are historical, not full-phase completion or lifecycle-mutation claims.
+## #61 integration
+
+The completed [coverage matrix](mock-integration.md#coverage-matrix) maps all 40 domain rows and U01–U06 to typed methods, `/mock` surfaces, S/E/P/F/C tests and 375/1280 journey steps; `tests/frontend/coverage.test.ts` checks it against this page. Historical rows above are unchanged. Evidence for each whole-phase checklist item:
+
+- Every operation reachable through the one typed service, no bypass, baseline isolated: [coverage matrix](mock-integration.md#coverage-matrix), [route coverage](mock-integration.md#route-coverage), `tests/frontend/isolation.test.ts` and the zero non-GET/Server Action/outside-request checks in [launch and isolation evidence](mock-integration.md#launch-and-isolation-evidence).
+- FR01–FR17 and NFR01–NFR05 mapped to operation IDs, S/E/P/F/C with service scenarios and UI checks: [FR/NFR trace](mock-integration.md#frnfr-trace) and the operation sweep in `tests/frontend/integration.test.ts`.
+- Baseline reused with observed visual lessons, no fidelity claim: [reference versus implemented (#61)](design-references.md#reference-versus-implemented-61).
+- Two-width keyboard walkthrough with no overflow, fake controls or secret captures: `tests/fixtures/mock-integration-journey.mjs` in `pnpm test:mock` and the [screenshot evidence table](mock-integration.md#screenshot-evidence-table).
+- Isolation and Reset proven without normal SQLite, credentials, provider secrets or live traffic; the mock command and selector documented and tested: [launch and isolation evidence](mock-integration.md#launch-and-isolation-evidence) and [mock frontend](mock-frontend.md).
+- #43 receives every operation, result, error, auth/context need and the client-only/internal exclusions: [frontend contract handoff](frontend-contract-handoff.md). #47 and #51 remain later stages; the frontend phase does not claim them.
