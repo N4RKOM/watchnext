@@ -43,11 +43,11 @@ Builds cap Next page/static worker concurrency at two via `experimental.cpus` in
 
 ## Current scope
 
-The current app supports username/password accounts, private recovery-code resets, multiple account groups, creator removal/invite rotation, one shared deduplicated list with All/Mine and complete attribution, independent progress/completion/ratings/notes, contributor editing/removal and archive/history/restore. YouTube title/link and third-party РљРёРЅРѕРїРѕРёСЃРє search offer explicit candidates, automatic editable fields and safe previews. The picker preserves full-duration, viewer/catch-up/rewatch rules and ordered Pick again.
+The current app supports username/password accounts, private recovery-code resets, multiple account groups, creator removal/invite rotation, one shared deduplicated list with All/Mine and complete attribution, independent progress/completion/ratings/notes, contributor editing/removal and archive/history/restore. YouTube title/link and third-party Кинопоиск search offer explicit candidates, automatic editable fields and safe previews. The picker preserves full-duration, viewer/catch-up/rewatch rules and ordered Pick again.
 
 Choose **Register** or **Sign in** under **Your private account** on the home page. After registration, privately save the once-only code, Continue, and create a group or open an invitation and explicitly Join after signing in. The account username supplies group identity. **Legacy group access** separately preserves old invitation/name profiles; registering never claims or converts them. The existing synthetic demo remains legacy only.
 
-[The enhancement audit](_docs/enhancement-audit.md) maps all twelve account/discovery choices and #31вЂ“#40 to evidence; [the dated legacy audit](_docs/completion-audit.md) preserves #1вЂ“#30 history. Live independent QA remains authoritative. Provider keys are optional; manual workflows need none. Mocks verify integration, **not live access, quota, licensing or image rights**. Selected РљРёРЅРѕРїРѕРёСЃРє FILM `filmLength` is interpreted by this app as integral minutes, editable before save; the inspected schema does not confirm units. Episodic/unknown/invalid runtime requires manual completion. Acquired fields follow real refresh/delete deadlines; no public hosting, embedded/automatic playback or preference learning is included. [Lifecycle limits](_docs/metadata-lifecycle.md).
+[The enhancement audit](_docs/enhancement-audit.md) maps all twelve account/discovery choices and #31–#40 to evidence; [the dated legacy audit](_docs/completion-audit.md) preserves #1–#30 history. Live independent QA remains authoritative. Provider keys are optional; manual workflows need none. Mocks verify integration, **not live access, quota, licensing or image rights**. Selected Кинопоиск FILM `filmLength` is interpreted by this app as integral minutes, editable before save; the inspected schema does not confirm units. Episodic/unknown/invalid runtime requires manual completion. Acquired fields follow real refresh/delete deadlines; no public hosting, embedded/automatic playback or preference learning is included. [Lifecycle limits](_docs/metadata-lifecycle.md).
 
 Before a feature uses persistent storage, run `pnpm db:init`. It initializes/migrates the local user-data database and preserves rows on repeat runs; normal server access requires initialization and never silently creates another file. Set server-only `WATCHNEXT_DATABASE_PATH` in the shell or untracked `.env.local` to override the OS-local default. Relative paths resolve against the working directory; spaces work when quoted. Use a local disk rather than the repository's possibly shared drive. Exact platform paths and lifecycle/error handling are in [the database guide](_docs/database.md).
 
@@ -64,7 +64,7 @@ Before upgrading existing data, follow [the stopped-writer upgrade recipe](_docs
 ## Project documents
 
 - [Current product and software specification](_docs/specification.md)
-- [Graded MVP plan and stages](_docs/graded-mvp.md) вЂ” planning only: full mock frontend в†’ OpenAPI в†’ real HTTP memory в†’ Prisma SQLite в†’ genuine user testing/evidence.
+- [Graded MVP plan and stages](_docs/graded-mvp.md) — planning only: full mock frontend → OpenAPI → real HTTP memory → Prisma SQLite → genuine user testing/evidence.
 
 For a separate **legacy-mode** synthetic presentation database, run `pnpm demo:prepare`. See [demo setup and exact scenarios](_docs/demo-data.md) for private invitation output, quoted startup commands and safe repeat/reset behavior. Normal user storage is not initialized or reset by this command.
 
@@ -79,6 +79,6 @@ For a separate **legacy-mode** synthetic presentation database, run `pnpm demo:p
 
 ## Isolated mock preview foundation
 
-Open `/mock` on your own local server for an explicitly labeled synthetic context/read/reset preview; `/` remains the real app. No database initialization or provider key is needed for the preview. This includes the #42 foundation and #55 synthetic account journey (Engineer-tested, independent QA pending): other domain screens await #56вЂ“#60 and full integration #61. It does not provide real authentication or replace the completed app. [Exact isolated launch, reset/lifetime and verification](_docs/mock-frontend.md).
+Open `/mock` on your own local server for an explicitly labeled synthetic context/read/reset preview; `/` remains the real app. No database initialization or provider key is needed for the preview. This includes the #42 foundation and #55 synthetic account journey (Engineer-tested, independent QA pending): other domain screens await #56–#60 and full integration #61. It does not provide real authentication or replace the completed app. [Exact isolated launch, reset/lifetime and verification](_docs/mock-frontend.md).
 
 `pnpm test:mock` builds current source and checks the isolated foundation/production-default boundary with pinned Chromium; install it first with `pnpm exec playwright install chromium`. Never build into somebody else's running output.

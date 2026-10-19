@@ -1,4 +1,4 @@
-# Isolated mock frontend foundation РІР‚вЂќ issue #42
+# Isolated mock frontend foundation — issue #42
 
 This delivers **the foundation and synthetic accounts**, not the full mock frontend. `/mock` exercises a real typed asynchronous context read/reset with deterministic Ready/Slow/Unavailable outcomes. It always labels itself **Synthetic demo only / not real authentication**. The #55 synthetic account journey is now implemented and Engineer-tested; groups/legacy, saved library, manual/provider entry, personal records and picker remain unavailable until their owning issues. Existing production routes remain the normal default; their business operations are unchanged.
 
@@ -41,18 +41,18 @@ Ready waits 80ms, Slow 1200ms, Unavailable 300ms; callers cannot supply arbitrar
 
 Do not enter real credentials or use normal/provider data. Domain follow-ups must continue the [synthetic policy](operation-inventory.md), not reinterpret this foundation as server authorization. There is no HTTP/OpenAPI/ORM implementation here.
 
-## Domain handoff РІР‚вЂќ all still pending
+## Domain handoff - accounts implemented, other domains pending
 
 The [implemented #55 account handoff](mock-accounts.md) documents exact validation, once-only recovery, navigation lifetime and bounded evidence. Its independent QA is pending; other domain increments remain planned.
 
 | Owner | Inventory coverage |
 | --- | --- |
-| #55 (Engineer-tested; QA pending) | Accounts/recovery A01РІР‚вЂњA05 |
-| #56 | Account groups/owner G01РІР‚вЂњG08 and legacy L01РІР‚вЂњL04 |
-| #57 | Saved library/Mine/detail/edit/archive W01РІР‚вЂњW03/W06РІР‚вЂњW08 |
-| #58 | Manual/provider Add and lifecycle W04РІР‚вЂњW05/M01РІР‚вЂњM06 |
-| #59 | Personal progress/completion/feedback P01РІР‚вЂњP05 |
-| #60 | Picker/cycle K01РІР‚вЂњK04 |
+| #55 (Engineer-tested; QA pending) | Accounts/recovery A01–A05 |
+| #56 | Account groups/owner G01–G08 and legacy L01–L04 |
+| #57 | Saved library/Mine/detail/edit/archive W01–W03/W06–W08 |
+| #58 | Manual/provider Add and lifecycle W04–W05/M01–M06 |
+| #59 | Personal progress/completion/feedback P01–P05 |
+| #60 | Picker/cycle K01–K04 |
 | #61 | All 40 domain operations/six U groups integrated and complete phase evidence |
 
 [The full inventory](operation-inventory.md), [observed references](design-references.md) and [graded plan](graded-mvp.md) remain authoritative. A #42 PASS is not full frontend completion; #43 waits for all follow-ups/final integration. Backend/ORM issues remain outside frontend authorization.

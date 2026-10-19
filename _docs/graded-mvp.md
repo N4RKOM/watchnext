@@ -1,16 +1,16 @@
 # Graded MVP plan
 
-October 19, 2026 В· **Frontend request now authorizes #41 reference/inventory and #42 full typed mock UI after prerequisites. Later architecture stages remain planned, not implemented/authorized by this plan.**
+October 19, 2026 · **Frontend request now authorizes #41 reference/inventory and #42 full typed mock UI after prerequisites. Later architecture stages remain planned, not implemented/authorized by this plan.**
 
 ## Baseline and goal
 
-The complete current WatchNext feature set is described in [specification.md](specification.md). All original issues 1вЂ“40 are closed after independent QA; [final verdict](https://github.com/xiaodlb/watchnext/issues/40#issuecomment-6263933927). Preserve exact baseline 441fcaae660e273d6fc373f8757be562d9139b78 and annotated tag **graded-baseline-2026-10-19**.
+The complete current WatchNext feature set is described in [specification.md](specification.md). All original issues 1–40 are closed after independent QA; [final verdict](https://github.com/xiaodlb/watchnext/issues/40#issuecomment-6263933927). Preserve exact baseline 441fcaae660e273d6fc373f8757be562d9139b78 and annotated tag **graded-baseline-2026-10-19**.
 
-The graded iteration changes architectural delivery/evidence, not product scope. Keep **all** account/recovery, legacy separation, group/invite/owner, four-type library, manual/provider autofill/previews, own progress/feedback, picker/cycle, archive/restore, shared attribution and Mine behavior. Do not reduce вЂњMVPвЂќ to one unused demo screen or add unrelated features.
+The graded iteration changes architectural delivery/evidence, not product scope. Keep **all** account/recovery, legacy separation, group/invite/owner, four-type library, manual/provider autofill/previews, own progress/feedback, picker/cycle, archive/restore, shared attribution and Mine behavior. Do not reduce “MVP” to one unused demo screen or add unrelated features.
 
 Teacher requirements available in this session are summarized as: complete frontend with mock data first, root OpenAPI contract, real HTTP backend with in-memory storage, real full-domain ORM-backed SQLite with documented database-specific limits, genuine hands-on user testing/bug iterations, and traceable reference/brainstorming/implementation evidence. The teacher rubric text is available in the user conversation and must be mapped faithfully in the evidence task. The deadline is **unknown**; do not invent it or guarantee a grade.
 
-## Architecture target вЂ” planned
+## Architecture target — planned
 
 Keep Next.js/TypeScript and Next Route Handlers, one repository and the existing local academic deployment. No mandatory FastAPI/Python/new backend repository. A centralized typed frontend service has explicit mock and HTTP adapters. Real HTTP handlers invoke domain services through repository interfaces, with isolated memory and Prisma-backed durable adapters. Pure eligibility/ranking and security rules remain shared.
 
@@ -22,7 +22,7 @@ Mock UI uses only clearly synthetic data and makes no real-security claim. Memor
 
 ## Sequential backlog and phase gates
 
-The original complete-frontend #42 was too large for one session. It is now a small typed service/mode foundation, followed by bounded account, group/legacy, library, Add/review, personal-record and picker increments plus final integration. **#42 в†’ #55 в†’ #56 в†’ #57 в†’ #58 в†’ #59 в†’ #60 в†’ #61 all precede #43.** This preserves the original full scope and frontend authorization; foundation closure alone is not complete phase evidence. Later HTTP/backend/ORM work remains planned. QA refresh/acceptance applies independently to each increment.
+The original complete-frontend #42 was too large for one session. It is now a small typed service/mode foundation, followed by bounded account, group/legacy, library, Add/review, personal-record and picker increments plus final integration. **#42 → #55 → #56 → #57 → #58 → #59 → #60 → #61 all precede #43.** This preserves the original full scope and frontend authorization; foundation closure alone is not complete phase evidence. Later HTTP/backend/ORM work remains planned. QA refresh/acceptance applies independently to each increment.
 
 Thirteen required issues carry mvp; optional #52 carries post-mvp. Creation alone did not authorize implementation. The user subsequently requested frontend work and supplied Lovable editor/public-preview references; PM [refreshed #41](https://github.com/xiaodlb/watchnext/issues/41#issuecomment-6265752332) and recorded the accessible-preview correction. This authorizes #41 and #42 only, sequentially through PM/Engineer/independent QA. #41 supplies [the full operation inventory](operation-inventory.md), [observed design pack](design-references.md) and [source-mapped matrix](submission-matrix.md); it does not implement #42. #43 onward still need their owning authorization/prerequisites. Live issues remain authoritative.
 
@@ -30,12 +30,12 @@ Thirteen required issues carry mvp; optional #52 carries post-mvp. Creation alon
 | --- | --- | --- |
 | 1 | [#41 Inventory/reference pack](https://github.com/xiaodlb/watchnext/issues/41) | Full-operation inventory, rubric mapping, references/wireframes and real chat-source inventory |
 | 2 | [#42 Typed mock foundation](https://github.com/xiaodlb/watchnext/issues/42) | Isolated typed service/context/shell/reset only |
-| 3 | [#55 Accounts/recovery: A01вЂ“A05](https://github.com/xiaodlb/watchnext/issues/55) | Bounded frontend increment; all precede #43 |
-| 4 | [#56 Groups/owner/legacy: G01вЂ“G08/L01вЂ“L04](https://github.com/xiaodlb/watchnext/issues/56) | Bounded frontend increment; all precede #43 |
+| 3 | [#55 Accounts/recovery: A01–A05](https://github.com/xiaodlb/watchnext/issues/55) | Bounded frontend increment; all precede #43 |
+| 4 | [#56 Groups/owner/legacy: G01–G08/L01–L04](https://github.com/xiaodlb/watchnext/issues/56) | Bounded frontend increment; all precede #43 |
 | 5 | [#57 Saved library/Mine/detail/edit/archive](https://github.com/xiaodlb/watchnext/issues/57) | Bounded frontend increment; all precede #43 |
 | 6 | [#58 Manual/provider Add/review: W04/W05/M](https://github.com/xiaodlb/watchnext/issues/58) | Bounded frontend increment; all precede #43 |
-| 7 | [#59 Personal progress/feedback: P01вЂ“P05](https://github.com/xiaodlb/watchnext/issues/59) | Bounded frontend increment; all precede #43 |
-| 8 | [#60 Picker/cycle: K01вЂ“K04](https://github.com/xiaodlb/watchnext/issues/60) | Bounded frontend increment; all precede #43 |
+| 7 | [#59 Personal progress/feedback: P01–P05](https://github.com/xiaodlb/watchnext/issues/59) | Bounded frontend increment; all precede #43 |
+| 8 | [#60 Picker/cycle: K01–K04](https://github.com/xiaodlb/watchnext/issues/60) | Bounded frontend increment; all precede #43 |
 | 9 | [#61 All-operation integration and phase evidence](https://github.com/xiaodlb/watchnext/issues/61) | Bounded frontend increment; all precede #43 |
 | 10 | [#43 root openapi.yml](https://github.com/xiaodlb/watchnext/issues/43) | Validated complete HTTP schemas/examples/auth/errors and operation map |
 | 11 | [#44 Memory identity/groups HTTP](https://github.com/xiaodlb/watchnext/issues/44) | Real server auth/recovery/group/legacy context over memory repository |
@@ -50,11 +50,11 @@ Thirteen required issues carry mvp; optional #52 carries post-mvp. Creation alon
 | 20 | [#54 Submission package](https://github.com/xiaodlb/watchnext/issues/54) | Complete accurate matrix, artifacts/commands and QA closures |
 | Optional | [#52 Real PostgreSQL portability](https://github.com/xiaodlb/watchnext/issues/52) | Post-MVP only; no dependency for #53/#54 |
 
-Each issue identifies dependencies/files/limits. Full feature coverage is checked at every phase; a phase may use mock provider transport but not fake application writes. Existing baseline regressions remain meaningful. Current commands still describe the native-SQL baseline. The explicit `/mock` foundation entry and `pnpm test:mock` are implemented in #42, with [bounded commands/lifetime](mock-frontend.md); domain previews remain pending #55вЂ“#60 and full-phase integration #61. **Future HTTP/ORM selectors/commands do not exist yet**: owning issues must introduce, document and verify them; do not present proposed names as runnable. No empty openapi.yml is created in this first step.
+Each issue identifies dependencies/files/limits. Full feature coverage is checked at every phase; a phase may use mock provider transport but not fake application writes. Existing baseline regressions remain meaningful. Current commands still describe the native-SQL baseline. The explicit `/mock` foundation entry and `pnpm test:mock` are implemented in #42, with [bounded commands/lifetime](mock-frontend.md); domain previews remain pending #55–#60 and full-phase integration #61. **Future HTTP/ORM selectors/commands do not exist yet**: owning issues must introduce, document and verify them; do not present proposed names as runnable. No empty openapi.yml is created in this first step.
 
 ## Teacher workflow for this iteration
 
-The scoped rules below supersede earlier orchestrator-closure/no-QA-test-change rules **only for new mvp/user-test-bug issues**, without rewriting closed 1вЂ“40.
+The scoped rules below supersede earlier orchestrator-closure/no-QA-test-change rules **only for new mvp/user-test-bug issues**, without rewriting closed 1–40.
 
 1. PM grooms the issue, checkable acceptance criteria and scope.
 2. For an actual user-test-bug, QA adds concrete runnable regression case(s) reproducing the reported defect before Engineer work, recording expected versus observed failure. QA may edit tests, never product implementation. Use a reviewable red-regression commit/branch until fixed; do not skip the case.
