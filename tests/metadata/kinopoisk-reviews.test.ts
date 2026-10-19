@@ -21,7 +21,7 @@ function req(cookie=token){return new Request(origin,{method:"POST",headers:{ori
 function setup(database:DatabaseSync){db=database;migrate(db);calls=0;time=new Date("2040-10-19T00:00:00Z");token=acceptInvitation(db,createGroup(db,"Kino",origin).inviteUrl.split("/").at(-1)!);other=acceptInvitation(db,createGroup(db,"Other",origin).inviteUrl.split("/").at(-1)!);for(const[cookie,name]of[[token,"Anna"],[other,"Other"]])changeProfile(db,req(cookie),{intent:"create",name,color:"#1d4ed8"},origin);providers={kinopoisk_unofficial:kinopoiskUnofficialProvider({apiKey:randomUUID(),transport}),youtube:{namespace:"youtube",async lookup(){return{kind:"failure",code:"network_error"};}}};}
 beforeEach(()=>setup(new DatabaseSync(":memory:")));afterEach(()=>{if(db.isOpen)db.close();});
 const search=(text="Film")=>beginReview(db,req(),"kinopoisk_unofficial",text,providers,origin,now);
-it("real selected detail supplies app-interpreted runtime/poster and trusted thirty-day provider origins; corrections stay user-owned",async()=>{
+it("real selected detail supplies app-interpreted runtime/poster and trusted thirty-day provider origins",async()=>{
   const candidates=await search();expect(candidates).toMatchObject({kind:"candidates",candidates:[{duration:{seconds:null},coverUrl:poster,genres:["Drama"],provenance:{freshness:{policy:"academic_local_snapshot_30_days",refreshBy:"2040-11-18T00:00:00.000Z"}}}]});expect(calls).toBe(1);
   await expect(selectReviewCandidate(db,req(),candidates.handle,"9999",providers,origin,now)).rejects.toThrow();expect(calls).toBe(1);
   const selected=await selectReviewCandidate(db,req(),candidates.handle,"301",providers,origin,now);expect(calls).toBe(2);expect(selected).toMatchObject({kind:"available",item:{duration:{seconds:8160,interpretation:"app_minutes_to_seconds"},provenance:{freshness:{policy:"academic_local_snapshot_30_days"}}}});
@@ -30,6 +30,14 @@ it("real selected detail supplies app-interpreted runtime/poster and trusted thi
   expect(db.prepare("SELECT duration_seconds,cover_url,provider_id FROM titles WHERE id=?").get(saved.id)).toMatchObject({duration_seconds:8160,cover_url:poster,provider_id:"301"});expect(db.prepare("SELECT origin,expires_at FROM metadata_fields WHERE title_id=? AND field='duration'").get(saved.id)).toMatchObject({origin:"provider",expires_at:"2040-11-18T00:00:00.000Z"});
   time=new Date(time.getTime()+31*86400000);expireMetadata(db,now());expect(db.prepare("SELECT duration_seconds,cover_url FROM titles WHERE id=?").get(saved.id)).toMatchObject({duration_seconds:null,cover_url:null});expect(db.prepare("SELECT count(*) AS n FROM contributors WHERE title_id=?").get(saved.id)?.n).toBe(1);
 });
+it("explicit correction of interpreted duration stays user-owned when imported poster and title expire",async()=>{
+  const candidates=await search(),selected=await selectReviewCandidate(db,req(),candidates.handle,"301",providers,origin,now);
+  const fields={title:"ERASE_KINO_TITLE_42",contentType:"movie",minutes:"125",seconds:"0",numberingStyle:"none",genres:"Drama",moods:["funny"],watchUrl:""};
+  const saved=saveReview(db,req(),selected.handle,fields,"https://www.kinopoisk.ru/film/301/",poster,undefined,origin,now);expect(saved.kind).toBe("created");if(saved.kind!=="created")return;
+  expect(db.prepare("SELECT origin,expires_at FROM metadata_fields WHERE title_id=? AND field='duration'").get(saved.id)).toMatchObject({origin:"user",expires_at:null});
+  time=new Date(time.getTime()+31*86400000);expireMetadata(db,now());expect(db.prepare("SELECT title,duration_seconds,cover_url FROM titles WHERE id=?").get(saved.id)).toMatchObject({title:null,duration_seconds:7500,cover_url:null});expect(db.prepare("SELECT count(*) AS n FROM contributors WHERE title_id=?").get(saved.id)?.n).toBe(1);
+});
+
 it("generic opaque paging is provider/context/query bound, shared capped and fixed-expiry, including concurrent handles",async()=>{
   const one=await search();expect(one.page?.number).toBe(1);await expect(pageReview(db,req(other),one.handle,"next",providers,origin,now)).rejects.toThrow();await expect(pageReview(db,req(),"2","next",providers,origin,now)).rejects.toThrow();
   const two=await pageReview(db,req(),one.handle,"next",providers,origin,now);expect(two).toMatchObject({kind:"candidates",candidates:[{identity:{externalId:"302"}}],page:{number:2}});
