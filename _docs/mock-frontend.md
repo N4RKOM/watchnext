@@ -1,6 +1,6 @@
 # Isolated mock frontend foundation — issue #42
 
-This delivers **the foundation, synthetic accounts and group/legacy flows**, not the full mock frontend. `/mock` exercises a real typed asynchronous context read/reset with deterministic Ready/Slow/Unavailable outcomes. It always labels itself **Synthetic demo only / not real authentication**. The #55 synthetic account journey has independent QA acceptance; #56 group/legacy flows are implemented and Engineer-tested, awaiting independent QA. Saved library, manual/provider entry, personal records and picker remain unavailable until their owning issues. Existing production routes remain the normal default; their business operations are unchanged.
+This delivers **the foundation, synthetic accounts, group/legacy flows and saved library**, not the full mock frontend. `/mock` exercises a real typed asynchronous context read/reset with deterministic Ready/Slow/Unavailable outcomes. It always labels itself **Synthetic demo only / not real authentication**. The #55 synthetic account journey has independent QA acceptance; #56 group/legacy flows have independent QA acceptance. #57 saved library is implemented and Engineer-tested, awaiting QA. Manual/provider entry, personal records and picker remain unavailable until their owning issues. Existing production routes remain the normal default; their business operations are unchanged.
 
 ## Open the preview
 
@@ -51,7 +51,7 @@ The [#56 group/owner/invitation/legacy handoff](mock-groups.md) documents the ac
 | --- | --- |
 | #55 (QA accepted) | Accounts/recovery A01–A05 |
 | #56 (QA accepted) | Account groups/owner G01–G08 and legacy L01–L04 |
-| #57 | Saved library/Mine/detail/edit/archive W01–W03/W06–W08 |
+| #57 (Engineer-tested; QA pending) | Saved library/Mine/detail/edit/archive W01–W03/W06–W08 |
 | #58 | Manual/provider Add and lifecycle W04–W05/M01–M06 |
 | #59 | Personal progress/completion/feedback P01–P05 |
 | #60 | Picker/cycle K01–K04 |
@@ -78,3 +78,5 @@ Engineer verification: 13 focused foundation tests pass; ordinary suite passes *
 The account extension adds real synthetic registration/sign-in/sign-out/recovery/context forms to the same service instance; see [account implementation](mock-accounts.md). Foundation-only verification numbers above are historical #42 evidence, not the new total. `test:mock` now additionally runs the full account journey at both widths while preserving every foundation isolation/sentinel assertion.
 
 The [group/legacy implementation](mock-groups.md) extends the same typed service with G01-G08/L01-L04 and group U02/U03/U06 interactions. `test:mock` now runs creator removal/rotation/rejoin, anonymous account continuation and separate legacy create/resolve/profile at both widths, preserving foundation/account isolation checks. #57-#61 remain pending; earlier issue-specific counts are historical evidence.
+
+The [implemented saved library](mock-library.md) adds W01-W03/W06-W08 and readonly M06, with actual All/Mine/archive/detail/edit/remove-own/restore and local synthetic art. Add/provider/personal/picker mutations and whole-phase integration remain #58-#61; older issue-specific counts describe their historical verification.

@@ -74,3 +74,5 @@ The initial #41 documentation step changed no app/runtime/data. #42 now implemen
 #55 now adds the [Engineer-tested synthetic account journey](mock-accounts.md) to the accepted foundation. Its independent QA is pending. Remaining domains #56-#60 and full integration #61 are still required; no HTTP/OpenAPI/ORM implementation is claimed.
 
 Current frontend increment: #55 accounts are QA-accepted; [#56 group/legacy operations](mock-groups.md) are implemented and Engineer-tested, awaiting independent QA. #57-#61/full mock phase remain pending; the original per-issue delivery boundaries above are historical, not a complete-phase claim. No backend/OpenAPI/ORM stage is implemented by #56.
+
+Current frontend increment: #56 is independently accepted; [#57 saved library](mock-library.md) is implemented and Engineer-tested, awaiting independent QA. This adds six W operations and readonly M06 availability only; #58-#61 remain pending before #43. Older per-issue counts/boundaries above are historical, not full-phase completion or lifecycle-mutation claims.

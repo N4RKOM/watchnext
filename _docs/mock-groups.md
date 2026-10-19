@@ -53,3 +53,5 @@ No production service/API/schema/config/dependency changes, normal data initiali
 ## QA remediation: successful-context copy
 
 Independent QA found the foundation snapshot still claimed group actions were unavailable after sign-in. The snapshot now shows the actual account plus selected account/legacy group (or no selected group) and points to the working groups panel. A focused regression proves signed-in/no-group and selected-group output without the obsolete message; the current-source browser repeats both checks at 375px/1280px. Remediation verification: 35 focused tests, typecheck and current production build/browser/isolation/cleanup passed. The 992-test full-suite result above belongs to the preceding implementation; no new broad run is claimed for this bounded copy repair. Independent QA must recheck the current commit before closure.
+
+#57 now links readonly seeded membership contribution/history references to actual [synthetic library records](mock-library.md), including an inactive weekend attribution and retained archived history. Group permissions/generation rules remain unchanged; the original #56 opaque-reference boundary is historical.

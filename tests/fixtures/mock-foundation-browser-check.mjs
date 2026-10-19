@@ -122,7 +122,7 @@ try {
       if (process.env.WATCHNEXT_VISUAL_CHECK === "1") { const path = join(root, `groups-${width}.png`); await page.screenshot({path,fullPage:true}); screenshots.push(path); }
       for (const invite of [createdInvite,rotatedInvite,legacyInvite]) check(!output.includes(invite) && !page.url().includes(invite),"private synthetic invite absent from output/URL"); check(unexpected.length === 0 && external.length === 0,"groups use no production API/action/external request"); check((await context.cookies()).length === 0 && await page.evaluate(()=>localStorage.length === 0 && sessionStorage.length === 0),"groups have no durable credentials/storage"); unchanged();
     });
-    await step(`${width}: real synthetic library/Mine/detail/edit/archive/restore and legacy journey`, async () => { await mockLibraryJourney({page,origin,width,check}); check(unexpected.length === 0 && external.length === 0, "library uses local assets only, no production or external requests"); unchanged(); });
+    await step(`${width}: real synthetic library/Mine/detail/edit/archive/restore and legacy journey`, async () => { await mockLibraryJourney({page,origin,width,check,onAction:name=>{phase=`${width}: library action ${name}`;}}); check(unexpected.length === 0 && external.length === 0, "library uses local assets only, no production or external requests"); if (process.env.WATCHNEXT_VISUAL_CHECK === "1") { const path = join(root,`library-${width}.png`); await page.getByRole("region",{name:"Saved synthetic library"}).screenshot({path}); screenshots.push(path); } unchanged(); });
     mockPhase = false;
     await step(`${width}: production default and forged query stay production, without initialization`, async () => {
       await page.goto(origin); await page.getByRole("heading", { name: "Your private account", exact: true }).waitFor(); const home = await page.locator("main").innerText();
@@ -137,5 +137,5 @@ try {
   check(!output.includes("YOUTUBE_API_KEY=") && !output.includes("KINOPOISK_UNOFFICIAL_API_KEY="), "no credential diagnostics");
 } catch (error) { failure = error; }
 finally { try { await cleanup(); } catch (error) { failure ??= error; } process.removeListener("SIGINT", interrupted); process.removeListener("SIGTERM", interrupted); }
-if (failure) { const message = (failure instanceof Error ? failure.message.split("\n")[0] : "Unknown failure").split(root ?? "<root>").join("<fixture>").slice(0, 350); console.error(`FAIL ${phase}: ${message}`); process.exitCode = 1; }
+if (failure) { const message = (failure instanceof Error ? failure.message.split("\n")[0] + (failure.message.match(/waiting for ([^\n]+)/)?.[1] ? "; " + failure.message.match(/waiting for ([^\n]+)/)[1] : "") : "Unknown failure").split(root ?? "<root>").join("<fixture>").slice(0, 350); console.error(`FAIL ${phase}: ${message}`); process.exitCode = 1; }
 else console.log(JSON.stringify({ pass: true, widths: [375,1280], typedServiceState: true, noMockProductionRequestsOrStorage: true, productionDefaultUnchanged: true, sentinelsUnchanged: true, ownedCleanup: cleaned }));
