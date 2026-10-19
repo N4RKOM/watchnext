@@ -306,4 +306,20 @@ Integration fixes found by verification, each with a regression test that failed
 1. **Focus steal after a context change.** After sign-in, group selection or an Add save, the remounted library panel focused its own invalidation notice, so focus left the panel that announced the user's result (the browser journey observed "Library context or data changed…" instead of "Synthetic account context ready."). `app/mock/library.tsx` now never focuses the notice shown at mount. Regression: `tests/frontend/library-ui.test.tsx › #61 a remounted library shows its invalidation notice without stealing focus from the panel that announced the result`.
 2. **Demo-credential notice.** The sign-in surface named only `Demo.Viewer` and did not say the credentials are not security evidence. `app/mock/accounts.tsx` now names both fixture sign-ins and says they are a synthetic demo, not security evidence. Regression: `tests/frontend/accounts-ui.test.tsx › #61 states plainly on the sign-in surface …`.
 
-Final serial command results are recorded in the Engineer handoff for the final commit and summarized here when the documentation is final.
+Serial results at `0c83ecd` (product and test source identical to `cfe2148`, the capture commit, and to the final documentation-only commit):
+
+| Command | Result | Duration |
+| --- | --- | --- |
+| `pnpm test tests/frontend` | 17 files / 126 tests passed | 12 s |
+| `pnpm exec vitest run tests/picker` | 9 files / 245 tests passed (baseline unchanged) | 3 s |
+| `pnpm typecheck` | passed | 2 s |
+| `pnpm test` | 104 files / 1,084 tests passed, first run, no rerun | 69 s |
+| `pnpm build` | passed; the existing `db/migrate.ts` tracing warning is unchanged | 3 s (cached after the launcher build) |
+| `pnpm test:mock` | 22/22 steps passed, including both #61 steps at 375 and 1280 px; traffic `nonGet 0, serverActions 0, outsideMock 0, external 0, setCookie 0, cookies 0` per width | 199 s |
+| `WATCHNEXT_MOCK_EVIDENCE_DIR=… pnpm test:mock` (at `cfe2148`) | 22/22 steps passed; 14 images, 1,613,806 bytes | 205 s |
+| `pnpm test:e2e` | 71 PASS lines, `pass: true`, exit 0 (runnable in this environment) | 194 s |
+| `git diff --check` | passed | — |
+| Local Markdown links in the changed documents | 182 links, 0 missing files or anchors | — |
+| Footprint diff against `graded-baseline-2026-10-19` | the same five accepted files as at `b6132ad` | — |
+
+Earlier attempts, kept for the record: the first browser run of the new journey failed at step 1 on the missing "not security evidence" text (expected before fix 2), the next failed on the focus steal (fix 1); both were fixed with failing-first regressions. A first `pnpm dev` probe stopped the server through the wrong process group; it was repeated with SIGINT to the server's own process group. No test was weakened, no timeout, worker cap or security cost changed, and no existing #42–#60 assertion was edited.
