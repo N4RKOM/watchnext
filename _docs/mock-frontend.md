@@ -1,6 +1,6 @@
 # Isolated mock frontend foundation — issue #42
 
-This delivers **the foundation, synthetic accounts, group/legacy flows and saved library**, not the full mock frontend. `/mock` exercises a real typed asynchronous context read/reset with deterministic Ready/Slow/Unavailable outcomes. It always labels itself **Synthetic demo only / not real authentication**. The #55 synthetic account journey has independent QA acceptance; #56 group/legacy flows have independent QA acceptance. #57 saved library is independently QA-closed at `1a95c60`. Manual/provider entry, personal records and picker remain unavailable until their owning issues. Existing production routes remain the normal default; their business operations are unchanged.
+This delivers **the foundation, synthetic accounts, group/legacy flows, saved library and manual/provider entry**, not the full mock frontend. `/mock` exercises a real typed asynchronous context read/reset with deterministic Ready/Slow/Unavailable outcomes. It always labels itself **Synthetic demo only / not real authentication**. The #55 synthetic account journey has independent QA acceptance; #56 group/legacy flows have independent QA acceptance. #57 saved library is independently QA-closed at `1a95c60`. Manual/provider entry and metadata lifecycle are Engineer-tested under #58, pending independent QA. Personal records and picker remain unavailable until their owning issues. Existing production routes remain the normal default; their business operations are unchanged.
 
 ## Open the preview
 
@@ -45,14 +45,14 @@ Do not enter real credentials or use normal/provider data. Domain follow-ups mus
 
 The [implemented #55 account handoff](mock-accounts.md) documents exact validation, once-only recovery, navigation lifetime and bounded evidence. It is independently QA-closed at `269abbc`; other domain increments remain planned.
 
-The [#56 group/owner/invitation/legacy handoff](mock-groups.md) documents the accepted domain and its generation/lifetime checks; independent QA closed it at `391d312`. The [#57 library handoff](mock-library.md) is independently QA-closed at `1a95c60`. The next [#58 manual/provider entry handoff](mock-entry.md) is PM-groomed, not implemented by this document.
+The [#56 group/owner/invitation/legacy handoff](mock-groups.md) documents the accepted domain and its generation/lifetime checks; independent QA closed it at `391d312`. The [#57 library handoff](mock-library.md) is independently QA-closed at `1a95c60`. The [#58 manual/provider entry handoff](mock-entry.md) documents the implemented Add, review/shared-save and metadata lifecycle increment; independent QA is pending.
 
 | Owner | Inventory coverage |
 | --- | --- |
 | #55 (QA accepted) | Accounts/recovery A01–A05 |
 | #56 (QA accepted) | Account groups/owner G01–G08 and legacy L01–L04 |
 | #57 (QA accepted) | Saved library/Mine/detail/edit/archive W01–W03/W06–W08 |
-| #58 | Manual/provider Add and lifecycle W04–W05/M01–M06 |
+| #58 (Engineer-tested, QA pending) | Manual/provider Add and lifecycle W04–W05/M01–M06 |
 | #59 | Personal progress/completion/feedback P01–P05 |
 | #60 | Picker/cycle K01–K04 |
 | #61 | All 40 domain operations/six U groups integrated and complete phase evidence |
@@ -77,6 +77,6 @@ Engineer verification: 13 focused foundation tests pass; ordinary suite passes *
 
 The account extension adds real synthetic registration/sign-in/sign-out/recovery/context forms to the same service instance; see [account implementation](mock-accounts.md). Foundation-only verification numbers above are historical #42 evidence, not the new total. `test:mock` now additionally runs the full account journey at both widths while preserving every foundation isolation/sentinel assertion.
 
-The [group/legacy implementation](mock-groups.md) extends the same typed service with G01-G08/L01-L04 and group U02/U03/U06 interactions. `test:mock` now runs creator removal/rotation/rejoin, anonymous account continuation and separate legacy create/resolve/profile at both widths, preserving foundation/account isolation checks. #57-#61 remain pending; earlier issue-specific counts are historical evidence.
+The [group/legacy implementation](mock-groups.md) extends the same typed service with G01-G08/L01-L04 and group U02/U03/U06 interactions. `test:mock` now runs creator removal/rotation/rejoin, anonymous account continuation and separate legacy create/resolve/profile at both widths, preserving foundation/account isolation checks. #57 is QA accepted; #58 is Engineer-tested and #59–#61 remain pending; earlier issue-specific counts are historical evidence.
 
-The [implemented saved library](mock-library.md) adds W01-W03/W06-W08 and readonly M06, with actual All/Mine/archive/detail/edit/remove-own/restore and local synthetic art. Add/provider/personal/picker mutations and whole-phase integration remain #58-#61; older issue-specific counts describe their historical verification.
+The [implemented saved library](mock-library.md) adds W01-W03/W06-W08 and readonly M06, with actual All/Mine/archive/detail/edit/remove-own/restore and local synthetic art. Add/provider and metadata lifecycle are implemented under [#58](mock-entry.md), pending independent QA; personal/picker mutations and whole-phase integration remain #59–#61; older issue-specific counts describe their historical verification.

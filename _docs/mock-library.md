@@ -50,3 +50,7 @@ Engineer verification: `pnpm test tests/frontend` passes **9 files / 47 tests**,
 Browser development found and repaired a real navigation regression: Mine had been hidden after restoring because it depended on a discarded list. A focused regression now restores and immediately navigates to Mine. The harness also learned to explicitly select All after group switching when its prior Mine filter is deliberately preserved; no authorization or assertion was weakened. Diagnostic failures name only public synthetic control/step labels, never invitation/proof payloads.
 
 No production services/API/schema/config/dependencies, normal/user data or real sessions/providers were changed. Temporary state is not durable storage or real security, and automation is not human user testing. Add/new saves/duplicate provider integration, metadata lifecycle mutation, personal record mutation and picker remain #58-#60; #61 still owns whole-phase evidence before #43.
+
+## Subsequent entry integration — issue #58
+
+The #57 increment is independently QA-closed at `1a95c60`. Its earlier unavailable-Add and readonly-lifecycle statements describe that historical boundary. [#58](mock-entry.md) now implements actual manual/provider shared saves, duplicate/attachment/archive confirmations, contributor refresh and controlled in-memory expiry on these same records. It is Engineer-tested, with independent QA pending. Personal mutation and picker remain #59/#60; #61 owns whole-phase evidence.
