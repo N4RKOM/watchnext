@@ -22,24 +22,33 @@ Mock UI uses only clearly synthetic data and makes no real-security claim. Memor
 
 ## Sequential backlog and phase gates
 
+The original complete-frontend #42 was too large for one session. It is now a small typed service/mode foundation, followed by bounded account, group/legacy, library, Add/review, personal-record and picker increments plus final integration. **#42 → #55 → #56 → #57 → #58 → #59 → #60 → #61 all precede #43.** This preserves the original full scope and frontend authorization; foundation closure alone is not complete phase evidence. Later HTTP/backend/ORM work remains planned. QA refresh/acceptance applies independently to each increment.
+
 Thirteen required issues carry mvp; optional #52 carries post-mvp. Creation alone did not authorize implementation. The user subsequently requested frontend work and supplied Lovable editor/public-preview references; PM [refreshed #41](https://github.com/xiaodlb/watchnext/issues/41#issuecomment-6265752332) and recorded the accessible-preview correction. This authorizes #41 and #42 only, sequentially through PM/Engineer/independent QA. #41 supplies [the full operation inventory](operation-inventory.md), [observed design pack](design-references.md) and [source-mapped matrix](submission-matrix.md); it does not implement #42. #43 onward still need their owning authorization/prerequisites. Live issues remain authoritative.
 
 | Order | Issue | Phase/evidence |
 | --- | --- | --- |
 | 1 | [#41 Inventory/reference pack](https://github.com/xiaodlb/watchnext/issues/41) | Full-operation inventory, rubric mapping, references/wireframes and real chat-source inventory |
-| 2 | [#42 Complete mock frontend](https://github.com/xiaodlb/watchnext/issues/42) | All screens/operations use typed mock services; synthetic UI walkthrough |
-| 3 | [#43 root openapi.yml](https://github.com/xiaodlb/watchnext/issues/43) | Validated complete HTTP schemas/examples/auth/errors and operation map |
-| 4 | [#44 Memory identity/groups HTTP](https://github.com/xiaodlb/watchnext/issues/44) | Real server auth/recovery/group/legacy context over memory repository |
-| 5 | [#45 Memory library/provider HTTP](https://github.com/xiaodlb/watchnext/issues/45) | Real shared saves/lookup/reviews/expiry and archive/Mine |
-| 6 | [#46 Memory personal/picker HTTP](https://github.com/xiaodlb/watchnext/issues/46) | Real own history/feedback and full picker/cycle truth tables |
-| 7 | [#47 Complete UI-to-HTTP wiring](https://github.com/xiaodlb/watchnext/issues/47) | Every operation demonstrated over HTTP; restart proves memory loss |
-| 8 | [#48 Prisma mapping/baseline](https://github.com/xiaodlb/watchnext/issues/48) | Data-safe schema/constraint inventory and owned populated upgrade copies |
-| 9 | [#49 Prisma identity/group repositories](https://github.com/xiaodlb/watchnext/issues/49) | Actual durable auth/group use and parity tests |
-| 10 | [#50 Prisma library/history repositories](https://github.com/xiaodlb/watchnext/issues/50) | Actual durable library/provenance/history and picker projections |
-| 11 | [#51 Full Prisma SQLite integration](https://github.com/xiaodlb/watchnext/issues/51) | Same full HTTP UI, restart/backup/restore/upgrade evidence |
+| 2 | [#42 Typed mock foundation](https://github.com/xiaodlb/watchnext/issues/42) | Isolated typed service/context/shell/reset only |
+| 3 | [#55 Accounts/recovery: A01–A05](https://github.com/xiaodlb/watchnext/issues/55) | Bounded frontend increment; all precede #43 |
+| 4 | [#56 Groups/owner/legacy: G01–G08/L01–L04](https://github.com/xiaodlb/watchnext/issues/56) | Bounded frontend increment; all precede #43 |
+| 5 | [#57 Saved library/Mine/detail/edit/archive](https://github.com/xiaodlb/watchnext/issues/57) | Bounded frontend increment; all precede #43 |
+| 6 | [#58 Manual/provider Add/review: W04/W05/M](https://github.com/xiaodlb/watchnext/issues/58) | Bounded frontend increment; all precede #43 |
+| 7 | [#59 Personal progress/feedback: P01–P05](https://github.com/xiaodlb/watchnext/issues/59) | Bounded frontend increment; all precede #43 |
+| 8 | [#60 Picker/cycle: K01–K04](https://github.com/xiaodlb/watchnext/issues/60) | Bounded frontend increment; all precede #43 |
+| 9 | [#61 All-operation integration and phase evidence](https://github.com/xiaodlb/watchnext/issues/61) | Bounded frontend increment; all precede #43 |
+| 10 | [#43 root openapi.yml](https://github.com/xiaodlb/watchnext/issues/43) | Validated complete HTTP schemas/examples/auth/errors and operation map |
+| 11 | [#44 Memory identity/groups HTTP](https://github.com/xiaodlb/watchnext/issues/44) | Real server auth/recovery/group/legacy context over memory repository |
+| 12 | [#45 Memory library/provider HTTP](https://github.com/xiaodlb/watchnext/issues/45) | Real shared saves/lookup/reviews/expiry and archive/Mine |
+| 13 | [#46 Memory personal/picker HTTP](https://github.com/xiaodlb/watchnext/issues/46) | Real own history/feedback and full picker/cycle truth tables |
+| 14 | [#47 Complete UI-to-HTTP wiring](https://github.com/xiaodlb/watchnext/issues/47) | Every operation demonstrated over HTTP; restart proves memory loss |
+| 15 | [#48 Prisma mapping/baseline](https://github.com/xiaodlb/watchnext/issues/48) | Data-safe schema/constraint inventory and owned populated upgrade copies |
+| 16 | [#49 Prisma identity/group repositories](https://github.com/xiaodlb/watchnext/issues/49) | Actual durable auth/group use and parity tests |
+| 17 | [#50 Prisma library/history repositories](https://github.com/xiaodlb/watchnext/issues/50) | Actual durable library/provenance/history and picker projections |
+| 18 | [#51 Full Prisma SQLite integration](https://github.com/xiaodlb/watchnext/issues/51) | Same full HTTP UI, restart/backup/restore/upgrade evidence |
+| 19 | [#53 Genuine user testing/bugs](https://github.com/xiaodlb/watchnext/issues/53) | Hands-on checklist and actual user-test-bug regression iterations |
+| 20 | [#54 Submission package](https://github.com/xiaodlb/watchnext/issues/54) | Complete accurate matrix, artifacts/commands and QA closures |
 | Optional | [#52 Real PostgreSQL portability](https://github.com/xiaodlb/watchnext/issues/52) | Post-MVP only; no dependency for #53/#54 |
-| 12 | [#53 Genuine user testing/bugs](https://github.com/xiaodlb/watchnext/issues/53) | Hands-on checklist and actual user-test-bug regression iterations |
-| 13 | [#54 Submission package](https://github.com/xiaodlb/watchnext/issues/54) | Complete accurate matrix, artifacts/commands and QA closures |
 
 Each issue identifies dependencies/files/limits. Full feature coverage is checked at every phase; a phase may use mock provider transport but not fake application writes. Existing baseline regressions remain meaningful. Current commands still describe the native-SQL baseline. **Future mode selectors/ORM commands do not exist yet**: owning issues must introduce, document and verify exact commands; do not present proposed names as runnable. No empty openapi.yml is created in this first step.
 

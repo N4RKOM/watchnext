@@ -2,11 +2,11 @@
 
 October 19, 2026 · #41 documentation only. Baseline: **441fcaae660e273d6fc373f8757be562d9139b78**, tag **graded-baseline-2026-10-19**, accepted through closed issues #1–#40. Current source inventory was read at d8b99cd6eb8ef90c9e0abd9e61ca63d81ec44308; no application changes are delivered here. Requirement IDs refer to [specification.md](specification.md); visual observations/provenance are in [design-references.md](design-references.md).
 
-The subsequent frontend request authorizes #41 and then #42 after its prerequisites. It does **not** authorize the later contract/backend/ORM implementation merely because these operations are mapped. These are **proposed typed mock-service operations**, not existing exported interfaces or REST paths. Current UI uses native server reads, Next Server Actions and limited account/group HTTP handlers. #42 must implement the complete service, not an unused mock beside unchanged database calls.
+The subsequent frontend request authorizes #41 and then #42 after its prerequisites. It does **not** authorize the later contract/backend/ORM implementation merely because these operations are mapped. These are **proposed typed mock-service operations**, not existing exported interfaces or REST paths. Current UI uses native server reads, Next Server Actions and limited account/group HTTP handlers. The split frontend phase (#42/#55–#61) must implement the complete service, not an unused mock beside unchanged database calls.
 
 ## Common contract and state language
 
-Each service operation has typed input/output and asynchronous success/failure variants. The proposed boundary supports cancellation, a request/context identity, field-level validation, stale/context-changed outcomes and actionable retry. #42 defines real TypeScript types; #43 maps each operation ID to the validated root OpenAPI contract, including auth, methods, inputs/results and errors. This document does not preempt that design with invented runnable endpoints.
+Each service operation has typed input/output and asynchronous success/failure variants. The proposed boundary supports cancellation, a request/context identity, field-level validation, stale/context-changed outcomes and actionable retry. The domain increments extend #42 with real TypeScript types; #43 maps each operation ID to the validated root OpenAPI contract, including auth, methods, inputs/results and errors. This document does not preempt that design with invented runnable endpoints.
 
 - **S** success/readback: show actual returned data or a clearly acknowledged mutation; no decorative fake working controls.
 - **E** empty/absent/unavailable: distinguish a genuinely empty list, no personal record, missing title and unauthorized access. For operations without a collection, the row names the appropriate absent state rather than a meaningless empty screen.
@@ -16,7 +16,7 @@ Each service operation has typed input/output and asynchronous success/failure v
 
 **Every operation below requires P/F/C**, with row-specific S/E cases. Read-only links, local draft edits and clipboard handling are separated below; they must not be turned into fake backend mutations. Real server authority in later stages derives the member from the session, not a caller-supplied ID. Mock errors demonstrate interactions only, not real authentication/security.
 
-All operations participate in **#42 typed mock → #43 contract inventory → #47 HTTP UI wiring → #51 durable full-UI integration**. The `Adapters` column gives the additional memory-domain issue and Prisma-repository issue. **#48** must map the storage/invariant requirements of every persisted operation before #49/#50 implement them. **#52** is optional post-MVP, never a dependency for this inventory or required submission.
+All operations participate in the **frontend mock phase (#42 foundation and #55–#61 domain/integration increments) → #43 contract inventory → #47 HTTP UI wiring → #51 durable full-UI integration**. The `Adapters` column gives additional memory-domain and Prisma-repository ownership. **#48** maps every persisted operation before #49/#50 implement it. **#52** is optional post-MVP, never a prerequisite for required submission. Every frontend increment must pass QA before #43; a #42 foundation PASS alone does not complete the mock phase.
 
 ## Account, group and legacy screens
 
@@ -81,7 +81,7 @@ All mutations bind the current session member, not a client-selected author; gro
 
 ## Local interactions, images and operator boundaries
 
-These remain in #42/#47/#51 UI coverage; #43 must explicitly mark them **client-only**, reusing the corresponding operation's DTO rather than inventing endpoints:
+These remain in #42/#55–#61, then #47/#51 UI coverage; #43 must explicitly mark them **client-only**, reusing the corresponding operation's DTO rather than inventing endpoints:
 
 - **U01 FR13:** edit draft, choose source/type, clean automatic merge, dirty Replace/Keep, cancel/ignore late response, start fresh manual/drop import. Preserve unrelated mood/manual edits. Removing import authority must be explicit, never a hidden provider relabel. M03/M04 establish/save authority.
 - **U02 FR02/FR04, NFR03/FR04:** copy once-only recovery/invite with manual selection fallback, secret visibility/save-and-continue and departure erasure. No retrieval endpoint for a discarded raw code/link; no permanent browser storage/logs.
@@ -114,14 +114,29 @@ The mock adapter has **no imports of db/server, SQLite, provider keys or native 
 
 Use deterministic opt-in service scenarios for S/E/P/F/C (including canceled/late success/error), not decorative page-only state. Production handlers remain authoritative in later HTTP modes; mocks never prove authorization, password hashing, session protection, network entitlement or persistence. The HTTP adapter must eventually implement the same frontend-facing interface without normal-data fallback. #42 owns its exact selector/scripts/type implementation and actual walkthrough evidence; none is invented as runnable here.
 
-## Bounded #42 completion checklist
+## Split frontend ownership and complete phase checklist
+
+The earlier #42 whole-phase task was too large for the one-session rule. Requirements are retained in these independently groomed owners; nothing below is silently removed:
+
+| Issue | Bounded ownership |
+| --- | --- |
+| [#42](https://github.com/xiaodlb/watchnext/issues/42) | Typed async result/context/scenario foundation, explicit isolated mock shell/entry/reset, production default unchanged |
+| [#55](https://github.com/xiaodlb/watchnext/issues/55) | A01–A05 account/recovery and account U02/U06 interactions |
+| [#56](https://github.com/xiaodlb/watchnext/issues/56) | G01–G08/L01–L04 group/owner/legacy and group U02/U03/U06 |
+| [#57](https://github.com/xiaodlb/watchnext/issues/57) | W01–W03/W06–W08 saved library/Mine/detail/edit/archive; read-only M06 expiry presentation; U03/U04/U05/U06 |
+| [#58](https://github.com/xiaodlb/watchnext/issues/58) | W04–W05/M01–M06 manual/provider Add/review/refresh; U01/U04/U06; completes M06 across entry and reads |
+| [#59](https://github.com/xiaodlb/watchnext/issues/59) | P01–P05 personal progress/completion/feedback and U06 |
+| [#60](https://github.com/xiaodlb/watchnext/issues/60) | K01–K04 picker/results/cycle and U03/U05/U06 |
+| [#61](https://github.com/xiaodlb/watchnext/issues/61) | Connected all-40-operation/six-U-group integration, full regression/two-width evidence and #43 handoff |
+
+Execute in that order, with each issue's focused checks and independent QA. The following retained whole-phase checklist belongs to final integration #61, not the small #42 foundation:
 
 - [ ] Every A/G/L/W/M/P/K operation and U interaction above is reachable in the actual mock UI and routed through the centralized typed service boundary, including existing page reads and all clear/undo/confirm/retry variants. No direct native DB/server-action/provider bypass remains in mock mode; real baseline mode is preserved and isolated.
 - [ ] FR01-FR17 and NFR01-NFR05 coverage maps back to operation IDs; every applicable S/E/P/F/C case has a service scenario and meaningful UI verification, with both personas/groups and no missing legacy/archive/owner/recovery/detail screen.
 - [ ] Reuse the existing full accessible baseline, adapting only observed visual lessons (spacing/cards/blue action/centered forms) under source priority. Record unseen-screen mock wireframes rather than claim Lovable fidelity or introduce unrelated type-filter features.
 - [ ] Two-width keyboard walkthrough covers actual routes, navigation/focus, all content-type/missing-field branches, once-only secrets, manual/provider review/dedup/restore and truthful picker state; no overflow, fake working controls, secret captures or hidden-only demo.
 - [ ] Mock isolation/scenario reset is proven without opening normal SQLite, native account credentials, provider secrets or live provider traffic. Actual mock-mode command/selector is documented and independently tested, not assumed from this plan.
-- [ ] #43 receives every service operation/result/error/auth/context requirement plus explicit client-only/internal exclusions. #47 and #51 must demonstrate the same UI over real HTTP/memory then durable SQLite, preserving full behavior and honest mode labels. #42 cannot claim those later stages complete.
+- [ ] #43 receives every service operation/result/error/auth/context requirement plus explicit client-only/internal exclusions. #47 and #51 must demonstrate the same UI over real HTTP/memory then durable SQLite, preserving full behavior and honest mode labels. The frontend phase cannot claim those later stages complete.
 
 QA independently checks this inventory/reference issue and owns actual PASS/closure for mvp. Engineer leaves #41 open; no #42 code starts as part of this document.
 

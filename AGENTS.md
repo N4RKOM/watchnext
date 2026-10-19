@@ -78,6 +78,8 @@ The design system, API guide and testing guidelines are available at `_docs/desi
 
 ## Orchestration
 
+The frontend-only authorization originally named #41/#42. #42 is now split into foundation #42 followed by #55–#61 within the same authorized scope; follow that explicit backlog order before #43. Each increment is independently groomed/implemented/QA-closed. #43 and later backend/ORM stages remain outside this frontend request. Do not treat the smaller foundation PASS as complete frontend delivery.
+
 - The main session orchestrates issue work according to `_docs/process.md`; it delegates grooming, implementation, and verification to PM, Engineer, and QA subagents rather than doing those roles itself.
 - For an authorized backlog run, select the next open issue in backlog order and launch the PM first, even if the issue was groomed previously. Pass the issue and relevant document links to each role.
 - Launch the Engineer after PM grooming, then QA after implementation. If QA returns FAIL, send the QA comment to the Engineer and repeat implementation and verification.
