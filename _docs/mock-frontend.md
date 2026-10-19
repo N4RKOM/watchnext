@@ -45,7 +45,7 @@ Do not enter real credentials or use normal/provider data. Domain follow-ups mus
 
 The [implemented #55 account handoff](mock-accounts.md) documents exact validation, once-only recovery, navigation lifetime and bounded evidence. It is independently QA-closed at `269abbc`; other domain increments remain planned.
 
-The [#56 group/owner/invitation/legacy handoff](mock-groups.md) documents the accepted domain and its generation/lifetime checks; independent QA closed it at `391d312`. The [#57 library handoff](mock-library.md) is independently QA-closed at `1a95c60`. The [#58 manual/provider entry handoff](mock-entry.md) documents the implemented Add, review/shared-save and metadata lifecycle increment; independent QA passed at `89deec3`. The [#59 personal progress/feedback handoff](mock-personal.md) documents the implemented P01–P05 increment; independent QA is pending.
+The [#56 group/owner/invitation/legacy handoff](mock-groups.md) documents the accepted domain and its generation/lifetime checks; independent QA closed it at `391d312`. The [#57 library handoff](mock-library.md) is independently QA-closed at `1a95c60`. The [#58 manual/provider entry handoff](mock-entry.md) documents the implemented Add, review/shared-save and metadata lifecycle increment; independent QA passed at `89deec3`. The [#59 personal progress/feedback handoff](mock-personal.md) documents the implemented P01–P05 increment; independent QA is pending. The [#60 picker/Pick again handoff](mock-picker.md) is PM-groomed; its engineering starts only after #59 independent QA PASS.
 
 | Owner | Inventory coverage |
 | --- | --- |
@@ -54,7 +54,7 @@ The [#56 group/owner/invitation/legacy handoff](mock-groups.md) documents the ac
 | #57 (QA accepted) | Saved library/Mine/detail/edit/archive W01–W03/W06–W08 |
 | #58 (QA PASS at `89deec3`) | Manual/provider Add and lifecycle W04–W05/M01–M06 |
 | #59 (Engineer-tested, QA pending) | Personal progress/completion/feedback P01–P05 |
-| #60 | Picker/cycle K01–K04 |
+| #60 (PM-groomed; awaits #59 QA PASS) | Picker/cycle K01–K04 |
 | #61 | All 40 domain operations/six U groups integrated and complete phase evidence |
 
 [The full inventory](operation-inventory.md), [observed references](design-references.md) and [graded plan](graded-mvp.md) remain authoritative. A #42 PASS is not full frontend completion; #43 waits for all follow-ups/final integration. Backend/ORM issues remain outside frontend authorization.
