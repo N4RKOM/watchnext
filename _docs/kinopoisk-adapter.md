@@ -1,5 +1,7 @@
 # Kinopoisk API Unofficial adapter (#18, #37)
 
+Current account/discovery delivery and historical boundaries are mapped in [enhancement-audit.md](enhancement-audit.md). Historical #16-#19 manual-runtime/no-cover statements describe that adapter stage. #36-#38 supersede them with title/link search, available-field automatic review and allowlisted previews. Selected Kinopoisk FILM integral filmLength is interpreted by the app as minutes, editable, not provider-confirmed units. Unknown/episodic runtime stays manual; no live access/rights claim is made.
+
 **Third-party Unofficial service, not an official Кинопоиск API or streaming access.** Primary [OpenAPI contract](https://kinopoiskapiunofficial.tech/documentation/api/openapi.json) and [Swagger documentation](https://kinopoiskapiunofficial.tech/documentation/api/) rechecked **October 19, 2026**; the contract still reports version **2.0.1**. The Swagger page itself is a JavaScript shell; field/range evidence comes from OpenAPI. Implementation is **documented and synthetically/mock verified**, not authenticated/live-tested. No provider credentials were inspected, account registered, purchase made or original-site page scraped. Actual account allowance/access and image/persistence rights remain unverified; free access is not promised.
 
 ## Configuration and server boundary

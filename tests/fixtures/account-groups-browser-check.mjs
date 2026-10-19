@@ -22,7 +22,7 @@ export async function runAccountGroups({build=true,onFixture,injectFailure=false
 failure=undefined;current="setup";
 
 try{
-  f=await createFixture();onFixture?.(f);await step(build?"current production build and owned server":"owned server using this invocation’s current build",async()=>{await (build?f.build():f.initialize());await f.launch();await f.start();});
+  f=await createFixture();onFixture?.(f);await step(build?"current production build and owned server":"owned server using this invocation's current build",async()=>{await (build?f.build():f.initialize());await f.launch();await f.start();});
   for(const width of [375,1280]){
     const contexts=await Promise.all([f.context(width),f.context(width),f.context(width),f.context(width),f.context(width)]),[a,b,c,a2,b2]=await Promise.all(contexts.map(context=>context.newPage()));
     const names={a:`MemberA.${width}`,b:`MemberB.${width}`,c:`MemberC.${width}`,g1:`Account group one ${width}`,g2:`Account group two ${width}`,movie:`Shared account movie ${width}`,series:`Account series ${width}`,foreign:`Private other group ${width}`};

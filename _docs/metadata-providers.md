@@ -1,5 +1,7 @@
 # Metadata provider research
 
+Current account/discovery delivery and historical boundaries are mapped in [enhancement-audit.md](enhancement-audit.md). Historical #16-#19 manual-runtime/no-cover statements describe that adapter stage. #36-#38 supersede them with title/link search, available-field automatic review and allowlisted previews. Selected Kinopoisk FILM integral filmLength is interpreted by the app as minutes, editable, not provider-confirmed units. Unknown/episodic runtime stays manual; no live access/rights claim is made.
+
 Verified against public provider documentation on **October 15, 2026** for [issue #3](https://github.com/xiaodlb/watchnext/issues/3). No authenticated requests were made, credentials inspected, accounts created, or purchases made. All JSON below is synthetic, reduced to relevant fields, and contains invented titles/IDs or redacted values. It is not a captured live response.
 
 ## Result and chosen routes

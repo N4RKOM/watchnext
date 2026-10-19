@@ -16,7 +16,7 @@
 - `pnpm db:verify:persistence` - verify fresh-process persistence using isolated temporary files
 - `pnpm db:snapshot '<absolute source>' '<new absolute destination>'` - explicit private SQLite-consistent snapshot/restore; read `_docs/backup-restore.md`, never overwrite an existing destination
 - `pnpm db:verify:backup` - isolated WAL-aware snapshot/restore/expiry verification; never uses normal/demo storage
-- `pnpm verify:fresh-checkout` - from clean committed source, install and verify the documented setup/dev/production/demo/tests in an owned temporary local clone; see `_docs/completion-audit.md`
+- `pnpm verify:fresh-checkout` - from clean committed source, install and verify the documented setup/dev/production/demo/tests in an owned temporary local clone; see `_docs/enhancement-audit.md`
 - `pnpm start` - serve the production build locally
 
 Use Node.js 24.15.0 or newer within the 24.x release line and pnpm 11.25.0. This is a Next.js and TypeScript project; Python/uv/pytest commands do not apply.
@@ -29,7 +29,7 @@ The user approved the initial Next.js, React, TypeScript, type definitions, Vite
 
 ## Project context
 
-The October 18 account/discovery enhancement (#31–#40) is now **authorized for sequential implementation**: after the planning-only phase, the user explicitly said “выполни оставшиеся ишшюс на гитхабе” (implement the remaining GitHub issues). This supersedes the planning pause; it does not claim any new feature delivered. Read `_docs/account-discovery-enhancement.md`, then refresh the selected issue through PM → Engineer → independent QA, one issue at a time. New authenticated groups supersede the first-release no-account restriction only within this enhancement; legacy groups stay separate with no claiming/migration. Preserve the user's running dev server and existing `next-env.d.ts` changes; use a separate owned checkout/build output for verification.
+The October 18 account/discovery enhancement (#31–#40) is now **authorized for sequential implementation**: after the planning-only phase, the user explicitly said “выполни оставшиеся ишшюс на гитхабе” (implement the remaining GitHub issues). This supersedes the planning pause; issues #31–#39 have since passed independent QA. #40 consolidates verification and docs; its own fresh QA verdict remains required. Read `_docs/account-discovery-enhancement.md`, then refresh the selected issue through PM → Engineer → independent QA, one issue at a time. New authenticated groups supersede the first-release no-account restriction only within this enhancement; legacy groups stay separate with no claiming/migration. Preserve the user's running dev server and existing `next-env.d.ts` changes; use a separate owned checkout/build output for verification.
 
 WatchNext is an academic web app that helps couples and friends choose something from their shared saved watchlist. The stack is Next.js, TypeScript and SQLite, served locally at configured `http://127.0.0.1:3000` by default. First-release feature implementation and verification are mapped in `_docs/completion-audit.md`; live issue QA/closure remains authoritative. Do not treat old task delivery boundaries as unimplemented features or reopen resolved delegated decisions.
 
@@ -41,7 +41,8 @@ WatchNext is an academic web app that helps couples and friends choose something
 
 ## Documents
 
-- `_docs/account-discovery-enhancement.md` - planned account/multi-group/autofill/preview requirements, explicit answers versus engineering defaults, issue order, and preservation constraints; not a delivered-feature claim.
+- `_docs/account-discovery-enhancement.md` - authorized account/multi-group/autofill/preview requirements, explicit answers versus engineering defaults and preservation constraints.
+- `_docs/enhancement-audit.md` - current twelve-answer/source/verification map; independent issue QA remains authoritative.
 
 - `_docs/process.md` - how work is organized.
 - `_docs/plan.md` - agreed product scope and unresolved decisions.
@@ -90,14 +91,14 @@ The design system, API guide and testing guidelines are available at `_docs/desi
 - Complete one selected issue at a time unless the user explicitly requests a broader scope.
 - Each issue is designed for one focused session. Document unmet prerequisites and use fixtures or stubs when appropriate instead of silently implementing other issues.
 - `_docs/plan.md` records agreed requirements. Record suitable resolutions of unresolved product decisions with rationale and the delegated-authority source before relying on them. Distinguish delegated choices from explicit user answers.
-- Do not introduce mixed watch sessions, embedded playback, automatic progress tracking, separate account signup, or public hosting as part of the first release without a scope change from the user.
+- Do not introduce mixed watch sessions, embedded playback, automatic progress tracking or public hosting without a scope change. Account signup is delivered under the later #31-#40 authorization; legacy profile claiming remains excluded.
 
 ## Product rules to preserve
 
 - One shared title entry per group, with multiple contributors; any contributor may edit the shared metadata.
 - Removing the last contribution archives the title. Saving it again restores the same entry, including personal history.
 - Each member has independent progress, a 1–10 rating, and notes; ratings and notes are visible to the group.
-- Invite links and name selection are trust-based access, not verified personal identities. Validate group access and record ownership on the server.
+- Account groups derive identity from the live hashed account session and active membership/context generation; only separate legacy groups use trusted name selection. Validate current access and target record ownership on every server request.
 - Picks use selected viewers, mood, and full item duration; series use a typical episode duration. Saved timestamps do not reduce the duration used for matching.
 - Rewatches are off by default. Follow the plan's episode eligibility rules and rank matching items longest-first within the available time.
 - Ratings do not influence picks. Content opens through external links.

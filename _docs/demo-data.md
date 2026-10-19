@@ -1,5 +1,7 @@
 # Synthetic academic demo
 
+Current account/discovery delivery and historical boundaries are mapped in [enhancement-audit.md](enhancement-audit.md). This generator intentionally remains **separate legacy-mode data**, not an account/credential seed; register privately for an authenticated demonstration.
+
 From the repository root, with the documented Node/pnpm versions installed:
 
 ```sh

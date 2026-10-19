@@ -23,7 +23,7 @@ export async function runMine({build=true,onFixture,injectFailure=false}={}){
 failure=undefined;current="setup";
 
 try{
- f=await createFixture();onFixture?.(f);await step(build?"current production build and owned server":"owned server using this invocation’s current build",async()=>{await (build?f.build():f.initialize());await f.launch();await f.start();});
+ f=await createFixture();onFixture?.(f);await step(build?"current production build and owned server":"owned server using this invocation's current build",async()=>{await (build?f.build():f.initialize());await f.launch();await f.start();});
  for(const width of[375,1280]){
   const contexts=[await f.context(width),await f.context(width)];for(const context of contexts)await context.route("https://i.ytimg.com/**",route=>route.fulfill({status:200,contentType:"image/svg+xml",body:'<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90"><rect width="160" height="90" fill="#1d4ed8"/></svg>'}));
   const[a,b]=await Promise.all(contexts.map(context=>context.newPage())),nameA=`MineA.${width}`,nameB=`MineB.${width}`,g1=`Mine group ${width}`,g2=`Mine other ${width}`,names={own:`Own ${width}`,sole:`Other sole ${width}`,joint:`Joint ${width}`,foreign:`Foreign ${width}`},password=randomBytes(24).toString("base64url");f.secrets.push(password);let own,sole,joint,provider,foreign,memberB;

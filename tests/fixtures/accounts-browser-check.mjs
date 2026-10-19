@@ -21,7 +21,7 @@ failure=undefined;current="setup";
 
 try {
   f = await createFixture();onFixture?.(f);
-  await step(build?"current production build and owned server":"owned server using this invocation’s current build", async () => { await (build?f.build():f.initialize()); await f.launch(); await f.start(); });
+  await step(build?"current production build and owned server":"owned server using this invocation's current build", async () => { await (build?f.build():f.initialize()); await f.launch(); await f.start(); });
   for (const width of [375, 1280]) {
     const a = await f.context(width), b = await f.context(width), third = await f.context(width);
     const pageA = await a.newPage(), pageB = await b.newPage(), pageThird = await third.newPage();

@@ -1,6 +1,6 @@
 # WatchNext
 
-An academic web app for choosing something to watch from your group's saved list. Save movies, series, anime and YouTube videos; keep separate progress/ratings/notes; pick by viewers, full duration and mood. Duplicate saves add names to one entry. Contributor edits, archive/restore, optional metadata review and ordered Pick again are implemented.
+An academic web app for choosing something to watch from your group's saved list. Save movies, series, anime and YouTube videos; keep separate progress/ratings/notes; pick by viewers, full duration and mood. Duplicate saves add names to one entry. Register a private username/password account, save your one-time recovery code, and create/join multiple groups. Creator controls, contributor edits, All/Mine, covers, automatic editable metadata review, archive/restore and ordered Pick again are implemented. Existing trusted-name groups remain a separate legacy mode.
 
 ## Requirements
 
@@ -19,7 +19,7 @@ pnpm db:init
 pnpm dev
 ```
 
-Open **http://127.0.0.1:3000** and keep the terminal running. Stop with Ctrl+C. These PowerShell commands select a local private database explicitly; [the setup guide](_docs/local-setup.md) covers quoted paths with spaces, macOS/Linux, alternate ports, invitations/profiles, optional provider settings and troubleshooting. Match browser/configured origin exactly; do not silently mix localhost and 127.0.0.1.
+Open **http://127.0.0.1:3000** and keep the terminal running. Stop with Ctrl+C. These PowerShell commands select a local private database explicitly; [the setup guide](_docs/local-setup.md) covers quoted paths with spaces, macOS/Linux, alternate ports, account groups and separate legacy invitations/profiles, optional provider settings and troubleshooting. Match browser/configured origin exactly; do not silently mix localhost and 127.0.0.1.
 
 ## Verification
 
@@ -43,9 +43,11 @@ Builds cap Next page/static worker concurrency at two via `experimental.cpus` in
 
 ## Current scope
 
-The local first release supports real groups/invites, selectable named/colored profiles, shared watchlists/details, all four manual entry types, optional YouTube/third-party Кинопоиск review/save, independent progress/completion/ratings/notes, contributor editing/removal, archive/history/restore, full-duration filtering, catch-up/rewatch eligibility and Pick again with explicit exhaustion/restart. [The dated completion audit](_docs/completion-audit.md) maps every agreed requirement and all 30 issues to implementation and verification. Live issue QA/closure remains authoritative.
+The current app supports username/password accounts, private recovery-code resets, multiple account groups, creator removal/invite rotation, one shared deduplicated list with All/Mine and complete attribution, independent progress/completion/ratings/notes, contributor editing/removal and archive/history/restore. YouTube title/link and third-party Кинопоиск search offer explicit candidates, automatic editable fields and safe previews. The picker preserves full-duration, viewer/catch-up/rewatch rules and ordered Pick again.
 
-Names/invitations are trust-based, without verified accounts. Provider credentials are optional: manual workflows/demo run without them. Configured adapters are tested with synthetic responses; authenticated provider access/quotas/rights are unverified. Кинопоиск is a third-party service with manual runtime and absent covers; retained imported fields follow real refresh/delete deadlines. See [provider/lifecycle limits](_docs/metadata-lifecycle.md). No public hosting, embedded/automatic playback, mixed sessions or preference learning is included.
+Choose **Register** or **Sign in** under **Your private account** on the home page. After registration, privately save the once-only code, Continue, and create a group or open an invitation and explicitly Join after signing in. The account username supplies group identity. **Legacy group access** separately preserves old invitation/name profiles; registering never claims or converts them. The existing synthetic demo remains legacy only.
+
+[The enhancement audit](_docs/enhancement-audit.md) maps all twelve account/discovery choices and #31–#40 to evidence; [the dated legacy audit](_docs/completion-audit.md) preserves #1–#30 history. Live independent QA remains authoritative. Provider keys are optional; manual workflows need none. Mocks verify integration, **not live access, quota, licensing or image rights**. Selected Кинопоиск FILM `filmLength` is interpreted by this app as integral minutes, editable before save; the inspected schema does not confirm units. Episodic/unknown/invalid runtime requires manual completion. Acquired fields follow real refresh/delete deadlines; no public hosting, embedded/automatic playback or preference learning is included. [Lifecycle limits](_docs/metadata-lifecycle.md).
 
 Before a feature uses persistent storage, run `pnpm db:init`. It initializes/migrates the local user-data database and preserves rows on repeat runs; normal server access requires initialization and never silently creates another file. Set server-only `WATCHNEXT_DATABASE_PATH` in the shell or untracked `.env.local` to override the OS-local default. Relative paths resolve against the working directory; spaces work when quoted. Use a local disk rather than the repository's possibly shared drive. Exact platform paths and lifecycle/error handling are in [the database guide](_docs/database.md).
 
@@ -57,16 +59,17 @@ Run `pnpm db:migrate:temp` to create a temporary database and inspect its tables
 
 Dependencies use exact versions in `package.json`, with transitive versions captured in `pnpm-lock.yaml`. Next.js supplies the application framework, React renders the page, and Vitest with React Testing Library and jsdom provides the rendering test. No styling framework or database library has been added.
 
-Keep backups private and outside Git. Use [the SQLite-safe backup and separate-restore recipe](_docs/backup-restore.md), not a blind copy of a live main file; provenance deadlines remain unchanged and restored files need `pnpm metadata:maintain` before presentation.
+Before upgrading existing data, follow [the stopped-writer upgrade recipe](_docs/local-setup.md#upgrade-an-existing-installation). Keep backups private and outside Git. Use [the SQLite-safe backup and separate-restore recipe](_docs/backup-restore.md), not a blind copy of a live main file; provenance deadlines remain unchanged and restored files need `pnpm metadata:maintain` before presentation.
 
 ## Project documents
 
-For a separate synthetic presentation database, run `pnpm demo:prepare`. See [demo setup and exact scenarios](_docs/demo-data.md) for private invitation output, quoted startup commands and safe repeat/reset behavior. Normal user storage is not initialized or reset by this command.
+For a separate **legacy-mode** synthetic presentation database, run `pnpm demo:prepare`. See [demo setup and exact scenarios](_docs/demo-data.md) for private invitation output, quoted startup commands and safe repeat/reset behavior. Normal user storage is not initialized or reset by this command.
 
 - [Project scope](_docs/plan.md)
 - [Local setup and troubleshooting](_docs/local-setup.md)
 - [Backup and restore](_docs/backup-restore.md)
-- [Requirement and verification audit](_docs/completion-audit.md)
+- [Account/discovery requirement audit](_docs/enhancement-audit.md)
+- [Historical requirement and verification audit](_docs/completion-audit.md)
 - [GitHub issue index](_docs/tasks.md)
 - [Work process](_docs/process.md)
 - [Agent instructions](AGENTS.md)

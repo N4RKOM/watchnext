@@ -1,5 +1,7 @@
 # Server operations
 
+Current account/discovery delivery and historical boundaries are mapped in [enhancement-audit.md](enhancement-audit.md). Account groups use live authenticated membership/context identity; only separate legacy groups use trusted selectable names. Later issue-specific sections supersede first-release restrictions without converting old groups.
+
 ## Account registration, login and logout — issue #32
 
 `/register` and `/login` are accessible forms; dynamic `/account` reads the actual separate account credential and displays its database username and current account memberships, or safely redirects to fixed `/login` when anonymous/expired/revoked/tampered. Storage failure returns a safe retry view. The landing clearly labels existing legacy group entry separately. No legacy member, history, invitation or membership is claimed by registering/logging in. Password recovery is described below.

@@ -1,5 +1,7 @@
 # Normalized metadata contract (#16)
 
+Current account/discovery delivery and historical boundaries are mapped in [enhancement-audit.md](enhancement-audit.md). Historical #16-#19 manual-runtime/no-cover statements describe that adapter stage. #36-#38 supersede them with title/link search, available-field automatic review and allowlisted previews. Selected Kinopoisk FILM integral filmLength is interpreted by the app as minutes, editable, not provider-confirmed units. Unknown/episodic runtime stays manual; no live access/rights claim is made.
+
 This is the pure offline layer of the delivered provider integration. `types.ts` defines projections/results and `lookupMetadata` accepts an injected provider; implemented #17/#18 adapters own credentials/fixed-host transport, and #19 owns review/save/lifecycle. Those operations are deliberately outside this pure module. See [the delivered lifecycle](metadata-lifecycle.md) and [research](metadata-providers.md) for honest live-access/rights/runtime limits.
 
 ## Delegated interface choices
@@ -63,7 +65,7 @@ Review UI, server review state, shared-save provenance and policy enforcement ar
 
 The interface above remains pure/offline, while the app now consumes delivered adapters through the [trusted review and lifecycle integration](metadata-lifecycle.md). A short-lived bound snapshot supplies original values/identity; actual shared-save provenance and refresh/deletion enforcement now exist outside this module. Genre labels containing commas cannot be represented by the existing CSV editor and are explicitly incomplete instead of silently becoming different genres.
 
-`provider_policy_unverified` remains truthful adapter-stage Кинопоиск output. The authorized local academic text-snapshot policy adopted in #19 adds `academic_local_snapshot_30_days` at the server review/storage boundary, with an app-chosen refresh/delete deadline and disclosed external-rights/account uncertainty. Thus the provisional #16/#18 verify-before-persistence handoff is satisfied by a recorded project decision rather than an invented permanent save ban; image/streaming rights are not claimed and covers stay absent.
+`provider_policy_unverified` remains truthful adapter-stage Кинопоиск output. The authorized local academic text-snapshot policy adopted in #19 adds `academic_local_snapshot_30_days` at the server review/storage boundary, with an app-chosen refresh/delete deadline and disclosed external-rights/account uncertainty. Thus the provisional #16/#18 verify-before-persistence handoff is satisfied by a recorded project decision rather than an invented permanent save ban; image/streaming rights are not claimed; #37/#38 later add validated allowlisted poster URLs without caching binaries.
 
 ## Kinopoisk discovery extension (#37)
 

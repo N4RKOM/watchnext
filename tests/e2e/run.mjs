@@ -1,3 +1,4 @@
+import {verifyLegacyUpgrade} from "./legacy-upgrade.mjs";
 import {runAccounts} from "../fixtures/accounts-browser-check.mjs";
 import {runRecovery} from "../fixtures/recovery-browser-check.mjs";
 import {runAccountGroups} from "../fixtures/account-groups-browser-check.mjs";
@@ -14,6 +15,7 @@ process.once("SIGINT", interrupted); process.once("SIGTERM", interrupted);
 try {
   if (injected.some(arg => !["--inject-failure","--inject-auth-failure"].includes(arg)) || injected.length > 1) throw new Error("Use pnpm test:e2e, optionally --inject-failure or --inject-auth-failure for cleanup verification");
   fixture = await createFixture();
+  await step("populated legacy upgrade through current migrations, unchanged IDs/history and no claiming",()=>verifyLegacyUpgrade(fixture.root));
   await step("current production build", () => fixture.build());
   await step("installed Chromium and owned production server", async () => { await fixture.launch(); await fixture.start(); });
   if (injected.includes("--inject-failure")) await step("injected failure cleanup", () => { throw new Error("Expected: deliberate failure is nonzero after cleanup; observed: injected safe failure"); });

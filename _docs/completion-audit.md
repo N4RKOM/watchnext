@@ -1,5 +1,7 @@
 # First-release requirement and delivery audit
 
+Historical legacy-release record. The later authenticated release is mapped separately in [the October 19 enhancement audit](enhancement-audit.md); preserve the original dates/verdict limits below.
+
 Dated **October 18, 2026**. This maps the agreed [plan](plan.md) and all [30 backlog issues](tasks.md) to actual source/documentation and authoritative verification. It is an evidence record, not a duplicated live issue board: GitHub comments/closure remain authoritative. #1–#29 were closed at the start of #30. The API audit found independent PASS comments for #2–#29; #1 predates the orchestrator run and has no standalone historical QA comment. Its current home/build/fresh-checkout behavior is verified below; no earlier verdict is invented. #30 must receive its own independent verdict before closure, including the baseline check.
 
 The last pre-documentation production baseline is `f1a6a3ff9eae9587f81c08e63e67feeb0c48ac31`, with [#29 independent QA PASS](https://github.com/xiaodlb/watchnext/issues/29#issuecomment-6246402934). [#28 QA PASS](https://github.com/xiaodlb/watchnext/issues/28#issuecomment-6246227440) covers isolated demo ownership/scenarios. #30 adds documentation, the native snapshot helper and isolated walkthrough/restore verification; it does not silently replace unimplemented core behavior with a limitation.

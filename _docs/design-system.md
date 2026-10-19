@@ -1,5 +1,7 @@
 # Initial design baseline
 
+Current account/discovery delivery and historical boundaries are mapped in [enhancement-audit.md](enhancement-audit.md). Account groups use live authenticated membership/context identity; only separate legacy groups use trusted selectable names. Later issue-specific sections supersede first-release restrictions without converting old groups.
+
 ## Account/discovery extension
 
 Keep the existing visual palette and accessible responsive conventions. #32 uses real Register/Sign in forms, focused actionable feedback, disabled pending submission, cleared passwords and a private once-only recovery save/copy/Continue view. #33 reuses them for Forgot password/Reset, with a masked saved code, exact new-password confirmation, honest no-backdoor explanation and once-only replacement that continues to sign-in. Secret fields clear on failure; no old code is redisplayed. Explicit Legacy group access stays separate. The account page displays actual identity and honest group availability without fake controls. [The enhancement scope](account-discovery-enhancement.md) defines the remaining account group switcher, creator controls and All/Added by me tabs. Current account identity is not an arbitrary member selector. Future creator removal needs confirmation and visible retained-history explanation; preview images need safe real sources and stable fallback. Do not claim later screens exist. Owning issues #32–#40 require keyboard and 375px/1280px checks.
