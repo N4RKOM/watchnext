@@ -172,8 +172,16 @@ try {
       await page.goto(origin + "/watchlist?mode=mock&memberId=forged"); await page.getByRole("heading", { name: "Couldn’t load your watchlist", exact: true }).waitFor(); check(await page.locator("main").innerText() === library, "production storage/access path unchanged by forged query"); check(await page.getByLabel("Synthetic demo notice").count() === 0, "production never silently falls back to demo"); unchanged();
     });
     await step(`${width}: eleven production routes ignore forged mode/scenario/member queries; /mock?mode=http is refused (#61)`, async () => {
+      // Each route's own production h1 (with the deliberately absent database) proves the real route rendered. Navigation waits for the
+      // document load event plus that heading and a settled main text, not network idle, so host load cannot stall it at the default timeout.
+      const headings = { "/": "WatchNext", "/watchlist": "Your watchlist", "/watchlist?filter=mine": "Your watchlist", "/archive": "Archive", "/watchlist/add": "Group access unavailable", "/pick": "Pick for me", "/group": "Group access unavailable", "/account": "Account unavailable", "/login": "Sign in", "/register": "Create an account", "/recover": "Reset your password" };
       for (const route of ["/", "/watchlist", "/watchlist?filter=mine", "/archive", "/watchlist/add", "/pick", "/group", "/account", "/login", "/register", "/recover"]) {
-        const read = async target => { await page.goto(origin + target, { waitUntil: "networkidle" }); await page.locator("main").first().waitFor(); return { path: new URL(page.url()).pathname, text: await page.locator("main").first().innerText() }; };
+        const read = async target => {
+          await page.goto(origin + target, { waitUntil: "load" }); await page.locator("main").first().getByRole("heading", { level: 1, name: headings[route], exact: true }).waitFor();
+          let text = await page.locator("main").first().innerText();
+          for (let settled = 0; settled < 20; settled++) { await page.waitForTimeout(150); const again = await page.locator("main").first().innerText(); if (again === text) break; text = again; }
+          return { path: new URL(page.url()).pathname, text };
+        };
         const plain = await read(route), forged = await read(`${route}${route.includes("?") ? "&" : "?"}mode=mock&scenario=slow&member=friday-owner`);
         check(forged.path === plain.path && forged.text === plain.text, `${route} renders the same main text with forged mock/persona query`);
         check(await page.getByLabel("Synthetic demo notice").count() === 0 && !/Synthetic workspace|Demo\.Owner|Demo\.Viewer|synthetic preview/i.test(forged.text), `${route} shows no synthetic content`);
