@@ -36,3 +36,9 @@ it("keeps seeded memberships read-only and clears proof on leaving recovery",asy
  click("Recover account"); fill("Current recovery code","private synthetic input"); click("Sign in"); expect(screen.queryByDisplayValue("private synthetic input")).toBeNull(); expect(screen.getByLabelText("Synthetic demo notice")).toBeTruthy();
 });
 
+it("#61 states plainly on the sign-in surface that the Demo.Owner / Demo.Viewer fixture credentials are a synthetic demo, not security evidence",()=>{
+ render(<MockEntry selection={selectDemo("mock","ready")} />);
+ const panel=within(screen.getByRole("region",{name:"Synthetic accounts"}));
+ expect(panel.getByText(/Demo\.Owner/)).toBeTruthy(); expect(panel.getByText(/Demo\.Viewer \/ synthetic password/)).toBeTruthy();
+ expect(panel.getByText(/synthetic demo, not security evidence/)).toBeTruthy();
+});

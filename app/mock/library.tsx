@@ -21,7 +21,9 @@ export function MockLibrary({ service, identity, scenario, initialFilter, invali
   function cancel() {sequence.current++;running.current?.abort();running.current=undefined;setPending(false);setMessage("Library request canceled. Your draft and saved data are unchanged.");}
   useEffect(()=>()=>{sequence.current++;running.current?.abort();},[]);
   useEffect(()=>{if(running.current)cancel();},[scenario]);
-  useEffect(()=>{if(!pending && !message.startsWith("Load the saved"))feedback.current?.focus();},[message,pending]);
+  // #61: the notice shown at (re)mount is not a response to an action in this panel, so it never steals focus from the panel that announced its own result.
+  const mountMessage=useRef(message);
+  useEffect(()=>{if(!pending && !message.startsWith("Load the saved") && message!==mountMessage.current)feedback.current?.focus();},[message,pending]);
   function clearViews(){setDetail(undefined);setDraft(undefined);setEditing(undefined);setIntent(undefined);setConfirmation(undefined);}
   useEffect(()=>{
     const initial = new URL(window.location.href).searchParams.getAll("filter"); setFilter(initial.length > 1 ? initial : initial[0]);
