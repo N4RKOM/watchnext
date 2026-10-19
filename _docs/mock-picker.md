@@ -1,6 +1,6 @@
 # Mock picker and Pick again handoff — issue #60
 
-Status: **Implemented and Engineer-tested; independent QA pending.** Engineering started after prerequisite [#59](https://github.com/xiaodlb/watchnext/issues/59) received its independent QA PASS at `033c656`. See [Engineer implementation and evidence](#engineer-implementation-and-evidence). [#60](https://github.com/xiaodlb/watchnext/issues/60) owns K01–K04 and the picker portions of U03, U05 and U06 in the [operation inventory](operation-inventory.md).
+Status: **Implemented, independently QA-passed at `b6132ad`.** Engineering started after prerequisite [#59](https://github.com/xiaodlb/watchnext/issues/59) received its independent QA PASS at `033c656`. See [Engineer implementation and evidence](#engineer-implementation-and-evidence). [#60](https://github.com/xiaodlb/watchnext/issues/60) owns K01–K04 and the picker portions of U03, U05 and U06 in the [operation inventory](operation-inventory.md).
 
 Read these first:
 

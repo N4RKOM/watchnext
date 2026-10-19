@@ -1,6 +1,6 @@
 # Mock manual/provider entry handoff — issue #58
 
-Status: **Implemented and Engineer-tested; independent QA pending.** [#58](https://github.com/xiaodlb/watchnext/issues/58) owns W04/W05/M01–M06, U01 and entry portions of U04/U06. Library prerequisite #57 is independently QA-closed at `1a95c60`. Read the [inventory](operation-inventory.md), [mock library](mock-library.md), [metadata lifecycle](metadata-lifecycle.md), [YouTube discovery](youtube-discovery.md), [Kinopoisk discovery](kinopoisk-discovery.md), [design system](design-system.md) and [API](api.md). The bounded choices here are delegated engineering defaults, not new user answers.
+Status: **Implemented, independently QA-passed at `89deec3`.** (QA FAIL 6272419253 was repaired in `89deec3` before the PASS.) [#58](https://github.com/xiaodlb/watchnext/issues/58) owns W04/W05/M01–M06, U01 and entry portions of U04/U06. Library prerequisite #57 is independently QA-closed at `1a95c60`. Read the [inventory](operation-inventory.md), [mock library](mock-library.md), [metadata lifecycle](metadata-lifecycle.md), [YouTube discovery](youtube-discovery.md), [Kinopoisk discovery](kinopoisk-discovery.md), [design system](design-system.md) and [API](api.md). The bounded choices here are delegated engineering defaults, not new user answers.
 
 ## One coordinated frontend increment
 
