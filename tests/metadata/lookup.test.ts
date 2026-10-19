@@ -38,7 +38,7 @@ describe("offline normalized metadata contract", () => {
     expect(result.kind).toBe("candidates");
     if (result.kind !== "candidates") throw new Error("Expected candidates");
     expect(result.candidates).toHaveLength(2);
-    expect(Object.keys(result.candidates[0]).sort()).toEqual(["identity", "title", "year", "contentType", "coverUrl"].sort());
+    expect(Object.keys(result.candidates[0]).sort()).toEqual(["identity", "title", "year", "contentType", "coverUrl","genres","sourceUrl","duration","manualFields","provenance"].sort());
     expect(result.requiresSelection).toBe(true);
     expect(provider.lookup).toHaveBeenCalledTimes(1);
     expect(provider.lookup).toHaveBeenCalledWith({ kind: "search", text: "Synthetic title" }, { signal: undefined });

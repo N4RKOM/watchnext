@@ -34,3 +34,5 @@ export class LookupBudget {
 }
 export const youtubePool=new LookupPool();
 export const youtubeBudget=new LookupBudget();
+export const kinopoiskPool=new LookupPool();
+export const kinopoiskBudget=new LookupBudget();

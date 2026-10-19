@@ -9,12 +9,13 @@ import { safeExternalUrl } from "../urls";
 import { ensureFreshMetadata, metadataColumns, storedFields, type StoredField } from "./lifecycle";
 import { lookupFailure, lookupMetadata } from "./lookup";
 import { youtubeLookupQuery } from "./youtube-input";
-import { youtubeBudget } from "./admission";
+import { youtubeBudget,kinopoiskBudget } from "./admission";
+import { kinopoiskSearchText } from "./kinopoisk-input";
 import type { Candidate, LookupResult, MetadataItem, MetadataProvider, ProviderNamespace,ProviderPage } from "./types";
 
 export type Providers = Record<ProviderNamespace, MetadataProvider>;
-type Chain={kind:"youtube_chain";text:string;visited:number};
-type SearchPage={provider:"youtube";text:string;number:number;navigation:ProviderPage;chainHash:string;expires:string};
+type Chain={kind:"youtube_chain"|"kinopoisk_chain";text:string;visited:number};
+type SearchPage={provider:ProviderNamespace;text:string;number:number;navigation:ProviderPage;chainHash:string;expires:string};
 type Snapshot = { kind: "item"; item: MetadataItem } | { kind: "candidates"; candidates: Candidate[];page?:SearchPage } | Chain;
 export type ReviewResult = LookupResult & { handle?: string;page?:{number:number;next?:string;previous?:string;limitReached:boolean} };
 const sessionId = (db: DatabaseSync, request: Request) => authorizeRequest(db,request).ownerKey;
@@ -38,19 +39,21 @@ function snapshot(db: DatabaseSync, request: Request, handle: unknown, now: Date
     .get(hash(handle), context.groupId, context.activeMemberId!, sessionId(db,request), now.toISOString());
   if (!row) throw new AccessError();
   const value=JSON.parse(row.payload as string) as Snapshot;
-  if(value.kind==="candidates"&&value.page)readChain(db,request,value.page.chainHash,now,origin);
+  if(value.kind==="candidates"&&value.page)readChain(db,request,value.page.chainHash,now,origin,value.page.provider);
   return value;
 }
-function readChain(db:DatabaseSync,request:Request,chainHash:string,now:Date,origin?:string){
+function readChain(db:DatabaseSync,request:Request,chainHash:string,now:Date,origin?:string,provider?:ProviderNamespace){
   const current=authorized(db,request,origin),row=db.prepare("SELECT payload FROM metadata_reviews WHERE handle_hash=? AND group_id=? AND member_id=? AND session_id=? AND expires_at>?").get(chainHash,current.groupId,current.activeMemberId!,sessionId(db,request),now.toISOString());
-  if(!row)throw new AccessError();const chain=JSON.parse(row.payload as string) as Snapshot;if(chain.kind!=="youtube_chain")throw new AccessError();return chain;
+  if(!row)throw new AccessError();const chain=JSON.parse(row.payload as string) as Snapshot;if(chain.kind!=="youtube_chain"&&chain.kind!=="kinopoisk_chain")throw new AccessError();if(provider&&(chain.kind==="youtube_chain")!==(provider==="youtube"))throw new AccessError();return chain;
 }
-function takeYoutube(current:ReturnType<typeof authorized>,now:Date){try{youtubeBudget.take(current.ownerKey,now.getTime());return null;}catch{return lookupFailure("rate_limited",900);}}
+function takeLookup(provider:ProviderNamespace,current:ReturnType<typeof authorized>,now:Date){try{(provider==="youtube"?youtubeBudget:kinopoiskBudget).take(current.ownerKey,now.getTime());return null;}catch{return lookupFailure("rate_limited",900);}}
 function pageResult(db:DatabaseSync,request:Request,result:LookupResult,page:SearchPage,now:Date,origin?:string):ReviewResult{
   if(result.kind!=="candidates"&&result.kind!=="no_match")return result;
-  const chain=readChain(db,request,page.chainHash,now,origin),limitReached=chain.visited>=5;
-  const handle=store(db,request,{kind:"candidates",candidates:result.candidates,page},now,origin,page.expires);
-  return {...result,handle,page:{number:page.number,limitReached,...(!limitReached&&page.navigation.next?{next:handle}:{}),...(!limitReached&&page.number>1&&page.navigation.previous?{previous:handle}:{})}};
+  const chain=readChain(db,request,page.chainHash,now,origin,page.provider),limitReached=chain.visited>=5;
+  const candidates=result.candidates.map(candidate=>candidate.identity.namespace!=="kinopoisk_unofficial"||!candidate.provenance?candidate:{...candidate,provenance:{...candidate.provenance,freshness:{policy:"academic_local_snapshot_30_days",refreshBy:new Date(new Date(candidate.provenance.retrievedAt).getTime()+30*86400000).toISOString(),action:"refresh_or_delete"}}});
+  const handle=store(db,request,{kind:"candidates",candidates,page},now,origin,page.expires);
+  const projected:LookupResult=result.kind==="candidates"?{...result,candidates}:result;
+  return {...projected,handle,page:{number:page.number,limitReached,...(!limitReached&&page.navigation.next?{next:handle}:{}),...(!limitReached&&page.number>1&&page.navigation.previous?{previous:handle}:{})}};
 }
 function sameContext(db: DatabaseSync, request: Request, before: ReturnType<typeof authorized>, origin?: string) {
   const after = authorized(db, request, origin);
@@ -69,20 +72,19 @@ function resultWithReview(db: DatabaseSync, request: Request, result: LookupResu
 export async function beginReview(db: DatabaseSync, request: Request, source: unknown, query: unknown, providers: Providers, origin?: string, now = () => new Date()): Promise<ReviewResult> {
   const before = authorized(db, request, origin); ensureFreshMetadata(db, now());
   if (source !== "youtube" && source !== "kinopoisk_unofficial") return lookupFailure("invalid_query");
-  const parsed=source==="youtube"?youtubeLookupQuery(query):{kind:"search" as const,text:query as string};
+  const text=source==="kinopoisk_unofficial"?kinopoiskSearchText(query):null;
+  const parsed=source==="youtube"?youtubeLookupQuery(query):text?{kind:"search" as const,text}:null;
   if(!parsed)return lookupFailure("invalid_query");
-  if(source==="youtube"){
-    const denied=takeYoutube(before,now());if(denied)return denied;
-    // Every new YouTube query, including a switch to a link, supersedes old search pages.
-    db.prepare("DELETE FROM metadata_reviews WHERE session_id=? AND (json_extract(payload,'$.kind')='youtube_chain' OR json_extract(payload,'$.page.provider')='youtube')").run(sessionId(db,request));
-  }
-  if(source==="youtube"&&parsed.kind==="search"){
+  const denied=takeLookup(source,before,now());if(denied)return denied;
+  const kind=source==="youtube"?"youtube_chain":"kinopoisk_chain";
+  db.prepare("DELETE FROM metadata_reviews WHERE session_id=? AND (json_extract(payload,'$.kind')=? OR json_extract(payload,'$.page.provider')=?)").run(sessionId(db,request),kind,source);
+  if(parsed.kind==="search"){
     // Superseding a query physically drops its old page data and invalidates pending work.
-    const expires=new Date(now().getTime()+600000).toISOString(),anchor=store(db,request,{kind:"youtube_chain",text:parsed.text,visited:1},now(),origin,expires),chainHash=hash(anchor);
-    let navigation:ProviderPage={};const result=await lookupMetadata(providers.youtube,parsed,{now,signal:request.signal,onPage:value=>{navigation=value;}});
-    sameContext(db,request,before,origin);readChain(db,request,chainHash,now(),origin);
+    const expires=new Date(now().getTime()+600000).toISOString(),anchor=store(db,request,{kind,text:parsed.text,visited:1},now(),origin,expires),chainHash=hash(anchor);
+    let navigation:ProviderPage={};const result=await lookupMetadata(providers[source],parsed,{now,signal:request.signal,onPage:value=>{navigation=value;}});
+    sameContext(db,request,before,origin);readChain(db,request,chainHash,now(),origin,source);
     if(result.kind!=="candidates"&&result.kind!=="no_match"){db.prepare("DELETE FROM metadata_reviews WHERE handle_hash=?").run(chainHash);return result;}
-    return pageResult(db,request,result,{provider:"youtube",text:parsed.text,number:1,navigation,chainHash,expires},now(),origin);
+    return pageResult(db,request,result,{provider:source,text:parsed.text,number:1,navigation,chainHash,expires},now(),origin);
   }
   const result = await lookupMetadata(providers[source], parsed, { now, signal: request.signal });
   sameContext(db, request, before, origin);
@@ -93,7 +95,7 @@ export async function selectReviewCandidate(db: DatabaseSync, request: Request, 
   if (current.kind !== "candidates")throw new AccessError();
   const selected=current.candidates.find(candidate=>candidate.identity.externalId===id);
   if(!selected)throw new AccessError();const namespace=selected.identity.namespace;
-  if(namespace==="youtube"){const denied=takeYoutube(before,now());if(denied)return denied;}
+  const denied=takeLookup(namespace,before,now());if(denied)return denied;
   const result = await lookupMetadata(providers[namespace], { kind: "detail", externalId: id as string }, { now, signal: request.signal });
   sameContext(db, request, before, origin);
   snapshot(db, request, handle, now(), origin);
@@ -104,10 +106,10 @@ export async function pageReview(db:DatabaseSync,request:Request,handle:unknown,
   const before=authorized(db,request,origin),current=snapshot(db,request,handle,now(),origin);
   if(current.kind!=="candidates"||!current.page||(direction!=="next"&&direction!=="previous"))throw new AccessError();
   const page=current.page,token=page.navigation[direction];if(!token||(direction==="previous"&&page.number<=1))throw new AccessError();
-  const denied=takeYoutube(before,now());if(denied)return denied;
+  const denied=takeLookup(page.provider,before,now());if(denied)return denied;
   db.exec("BEGIN IMMEDIATE");
-  try{const chain=readChain(db,request,page.chainHash,now(),origin);if(chain.visited>=5)throw new AccessError();db.prepare("UPDATE metadata_reviews SET payload=? WHERE handle_hash=?").run(JSON.stringify({...chain,visited:chain.visited+1}),page.chainHash);db.exec("COMMIT");}catch(error){db.exec("ROLLBACK");throw error;}
-  let navigation:ProviderPage={};const result=await lookupMetadata(providers.youtube,{kind:"search",text:page.text,pageToken:token},{now,signal:request.signal,onPage:value=>{navigation=value;}});
+  try{const chain=readChain(db,request,page.chainHash,now(),origin,page.provider);if(chain.visited>=5)throw new AccessError();db.prepare("UPDATE metadata_reviews SET payload=? WHERE handle_hash=?").run(JSON.stringify({...chain,visited:chain.visited+1}),page.chainHash);db.exec("COMMIT");}catch(error){db.exec("ROLLBACK");throw error;}
+  let navigation:ProviderPage={};const result=await lookupMetadata(providers[page.provider],{kind:"search",text:page.text,pageToken:token},{now,signal:request.signal,onPage:value=>{navigation=value;}});
   sameContext(db,request,before,origin);snapshot(db,request,handle,now(),origin);
   return pageResult(db,request,result,{...page,number:page.number+(direction==="next"?1:-1),navigation},now(),origin);
 }
@@ -151,7 +153,7 @@ export async function refreshTitleMetadata(db: DatabaseSync, request: Request, i
   contributor();
   const row = db.prepare("SELECT provider_namespace,provider_id FROM titles WHERE id=? AND group_id=?").get(id, before.groupId)!;
   if (row.provider_namespace !== "youtube" && row.provider_namespace !== "kinopoisk_unofficial") return lookupFailure("invalid_query");
-  if(row.provider_namespace==="youtube"){const denied=takeYoutube(before,now());if(denied)return denied;}
+  const denied=takeLookup(row.provider_namespace,before,now());if(denied)return denied;
   const result = await lookupMetadata(providers[row.provider_namespace], { kind: "detail", externalId: row.provider_id as string }, { now, signal: request.signal });
   sameContext(db, request, before, origin); authorizeRequest(db, request, { kind: "title", id }, { mutation: true, configuredOrigin: origin });
   contributor();

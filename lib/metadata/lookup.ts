@@ -1,6 +1,7 @@
 import { safeExternalUrl } from "../urls";
 import type { Candidate, ContentType, FailureCode, ItemProjection, LookupFailure, LookupQuery, LookupResult, MetadataItem, MetadataProvider, ProviderIdentity, ProviderNamespace, SuggestionField,ProviderPage } from "./types";
 import { youtubeThumbnail } from "./youtube-thumbnail";
+import { kinopoiskPoster } from "./kinopoisk-poster";
 
 const failures: Record<FailureCode, [string, LookupFailure["retry"]]> = {
   invalid_query: ["Enter a supported title search or provider ID.", "never"],
@@ -43,7 +44,7 @@ function candidate(namespace: ProviderNamespace, raw: ItemProjection): Candidate
   const identity = providerIdentity(namespace, raw.externalId);
   if (!identity) return null;
   const uncertain = new Set(Array.isArray(raw.uncertainFields) ? raw.uncertainFields : []);
-  return { identity, title: uncertain.has("title") ? null : text(raw.title, 200), year: !uncertain.has("year") && typeof raw.year === "number" && Number.isInteger(raw.year) && raw.year >= 1 && raw.year <= 9999 ? raw.year : null, contentType: uncertain.has("contentType") ? null : contentType(namespace, raw.contentType), coverUrl: uncertain.has("coverUrl") ? null : namespace==="youtube"?youtubeThumbnail(raw.coverUrl):publicUrl(raw.coverUrl),...(namespace==="youtube"&&raw.channelTitle!==undefined?{channelTitle:text(raw.channelTitle,200)}:{}) };
+  return { identity, title: uncertain.has("title") ? null : text(raw.title, 200), year: !uncertain.has("year") && typeof raw.year === "number" && Number.isInteger(raw.year) && raw.year >= 1 && raw.year <= 9999 ? raw.year : null, contentType: uncertain.has("contentType") ? null : contentType(namespace, raw.contentType), coverUrl: uncertain.has("coverUrl") ? null : namespace==="youtube"?youtubeThumbnail(raw.coverUrl):kinopoiskPoster(raw.coverUrl),...(namespace==="youtube"&&raw.channelTitle!==undefined?{channelTitle:text(raw.channelTitle,200)}:{}) };
 }
 function item(namespace: ProviderNamespace, raw: ItemProjection, now: Date): LookupResult {
   const base = candidate(namespace, raw);
@@ -60,7 +61,8 @@ function item(namespace: ProviderNamespace, raw: ItemProjection, now: Date): Loo
   const episodic = base.contentType === "series" || base.contentType === "anime";
   const meaning = base.contentType ? episodic ? "typical_episode" : "full_item" : "unknown";
   const seconds = raw.duration?.seconds;
-  const validDuration = !uncertain.has("duration") && raw.duration?.verified === true && raw.duration.meaning === meaning && meaning !== "unknown" && typeof seconds === "number" && Number.isInteger(seconds) && seconds > 0 && seconds <= 86400;
+  const interpreted=namespace==="kinopoisk_unofficial"&&base.contentType==="movie"&&raw.duration?.interpretation==="app_minutes_to_seconds"&&raw.duration.meaning==="full_item";
+  const validDuration = !uncertain.has("duration") && (raw.duration?.verified === true||interpreted) && raw.duration?.meaning === meaning && meaning !== "unknown" && typeof seconds === "number" && Number.isInteger(seconds) && seconds > 0 && seconds <= 86400;
   if (!validDuration) issue("duration", uncertain.has("duration") ? "uncertain" : seconds == null ? "missing" : "invalid");
   const urls = { coverUrl: base.coverUrl, sourceUrl: publicUrl(raw.sourceUrl), watchUrl: publicUrl(raw.watchUrl) };
   for (const field of ["coverUrl", "sourceUrl", "watchUrl"] as const) {
@@ -91,7 +93,7 @@ function item(namespace: ProviderNamespace, raw: ItemProjection, now: Date): Loo
   for (const field of ["coverUrl", "sourceUrl", "watchUrl"] as const) if (urls[field]) acquiredFields.push(field);
   const refreshBy = new Date(now); refreshBy.setUTCDate(refreshBy.getUTCDate() + 30);
   return { kind: manualFields.length || issues.length ? "incomplete" : "available", item: { ...base, ...urls, genres,
-    duration: { seconds: validDuration ? seconds as number : null, meaning }, issues, manualFields,
+    duration: { seconds: validDuration ? seconds as number : null, meaning,...(validDuration&&interpreted?{interpretation:"app_minutes_to_seconds" as const}:{}) }, issues, manualFields,
     requirements: ["review_metadata", "choose_moods", ...(episodic ? ["choose_numbering", "confirm_typical_episode_duration"] as const : [])],
     provenance: { provider: namespace, retrievedAt: now.toISOString(), acquiredFields, origin: "provider_suggestions", freshness: namespace === "youtube" ? { policy: "youtube_public_30_days", refreshBy: refreshBy.toISOString(), action: "refresh_or_delete" } : { policy: "provider_policy_unverified", refreshBy: null, action: "verify_policy_before_persistence" } },
   } };
@@ -110,15 +112,14 @@ export async function lookupMetadata(provider: MetadataProvider, query: LookupQu
     if (context.signal?.aborted) return lookupFailure("cancelled");
     if (reply.kind === "failure") return lookupFailure(reply.code, reply.retryAfterSeconds);
     if (reply.kind === "search" && safeQuery.kind === "search" && Array.isArray(reply.candidates)) {
-      if(provider.namespace==="youtube"&&reply.candidates.length>10)return lookupFailure("invalid_metadata");
+      if(reply.candidates.length>(provider.namespace==="youtube"?10:20))return lookupFailure("invalid_metadata");
       const now=context.now?.()??new Date();if(!(now instanceof Date)||!Number.isFinite(now.getTime()))return lookupFailure("provider_error");
       const navigation:ProviderPage={};for(const direction of ["next","previous"] as const){const token=reply.navigation?.[direction];if(typeof token==="string"&&token.length>0&&token.length<=1024&&!/[\p{Cc}\s]/u.test(token))navigation[direction]=token;}
       context.onPage?.(navigation);
       if (!reply.candidates.length) return { kind: "no_match", candidates: [], manualFallback: true };
-      const candidates = reply.candidates.map(raw => {
-        if(provider.namespace!=="youtube")return candidate(provider.namespace,raw);
+      const candidates = reply.candidates.map((raw):Candidate|null => {
         const normalized=item(provider.namespace,raw,now);if(normalized.kind!=="available"&&normalized.kind!=="incomplete")return null;
-        const value=normalized.item;return{identity:value.identity,title:value.title,year:value.year,contentType:value.contentType,coverUrl:value.coverUrl,channelTitle:value.channelTitle??null,duration:value.duration,manualFields:value.manualFields,provenance:value.provenance};
+        const value=normalized.item;return{identity:value.identity,title:value.title,year:value.year,contentType:value.contentType,coverUrl:value.coverUrl,...(provider.namespace==="youtube"?{channelTitle:value.channelTitle??null}:{genres:value.genres,sourceUrl:value.sourceUrl}),duration:value.duration,manualFields:value.manualFields,provenance:value.provenance};
       }).filter((value): value is Candidate => value !== null);
       return candidates.length ? { kind: "candidates", candidates, requiresSelection: true, omittedInvalidCandidates: candidates.length !== reply.candidates.length } : lookupFailure("invalid_metadata");
     }

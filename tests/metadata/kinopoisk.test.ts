@@ -36,7 +36,7 @@ it("first-page ambiguous search keeps distinct candidates and requires explicit 
   expect(result).toMatchObject({ kind: "candidates", requiresSelection: true, candidates: [{ identity: { namespace: "kinopoisk_unofficial", externalId: "1001" }, title: "Synthetic title", contentType: "movie", coverUrl: null }, { identity: { externalId: "1002" }, year: 2001, contentType: "series" }] });
   if (result.kind !== "candidates") throw new Error("Expected candidates");
   expect(result.candidates).toHaveLength(2);
-  expect(Object.keys(result.candidates[0]).sort()).toEqual(["identity", "title", "year", "contentType", "coverUrl"].sort());
+  expect(Object.keys(result.candidates[0]).sort()).toEqual(["identity", "title", "year", "contentType", "coverUrl","genres","sourceUrl","duration","manualFields","provenance"].sort());
   expect(calls).toBe(1);
 });
 it("empty search means no-match, and no detail request happens implicitly", async () => {
@@ -50,7 +50,7 @@ it("selected numeric provider identity maps losslessly through a fixed detail re
     expect(url.href === "https://kinopoiskapiunofficial.tech/api/v2.2/films/1001").toBe(true);
     return response(film());
   });
-  expect(result).toMatchObject({ kind: "incomplete", item: { identity: { namespace: "kinopoisk_unofficial", externalId: "1001" }, title: "Synthetic title", year: 2020, contentType: "movie", duration: { seconds: null, meaning: "full_item" }, manualFields: ["duration"], genres: ["Drama"], coverUrl: null, watchUrl: null, sourceUrl: film().webUrl, provenance: { retrievedAt: now().toISOString(), acquiredFields: ["title", "year", "contentType", "genres", "sourceUrl"], freshness: { policy: "provider_policy_unverified", refreshBy: null, action: "verify_policy_before_persistence" } } } });
+  expect(result).toMatchObject({ kind: "available", item: { identity: { namespace: "kinopoisk_unofficial", externalId: "1001" }, title: "Synthetic title", year: 2020, contentType: "movie", duration: { seconds:7200, meaning: "full_item",interpretation:"app_minutes_to_seconds" }, manualFields: [], genres: ["Drama"], coverUrl: null, watchUrl: null, sourceUrl: film().webUrl, provenance: { retrievedAt: now().toISOString(), acquiredFields: ["title", "year", "contentType","duration", "genres", "sourceUrl"], freshness: { policy: "provider_policy_unverified", refreshBy: null, action: "verify_policy_before_persistence" } } } });
 });
 it.each(["TV_SERIES", "MINI_SERIES"])("episodic %s never treats filmLength as typical episode runtime", async type => {
   expect(await lookup(mock({ ...film(), type, filmLength: 2400 }))).toMatchObject({ kind: "incomplete", item: { contentType: "series", duration: { seconds: null, meaning: "typical_episode" }, requirements: ["review_metadata", "choose_moods", "choose_numbering", "confirm_typical_episode_duration"] } });
@@ -58,7 +58,7 @@ it.each(["TV_SERIES", "MINI_SERIES"])("episodic %s never treats filmLength as ty
 it("anime-related genres do not infer anime, and unsupported types require manual classification", async () => {
   for (const type of ["FILM", "ANIME", "TV_SHOW"]) {
     const result = await lookup(mock({ ...film(), type, genres: [{ genre: "anime" }] }));
-    expect(result).toMatchObject({ kind: "incomplete", item: { contentType: type === "FILM" ? "movie" : null, duration: { seconds: null } } });
+    expect(result).toMatchObject({ kind: type==="FILM"?"available":"incomplete", item: { contentType: type === "FILM" ? "movie" : null, duration: { seconds:type==="FILM"?7200:null } } });
     expect(JSON.stringify(result)).not.toMatch(/"contentType":"anime"|"moods"|"notes"|"rating"/);
   }
 });
@@ -74,7 +74,7 @@ it("name fallback chooses the first valid name, with all-invalid names explicitl
   expect(await lookup(mock({ ...film(), nameRu: "x".repeat(201), nameOriginal: " ", nameEn: " English " }))).toMatchObject({ item: { title: "English" } });
   expect(await lookup(mock({ kinopoiskId: 1001 }))).toMatchObject({ kind: "incomplete", item: { title: null, contentType: null, genres: [], sourceUrl: null, coverUrl: null, watchUrl: null, duration: { seconds: null }, manualFields: ["title", "contentType", "duration"] } });
 });
-it.each([null, 0, 22, 120, 2400, "2:17", Infinity])("unverified filmLength %s never gains invented units", async filmLength => {
+it.each([null, 0,-1,1.5,1441, 2400,"120", "2:17", Infinity])("invalid filmLength %s remains manual rather than guessed", async filmLength => {
   expect(await lookup(mock({ ...film(), filmLength }))).toMatchObject({ kind: "incomplete", item: { duration: { seconds: null }, manualFields: ["duration"] } });
 });
 it.each(["javascript:alert(1)", "https://u:p@example.invalid/", "https://example.invalid/?api_key=redacted", "https://example.invalid/\n"])("unsafe source is removed; poster and watch data never grant rights/playability", async webUrl => {
@@ -140,14 +140,15 @@ it("credential, raw bodies and personal fields never reach results or retained d
 });
 it("caller cancellation and owned timeout bound even ignored signals/stalled bodies", async () => {
   const controller = new AbortController(); let signal: AbortSignal | null | undefined;
-  const hanging: typeof fetch = async (_input, init) => { signal = init?.signal; return new Promise(() => {}); };
-  const request = lookup(hanging, detail, { signal: controller.signal }); controller.abort();
+  let started!:()=>void;const ready=new Promise<void>(resolve=>{started=resolve;});
+  const hanging: typeof fetch = async (_input, init) => { signal = init?.signal;started(); return new Promise(() => {}); };
+  const request = lookup(hanging, detail, { signal: controller.signal });await ready; controller.abort();
   expect(await request).toMatchObject({ code: "cancelled" });
   expect(signal?.aborted).toBe(true);
   vi.useFakeTimers();
   const timeout = lookup(hanging, detail, { timeoutMs: 5 }); await vi.advanceTimersByTimeAsync(6);
   expect(await timeout).toMatchObject({ code: "timeout" });
   expect(signal?.aborted).toBe(true);
-  const body = lookup(async () => ({ ok: true, json: () => new Promise(() => {}) }) as Response, detail, { timeoutMs: 5 });
+  const body = lookup(async () => new Response(new ReadableStream({pull(){return new Promise(()=>{});}})), detail, { timeoutMs: 5 });
   await vi.advanceTimersByTimeAsync(6); expect(await body).toMatchObject({ code: "timeout" });
 });
