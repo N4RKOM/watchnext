@@ -113,6 +113,8 @@ Rejoin matrix is generation-based, not discovery time: remove at generation g de
 
 ## Provider evidence and limits
 
+The [#37 Kinopoisk discovery contract](kinopoisk-discovery.md) records current OpenAPI evidence, a transparently delegated FILM-only numeric-minutes mapping, provider-published safe posters and bounded protected paging. This is an editable app interpretation, not a claim of confirmed external runtime units, live access or image licensing; missing/episodic runtime remains manual.
+
 The [#36 YouTube discovery contract](youtube-discovery.md) records the October 19 primary-doc recheck, bounded title/link search and enriched candidate/pagination/review defaults. It is a PM contract for authorized implementation, not a claim that new lookup UI (#38) or authenticated provider access has been verified.
 
 Primary material inspected October 18, 2026:
