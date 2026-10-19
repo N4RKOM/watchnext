@@ -32,3 +32,9 @@ it("pending/failure/cancel and account navigation/reset/departure clear private 
  fireEvent.change(screen.getByLabelText("Simulated response"),{target:{value:"ready"}});click("Separate legacy mode");await advance();fill("New group name","Private legacy");click("Create legacy group");await advance();expect(screen.getByLabelText("Private synthetic invite")).toBeTruthy();fireEvent(window,new Event("pagehide"));expect(screen.queryByLabelText("Private synthetic invite")).toBeNull();
  click("Load groups");await advance();fill("New group name","Another legacy");click("Create legacy group");await advance();click("Register");expect(screen.queryByLabelText("Private synthetic invite")).toBeNull();click("Load groups");await advance();fill("New group name","Reset legacy");click("Create legacy group");await advance();click("Reset demo");await advance();expect(screen.queryByLabelText("Private synthetic invite")).toBeNull();
 });
+
+it("reports real signed-in and selected-group context without obsolete unavailable copy",async()=>{
+ render(<MockEntry selection={selectDemo("mock","ready")} />); await login(); click("Load preview"); await advance();
+ const snapshot=within(screen.getByLabelText("Synthetic context")); expect(snapshot.getByText("Synthetic account: Demo.Owner")).toBeTruthy(); expect(snapshot.getByText(/No synthetic group is selected/)).toBeTruthy(); expect(screen.queryByText(/Group actions are not available yet/)).toBeNull();
+ click("Load groups"); await advance(); click("Select Synthetic Friday friends"); await advance(); click("Load preview"); await advance(); expect(screen.getByLabelText("Synthetic context").textContent).toContain("Selected synthetic account group: Synthetic Friday friends"); expect(screen.queryByText(/Group actions are not available yet/)).toBeNull();
+});
