@@ -13,12 +13,12 @@ const choose = (value: string) => fireEvent.change(screen.getByLabelText("Simula
 it("uses actual async read/reset state, retains the warning and marks all domains unavailable", async () => {
   render(<MockEntry selection={selectDemo(undefined, undefined)} />);
   expect(screen.getByLabelText("Synthetic demo notice").textContent).toContain("not real authentication");
-  expect(screen.getAllByText("Not available yet")).toHaveLength(6); expect(screen.queryByRole("link")).toBeNull();
+  expect(screen.getAllByText("Not available yet")).toHaveLength(5); expect(screen.queryByRole("link")).toBeNull();
   click("Load preview"); expect((screen.getByRole("button", { name: "Load preview" }) as HTMLButtonElement).disabled).toBe(true);
-  expect(screen.getByRole("status").textContent).toContain("Loading"); expect(screen.queryByText("Demo revision: 0")).toBeNull();
+  expect(screen.getAllByRole("status")[0].textContent).toContain("Loading"); expect(screen.queryByText("Demo revision: 0")).toBeNull();
   await advance(80); expect(screen.getByText("Demo revision: 0")).toBeTruthy();
   click("Reset demo"); await advance(80); expect(screen.getByText("Demo revision: 1")).toBeTruthy();
-  expect(screen.getByLabelText("Synthetic demo notice")).toBeTruthy(); expect(document.activeElement).toBe(screen.getByRole("status"));
+  expect(screen.getByLabelText("Synthetic demo notice")).toBeTruthy(); expect(document.activeElement).toBe(screen.getAllByRole("status")[0]);
 });
 it("exposes failure/retry and cancel without clearing or overwriting the last successful context", async () => {
   render(<MockEntry selection={selectDemo("mock", "ready")} />);
@@ -26,20 +26,20 @@ it("exposes failure/retry and cancel without clearing or overwriting the last su
   expect(screen.getByRole("alert").textContent).toContain("Choose Ready and retry"); expect(screen.getByText("Demo revision: 0")).toBeTruthy();
   expect(document.activeElement).toBe(screen.getByRole("alert"));
   choose("slow"); click("Load preview"); click("Cancel request"); await advance(1200);
-  expect(screen.getByRole("status").textContent).toContain("canceled"); expect(screen.getByText("Demo revision: 0")).toBeTruthy();
-  choose("ready"); click("Load preview"); await advance(80); expect(screen.getByRole("status").textContent).toBe("Synthetic preview ready.");
+  expect(screen.getAllByRole("status")[0].textContent).toContain("canceled"); expect(screen.getByText("Demo revision: 0")).toBeTruthy();
+  choose("ready"); click("Load preview"); await advance(80); expect(screen.getAllByRole("status")[0].textContent).toBe("Synthetic preview ready.");
 });
 it("reset supersedes a slow read and canceled reset never commits or wins later", async () => {
   render(<MockEntry selection={selectDemo("mock", "slow")} />);
   click("Load preview"); click("Reset demo"); await advance(80); expect(screen.getByText("Demo revision: 1")).toBeTruthy();
-  await advance(1200); expect(screen.getByRole("status").textContent).toBe("Synthetic preview ready.");
+  await advance(1200); expect(screen.getAllByRole("status")[0].textContent).toBe("Synthetic preview ready.");
   click("Reset demo"); click("Cancel request"); await advance(80); expect(screen.getByText("Demo revision: 1")).toBeTruthy();
   choose("ready"); click("Load preview"); await advance(80); expect(screen.getByText("Demo revision: 1")).toBeTruthy();
 });
 it("changing scenario discards the pending result; leaving releases all pending work", async () => {
   const rendered = render(<MockEntry selection={selectDemo("mock", "slow")} />);
   click("Load preview"); choose("unavailable"); await advance(1200); expect(screen.queryByLabelText("Synthetic context")).toBeNull();
-  expect(screen.getByRole("status").textContent).toContain("canceled"); click("Load preview");
+  expect(screen.getAllByRole("status")[0].textContent).toContain("canceled"); click("Load preview");
   rendered.unmount(); await advance(300); expect(vi.getTimerCount()).toBe(0);
 });
 it("invalid entry selection is visibly rejected without exposing working preview controls", () => {

@@ -11,3 +11,6 @@
 .domains li { display: grid; gap: var(--space-1); }
 .domains span { color: var(--color-muted); }
 @media (max-width: 40rem) { .controls > button { width: 100%; } .card { padding: var(--space-4); } }
+
+.form { display: grid; gap: var(--space-4); max-width: 30rem; width: 100%; margin-inline: auto; }
+.form input { width: 100%; min-width: 0; }
