@@ -1,6 +1,6 @@
 # Mock library handoff — issue #57
 
-Status: **Implemented and Engineer-tested; independent QA pending.** [#57](https://github.com/xiaodlb/watchnext/issues/57) owns W01–W03/W06–W08, library U03/U04/U05/U06 and readonly M06 availability presentation. Its prerequisite #56 is independently QA-closed at `391d312`. Read the [operation inventory](operation-inventory.md), [mock groups](mock-groups.md), [API](api.md), [design system](design-system.md) and [metadata lifecycle](metadata-lifecycle.md). The decisions below are delegated engineering defaults for this temporary frontend, not new user answers.
+Status: **Implemented, independently QA-passed and closed at `1a95c60`.** [#57](https://github.com/xiaodlb/watchnext/issues/57) owns W01–W03/W06–W08, library U03/U04/U05/U06 and readonly M06 availability presentation. Its prerequisite #56 is independently QA-closed at `391d312`. Read the [operation inventory](operation-inventory.md), [mock groups](mock-groups.md), [API](api.md), [design system](design-system.md) and [metadata lifecycle](metadata-lifecycle.md). The decisions below are delegated engineering defaults for this temporary frontend, not new user answers.
 
 ## Bounded implementation
 
