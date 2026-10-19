@@ -152,3 +152,6 @@ h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); font-weight: 700; }
 .lookup-card .button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .lookup-review { margin-block: var(--space-4); }
 @media (max-width: 30rem) { .lookup-card, .lookup-review { grid-template-columns: 5rem minmax(0,1fr); gap: var(--space-3); } }
+
+.watchlist-filters { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-block: var(--space-4); }
+.watchlist-filters [aria-current="page"] { background: var(--color-accent-soft); font-weight: 700; border: 2px solid var(--color-accent); }

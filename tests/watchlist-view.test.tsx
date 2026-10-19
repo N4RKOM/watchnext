@@ -48,3 +48,17 @@ it("detects an already cached image failure at hydration and keeps an honest sta
  const complete=vi.spyOn(HTMLImageElement.prototype,"complete","get").mockReturnValue(true),width=vi.spyOn(HTMLImageElement.prototype,"naturalWidth","get").mockReturnValue(0);
  try{render(<Cover url="https://i.ytimg.com/vi/YtFixture01/default.jpg" title="Cached failure"/>);expect(screen.queryByRole("img")).toBeNull();expect(screen.getByText("No cover")).toBeTruthy();}finally{complete.mockRestore();width.mockRestore();}
 });
+
+it("account Mine changes inclusion only, preserves all contributor chips and exposes identity-free accessible current links",()=>{
+ render(<WatchlistContent view={{activeMemberId:"anna",canFilter:true,filter:"mine",items:[{...fixture,contributors:[...fixture.contributors,{id:"removed",name:"Former",color:"#475569",inactive:true}]}]}}/>);
+ const nav=screen.getByRole("navigation",{name:"Watchlist filter"});expect(within(nav).getByRole("link",{name:"All titles"}).getAttribute("href")).toBe("/watchlist");expect(within(nav).getByRole("link",{name:"Added by me"}).getAttribute("href")).toBe("/watchlist?filter=mine");expect(within(nav).getByRole("link",{name:"Added by me"}).getAttribute("aria-current")).toBe("page");expect(screen.getAllByRole("article")).toHaveLength(1);for(const name of["Anna","Max","Former"])expect(screen.getByText(name)).toBeTruthy();expect(screen.getByText(/Inactive participant/)).toBeTruthy();
+});
+it("empty Mine differs from All and provides real shared-list/add destinations",()=>{
+ const{rerender}=render(<WatchlistContent view={{activeMemberId:"anna",canFilter:true,filter:"mine",items:[]}}/>);expect(screen.getByRole("heading",{name:"You haven’t added any titles"})).toBeTruthy();expect(screen.getByRole("link",{name:"Show all titles"}).getAttribute("href")).toBe("/watchlist");expect(screen.getByRole("link",{name:"Add a title"}).getAttribute("href")).toBe("/watchlist/add");rerender(<WatchlistContent view={{activeMemberId:"anna",canFilter:true,filter:"all",items:[]}}/>);expect(screen.getByRole("heading",{name:"Your watchlist is empty"})).toBeTruthy();
+});
+it("legacy and archive never offer authenticated Mine controls, while safe notices remain visible",()=>{
+ const{rerender}=render(<WatchlistContent view={{activeMemberId:"anna",items:[fixture],filterNotice:"Added by me is available in account groups only. Showing your shared list."}}/>);expect(screen.queryByRole("navigation",{name:"Watchlist filter"})).toBeNull();expect(screen.getByRole("status").textContent).toContain("account groups only");rerender(<WatchlistContent archived view={{activeMemberId:"anna",canFilter:true,filter:"mine",items:[fixture]}}/>);expect(screen.queryByRole("navigation",{name:"Watchlist filter"})).toBeNull();expect(screen.getByRole("heading",{name:"Archive"})).toBeTruthy();
+});
+it("storage retry keeps a requested Mine mode without replacing the current URL",()=>{
+ render(<WatchlistLoadError filter="mine"/>);expect(screen.getByText("Your Added by me request is kept when you retry.")).toBeTruthy();fireEvent.click(screen.getByRole("button",{name:"Try again"}));expect(refresh).toHaveBeenCalledTimes(1);
+});
