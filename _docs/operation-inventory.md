@@ -151,3 +151,5 @@ Only the context/result/scenario/read-reset and explicit isolated `/mock` entry 
 ## Account increment #55
 
 A01-A05 and account portions of U02/U06 are implemented through the typed client-only account namespace and internal `/mock` forms; [actual behavior/verification](mock-accounts.md). Independent QA is pending. This does not implement group/legacy operations or remaining domain rows; #56-#61 stay pending before #43. Earlier foundation-only statements describe the #42 delivery boundary.
+
+Current frontend increment: #55 accounts are QA-accepted; [#56 group/legacy operations](mock-groups.md) are implemented and Engineer-tested, awaiting independent QA. #57-#61/full mock phase remain pending; the original per-issue delivery boundaries above are historical, not a complete-phase claim. No backend/OpenAPI/ORM stage is implemented by #56.

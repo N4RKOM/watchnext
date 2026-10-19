@@ -21,3 +21,5 @@ Status vocabulary: **observed** means an identified screen/source was actually i
 | Inspect linked teaching sites | [Public article URLs and access record](design-references.md), teacher text/source inventory | Observed public pages on October 19; used staged-service/contract/issue guidance. Example FastAPI/SQLAlchemy is not a mandate to replace Next.js/TypeScript. |
 
 Baseline reference/tag: **441fcaae660e273d6fc373f8757be562d9139b78 / graded-baseline-2026-10-19**, verified locally. Do not reopen or relabel historical accepted issues to fabricate a new count. The frontend authorization covers #41 and #42 after prerequisites; later phases remain planned until authorized. A final #54 hand-in must list exact revisions/commands/artifacts, real QA closures, real human observations and unresolved source gaps plainly.
+
+Current frontend increment: #55 accounts are QA-accepted; [#56 group/legacy operations](mock-groups.md) are implemented and Engineer-tested, awaiting independent QA. #57-#61/full mock phase remain pending; the original per-issue delivery boundaries above are historical, not a complete-phase claim. No backend/OpenAPI/ORM stage is implemented by #56.

@@ -1,6 +1,6 @@
 # Isolated mock frontend foundation — issue #42
 
-This delivers **the foundation and synthetic accounts**, not the full mock frontend. `/mock` exercises a real typed asynchronous context read/reset with deterministic Ready/Slow/Unavailable outcomes. It always labels itself **Synthetic demo only / not real authentication**. The #55 synthetic account journey is now implemented and Engineer-tested; groups/legacy, saved library, manual/provider entry, personal records and picker remain unavailable until their owning issues. Existing production routes remain the normal default; their business operations are unchanged.
+This delivers **the foundation, synthetic accounts and group/legacy flows**, not the full mock frontend. `/mock` exercises a real typed asynchronous context read/reset with deterministic Ready/Slow/Unavailable outcomes. It always labels itself **Synthetic demo only / not real authentication**. The #55 synthetic account journey has independent QA acceptance; #56 group/legacy flows are implemented and Engineer-tested, awaiting independent QA. Saved library, manual/provider entry, personal records and picker remain unavailable until their owning issues. Existing production routes remain the normal default; their business operations are unchanged.
 
 ## Open the preview
 
@@ -41,7 +41,7 @@ Ready waits 80ms, Slow 1200ms, Unavailable 300ms; callers cannot supply arbitrar
 
 Do not enter real credentials or use normal/provider data. Domain follow-ups must continue the [synthetic policy](operation-inventory.md), not reinterpret this foundation as server authorization. There is no HTTP/OpenAPI/ORM implementation here.
 
-## Domain handoff - accounts implemented, other domains pending
+## Domain handoff - accounts accepted, groups implemented, remaining domains pending
 
 The [implemented #55 account handoff](mock-accounts.md) documents exact validation, once-only recovery, navigation lifetime and bounded evidence. It is independently QA-closed at `269abbc`; other domain increments remain planned.
 
@@ -49,8 +49,8 @@ The [#56 group/owner/invitation/legacy handoff](mock-groups.md) defines the next
 
 | Owner | Inventory coverage |
 | --- | --- |
-| #55 (Engineer-tested; QA pending) | Accounts/recovery A01–A05 |
-| #56 | Account groups/owner G01–G08 and legacy L01–L04 |
+| #55 (QA accepted) | Accounts/recovery A01–A05 |
+| #56 (Engineer-tested; QA pending) | Account groups/owner G01–G08 and legacy L01–L04 |
 | #57 | Saved library/Mine/detail/edit/archive W01–W03/W06–W08 |
 | #58 | Manual/provider Add and lifecycle W04–W05/M01–M06 |
 | #59 | Personal progress/completion/feedback P01–P05 |
@@ -76,3 +76,5 @@ Focused tests also prove stale/reset races, abort cleanup, typed selectors and a
 Engineer verification: 13 focused foundation tests pass; ordinary suite passes **90 files / 971 tests**, unchanged security cost/timeouts/discovery; typecheck passes. `pnpm test:mock` current-source production build and both-width smoke pass, including owned cleanup and unchanged sentinels. Synthetic-only screenshots at 375px / 1280px were inspected for layout/focus/warning and deleted with the fixture. An initial smoke expected an auth-error view despite deliberately missing production DB; it was corrected to compare the existing load-error view against the same forged-query route, without changing production code. These are Engineer results, not independent QA PASS. Verification used owned M-drive temp/cache/browser paths because C storage was constrained; the runner itself has no machine-specific path.
 
 The account extension adds real synthetic registration/sign-in/sign-out/recovery/context forms to the same service instance; see [account implementation](mock-accounts.md). Foundation-only verification numbers above are historical #42 evidence, not the new total. `test:mock` now additionally runs the full account journey at both widths while preserving every foundation isolation/sentinel assertion.
+
+The [group/legacy implementation](mock-groups.md) extends the same typed service with G01-G08/L01-L04 and group U02/U03/U06 interactions. `test:mock` now runs creator removal/rotation/rejoin, anonymous account continuation and separate legacy create/resolve/profile at both widths, preserving foundation/account isolation checks. #57-#61 remain pending; earlier issue-specific counts are historical evidence.

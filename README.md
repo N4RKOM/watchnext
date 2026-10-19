@@ -79,6 +79,6 @@ For a separate **legacy-mode** synthetic presentation database, run `pnpm demo:p
 
 ## Isolated mock preview foundation
 
-Open `/mock` on your own local server for an explicitly labeled synthetic context/read/reset preview; `/` remains the real app. No database initialization or provider key is needed for the preview. This includes the #42 foundation and #55 synthetic account journey (Engineer-tested, independent QA pending): other domain screens await #56–#60 and full integration #61. It does not provide real authentication or replace the completed app. [Exact isolated launch, reset/lifetime and verification](_docs/mock-frontend.md).
+Open `/mock` on your own local server for an explicitly labeled synthetic context/read/reset preview; `/` remains the real app. No database initialization or provider key is needed for the preview. This includes the #42 foundation and #55 synthetic accounts (QA accepted), plus #56 group/legacy flows (Engineer-tested, independent QA pending): other domain screens await #57–#60 and full integration #61. It does not provide real authentication or replace the completed app. [Exact isolated launch, reset/lifetime and verification](_docs/mock-frontend.md).
 
 `pnpm test:mock` builds current source and checks the isolated foundation/production-default boundary with pinned Chromium; install it first with `pnpm exec playwright install chromium`. Never build into somebody else's running output.
