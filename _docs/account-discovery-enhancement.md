@@ -129,7 +129,7 @@ Primary material inspected October 18, 2026:
 
 Provider keys remain optional for manual operation, server-only and never inspected/purchased during planning or verification. Synthetic mocks verify supported behavior, not live access. Missing-key/quota/timeout/error states preserve manual entry. Automatic fields are only those the provider genuinely supplies and the normalized contract supports; absent ratings/descriptions/episode counts do not become fabricated values.
 
-## Planned interaction and server contracts
+## Delivered interaction and server contracts
 
 The [#39 Added by me contract](added-by-me.md) defines live account-derived contribution filtering, All default, URL/back/reload behavior, legacy/archive separation and unchanged shared attribution/history/picker scope. It records delegated filter defaults, not a claim of delivery.
 

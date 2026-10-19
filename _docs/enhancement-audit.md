@@ -1,6 +1,6 @@
 # Account and discovery requirement audit
 
-Dated **October 19, 2026**. This maps all twelve explicit [user answers](account-discovery-enhancement.md) and issues #31-#40. The [October 18 legacy audit](completion-audit.md) remains an unchanged dated evidence record, including its historical #1 QA limitation. #31-#39 were independently QA-accepted before #40; **#40 remains open for fresh independent QA**, not an Engineer-issued PASS.
+Dated **October 19, 2026**. This maps all twelve explicit [user answers](account-discovery-enhancement.md) and issues #31-#40. The [October 18 legacy audit](completion-audit.md) remains a preserved dated evidence record, including its historical #1 QA limitation. #31-#39 were independently QA-accepted before #40; **#40 remains open for fresh independent QA**, not an Engineer-issued PASS.
 
 ## Direct observable answer coverage
 
@@ -42,7 +42,23 @@ Personal timestamp/episode/completion, rating and note independence are checked 
 
 Baseline #39: `d4dbe742886199bac4409b78b3a5cddc4e53c531`. #40 runner/storage foundation: `ab18191`. A first full extraction run passed every functional suite but failed a duplicate final audit of an already-cleaned fixture. The redundant post-cleanup read was removed; per-suite pre-cleanup audit and cleanup audit remain mandatory. The subsequent ordinary consolidated command passed all suites, including the new populated legacy upgrade and authenticated WAL restore.
 
-Final clean committed source, ordinary whole suite/type/build/storage, repeated full supported E2E, deliberate private-registration failure cleanup and fresh-checkout results are recorded after execution below. Until those entries are recorded, this section is an implementation-progress record, not a claim that unexecuted checks passed.
+Recorded runtime: **Node24.19.0, pnpm11.25.0**, repository Playwright1.64.1 with its installed matching Chromium. Final local doc/readback checks: **292 relative Markdown file targets exist**, changed files decode as UTF-8, and current/baseline whitespace checks pass.
+
+Final implementation/test revision **`b2107223f118fa2b7a63f1ec19583821d7525ff3`** passed the clean-committed walkthrough on October19, exit0. The final audit-only commit records these already-executed results; it does not change app/test behavior. Independent QA must still verify the final handoff HEAD.
+
+| Executed command / context | Result |
+| --- | --- |
+| `pnpm test tests/accounts/watchlist-mine.test.ts` in owned checkout after deterministic fix | 1file /8tests passed, unchanged denial assertion/full native crypto. |
+| Ordinary `pnpm test` in owned checkout | **87files /958tests passed**, no skips; 62.74seconds. |
+| `pnpm test:e2e --inject-auth-failure` at `8a95e79` (same private-signup/cleanup code) | Expected **exit1** after actual registration, suite/root cleanup complete=true; no secret artifact retained. The subsequent current-source full run below passed. |
+| `pnpm verify:fresh-checkout` at exact revision above | **All ten serial commands passed**, exit0, owned clone removed. |
+| Fresh `pnpm install --frozen-lockfile` and `pnpm exec playwright install chromium` | Exact frozen dependencies and matching pinned browser setup passed; no machine-specific browser/runtime in repository command. |
+| Fresh `pnpm verify:guide` | Real supported dev account signup/private code/create/manual/Mine, separate legacy profile/progress/edit/picker/archive, production restart preserving both modes, offline maintenance and isolated demo prepare/repeat/reset/scenarios; privacy audit passed. |
+| Fresh ordinary `pnpm test`, `pnpm typecheck`, `pnpm build` | **958tests passed**; type and production compilation/static generation passed, existing tracing warning only. |
+| Fresh `pnpm db:verify`, `pnpm db:verify:persistence`, `pnpm db:verify:backup` | Isolated schema/constraints, separate-process persistence and WAL-aware standalone snapshot/restore/expiry passed. No normal storage selected. |
+| Fresh `pnpm test:e2e` | Current-source build, populated legacy upgrade, legacy journeys and all five authenticated suites passed at375/1280, including connected owner recovery/WAL restoration, both providers/autofill/images/Mine/context/picker preservation. Per-suite privacy/sentinel/owned cleanup passed. |
+
+The standalone consolidated command also passed before the final deterministic fixture correction; the fresh-clone command above verifies the complete final current behavior again. Keyboard/overflow checks ran in every relevant width; the app/UI files are unchanged from the independently accepted #38/#39 visual baseline. Private account/recovery/invitation pages were not exported as artifacts.
 
 ## Storage and privacy evidence
 
@@ -61,4 +77,4 @@ Each suite captures private generated password/recovery/invite/session/review/pr
 
 ## Diagnosed verification corrections
 
-The unrestricted whole-suite crypto case timed out at5000ms (957pass/1fail); a two-worker controlled run passed958, and PM authorized committing the bound with every assertion/timeout/security setting intact. A subsequent clean clone failed a different existing Mine assertion, not a timeout. Bounded install/guide/test recreation with safe stack classification located line56: its supposed expired session used created_at+1 and could still be current within the first second. The live guard behaved correctly. PM authorized only that targeted persisted fixture and its browser equivalent to use valid past0/1; the unchanged denial assertion now tests actual expiry deterministically. No application authorization or feature code changed. The ordinary direct suite and final fresh-clone gates below must pass after this correction.
+The unrestricted whole-suite crypto case timed out at5000ms (957pass/1fail); a two-worker controlled run passed958, and PM authorized committing the bound with every assertion/timeout/security setting intact. A subsequent clean clone failed a different existing Mine assertion, not a timeout. Bounded install/guide/test recreation with safe stack classification located line56: its supposed expired session used created_at+1 and could still be current within the first second. The live guard behaved correctly. PM authorized only that targeted persisted fixture and its browser equivalent to use valid past0/1; the unchanged denial assertion now tests actual expiry deterministically. No application authorization or feature code changed. The ordinary direct suite and final fresh-clone gates recorded above passed after this correction.
