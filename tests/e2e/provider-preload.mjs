@@ -1,10 +1,11 @@
 // Only test-owned production startup imports this outbound transport substitute.
 // Core adapters, actions, review authority and database mutations remain real.
 const realFetch = globalThis.fetch;
-import { existsSync,writeFileSync } from "node:fs";
+import { existsSync,writeFileSync,appendFileSync } from "node:fs";
 import { dirname,join } from "node:path";
 globalThis.fetch = async (input, init) => {
   const url = new URL(typeof input === "string" || input instanceof URL ? input : input.url);
+  if(["https://www.googleapis.com","https://kinopoiskapiunofficial.tech"].includes(url.origin))appendFileSync(join(dirname(process.env.WATCHNEXT_DATABASE_PATH),"provider-request-count"),"request\n");
   const json = (body, status = 200) => Promise.resolve(new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } }));
   if (url.origin === "https://www.googleapis.com" && url.pathname === "/youtube/v3/search") {
     const token=url.searchParams.get("pageToken"),number=token?Number(token.replace("page","")):1;
