@@ -43,6 +43,8 @@ Do not enter real credentials or use normal/provider data. Domain follow-ups mus
 
 ## Domain handoff — all still pending
 
+The next account increment has a [PM-groomed #55 handoff](mock-accounts.md), including validation, once-only recovery, navigation lifetime and bounded evidence. It is planned here, not implemented by this document.
+
 | Owner | Inventory coverage |
 | --- | --- |
 | #55 | Accounts/recovery A01–A05 |
