@@ -1,9 +1,9 @@
 export type ContextIdentity = Readonly<{ mode: "mock"; instance: string; revision: number }>;
-export type FieldErrors = Readonly<Partial<Record<"mode" | "scenario" | "context" | "username" | "password" | "confirmation" | "proof", string>>>;
+export type FieldErrors = Readonly<Partial<Record<"mode" | "scenario" | "context" | "username" | "password" | "confirmation" | "proof" | PersonalField, string>>>;
 export type ServiceFailure = Readonly<{
   kind: "failure";
   error: Readonly<{
-    code: "invalid_selection" | "demo_unavailable" | "invalid_account" | "invalid_credentials" | "invalid_proof" | "group_access" | "group_input" | "invite_invalid" | "library_access" | "library_input" | "library_conflict";
+    code: "invalid_selection" | "demo_unavailable" | "invalid_account" | "invalid_credentials" | "invalid_proof" | "group_access" | "group_input" | "invite_invalid" | "library_access" | "library_input" | "library_conflict" | "personal_access" | "personal_input";
     message: string;
     retryable: boolean;
     fields?: FieldErrors;
@@ -34,7 +34,9 @@ export interface FrontendService {
   readonly groups: GroupService;
   readonly library: LibraryService;
   readonly entry: EntryService;
-  // Domain namespaces will be added by #55–#60, never fabricated as successful here.
+  readonly progress: ProgressService;
+  readonly feedback: FeedbackService;
+  // The picker namespace is added by #60, never fabricated as successful here.
 }
 
 export type EntrySource = "youtube" | "kinopoisk";
@@ -60,8 +62,13 @@ export const libraryMoods = ["funny", "relaxing", "exciting", "dark", "emotional
 export type LibraryType = "movie" | "series" | "anime" | "youtube";
 export type Numbering = "none" | "season_episode" | "continuous";
 export type LibraryDraft = Readonly<{ title: string; contentType: LibraryType | ""; minutes: string; seconds: string; numberingStyle: Numbering; genres: string; moods: readonly string[]; watchUrl: string; sourceUrl: string; coverUrl: string }>;
-export type LibraryHistory = Readonly<{ id: string; memberId: string; progress: string; rating: number | null; note: string }>;
-export type LibraryTitle = Readonly<{ id: string; groupId: string; revision: number; createdBy: string; providerId: string | null; archived: boolean; title: string | null; contentType: LibraryType | null; durationSeconds: number | null; numberingStyle: Numbering; genres: readonly string[]; moods: readonly string[]; watchUrl: string | null; sourceUrl: string | null; coverUrl: string | null; origins: Readonly<Record<string, "authored" | "provider" | "unavailable">>; availability: string; contributors: readonly MemberSummary[]; history: readonly LibraryHistory[]; historyMembers: readonly MemberSummary[]; canEdit: boolean; canRemove: boolean; canRefresh: boolean; canRestore: boolean }>;
+export type EpisodePosition = "unknown" | "not_started" | "in_progress";
+/** One structured whole-title personal record per group, title and member; absent fields are null. */
+export type PersonalProgress =
+  | Readonly<{ kind: "episode"; position: EpisodePosition; season: number | null; episode: number | null; completed: boolean }>
+  | Readonly<{ kind: "watch"; timestampSeconds: number | null; completed: boolean }>;
+export type LibraryHistory = Readonly<{ id: string; memberId: string; progress: PersonalProgress | null; rating: number | null; note: string | null }>;
+export type LibraryTitle = Readonly<{ id: string; groupId: string; revision: number; createdBy: string; providerId: string | null; archived: boolean; title: string | null; contentType: LibraryType | null; durationSeconds: number | null; numberingStyle: Numbering; genres: readonly string[]; moods: readonly string[]; watchUrl: string | null; sourceUrl: string | null; coverUrl: string | null; origins: Readonly<Record<string, "authored" | "provider" | "unavailable">>; availability: string; contributors: readonly MemberSummary[]; history: readonly LibraryHistory[]; historyMembers: readonly MemberSummary[]; personal: PersonalPanel; canEdit: boolean; canRemove: boolean; canRefresh: boolean; canRestore: boolean }>;
 export type LibraryList = Readonly<{ mode: "account" | "legacy"; filter: "all" | "mine"; notice: string | null; archived: boolean; items: readonly LibraryTitle[] }>;
 export type LibrarySave = Readonly<{ status: "saved"; title: LibraryTitle }> | Readonly<{ status: "confirmation"; handle: string; message: string }>;
 export interface LibraryService {
@@ -71,6 +78,31 @@ export interface LibraryService {
   save(id: string, revision: number, draft: LibraryDraft, confirmation: string | undefined, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<LibrarySave>>;
   removeOwn(id: string, revision: number, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<LibraryTitle>>;
   restore(id: string, revision: number, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<LibraryTitle>>;
+}
+
+export type PersonalField = "positionState" | "nextSeason" | "nextEpisode" | "timestamp" | "completed" | "rating" | "note";
+export type OwnEpisodeProgress = Readonly<{ kind: "episode"; numberingStyle: "season_episode" | "continuous"; recorded: boolean; position: EpisodePosition; season: number | null; episode: number | null; completed: boolean; metadataUnavailable: boolean }>;
+export type OwnWatchProgress = Readonly<{ kind: "watch"; recorded: boolean; timestampSeconds: number | null; completed: boolean; fullDurationSeconds: number | null; runtimeAvailable: boolean; beyondDuration: boolean }>;
+/** The live actor's own projection. `progress` is null only when the title structure allows no progress. */
+export type OwnPersonal = Readonly<{ memberId: string; memberName: string; recordId: string | null; progress: OwnEpisodeProgress | OwnWatchProgress | null; rating: number | null; note: string | null }>;
+export type PersonalEntry = Readonly<{ member: MemberSummary; record: LibraryHistory | null; beyondDuration: boolean }>;
+/** W03 detail projection: every group member's attributed history plus the live actor's own record/capability. */
+export type PersonalPanel = Readonly<{ own: OwnPersonal | null; history: readonly PersonalEntry[]; writable: boolean; reason: string | null }>;
+/** Stale-form claims only; they never grant authority. The live actor and current title decide. */
+export type PersonalClaim = Readonly<{ memberId: string; numberingStyle: Numbering }>;
+export type EpisodeInput = Readonly<{ position: EpisodePosition; season: string; episode: string }>;
+export type PersonalCommit = Readonly<{ record: LibraryHistory | null; own: OwnPersonal; history: readonly PersonalEntry[] }>;
+export interface ProgressService {
+  saveEpisode(id: string, input: EpisodeInput, claim: PersonalClaim, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PersonalCommit>>;
+  saveTimestamp(id: string, timestamp: string, claim: PersonalClaim, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PersonalCommit>>;
+  clearTimestamp(id: string, claim: PersonalClaim, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PersonalCommit>>;
+  setCompleted(id: string, completed: boolean, claim: PersonalClaim, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PersonalCommit>>;
+}
+export interface FeedbackService {
+  saveRating(id: string, score: string, claim: PersonalClaim, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PersonalCommit>>;
+  clearRating(id: string, claim: PersonalClaim, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PersonalCommit>>;
+  saveNote(id: string, body: string, claim: PersonalClaim, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PersonalCommit>>;
+  clearNote(id: string, claim: PersonalClaim, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PersonalCommit>>;
 }
 export function libraryFilter(value: unknown): { filter: "all" | "mine"; notice: string | null } {
   return value === undefined || value === null || value === "all" ? { filter: "all", notice: null } : value === "mine" ? { filter: "mine", notice: null } : { filter: "all", notice: "Unsupported or repeated library filter. Showing All." };

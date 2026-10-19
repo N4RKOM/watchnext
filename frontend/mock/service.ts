@@ -5,7 +5,6 @@ import type { ContextIdentity, FrontendService, MockContext, MockScenario, Reque
 let instances = 0;
 export const scenarioDelays: Readonly<Record<MockScenario, number>> = Object.freeze({ ready: 80, slow: 1200, unavailable: 300 });
 export const pendingDomains = Object.freeze([
-  { key: "personal", label: "Personal progress, ratings and notes", issue: 59 },
   { key: "picker", label: "Picker and Pick again", issue: 60 },
 ] as const);
 function cancelled(): ServiceResult<never> { return { kind: "cancelled", message: "Preview request canceled. No demo state was changed." }; }
@@ -62,7 +61,7 @@ export function createMockService(options: { now?: () => number } = {}): Fronten
   const groups = createMockGroups({ account: () => current, identity, bump: () => { revision++; }, code, now: options.now ?? Date.now, gate });
   const library = createMockLibrary({ identity, workspace: groups.workspace, now: options.now ?? Date.now, gate });
   maintenance=library.expire;
-  return Object.freeze({ mode: "mock", library: library.service, entry: library.entry, groups: groups.service, accounts: Object.freeze({
+  return Object.freeze({ mode: "mock", library: library.service, entry: library.entry, progress: library.progress, feedback: library.feedback, groups: groups.service, accounts: Object.freeze({
     read,
     async register(input: AccountInput, expected: ContextIdentity, options: RequestOptions = {}): Promise<ServiceResult<PrivateDisclosure>> {
       return gate<PrivateDisclosure>(expected, options, () => {
