@@ -1,6 +1,6 @@
 # Isolated mock frontend foundation — issue #42
 
-This delivers **the foundation, synthetic accounts, group/legacy flows, saved library, manual/provider entry and personal progress/feedback**, not the full mock frontend. `/mock` exercises a real typed asynchronous context read/reset with deterministic Ready/Slow/Unavailable outcomes. It always labels itself **Synthetic demo only / not real authentication**. The #55 synthetic account journey has independent QA acceptance; #56 group/legacy flows have independent QA acceptance. #57 saved library is independently QA-closed at `1a95c60`. Manual/provider entry and metadata lifecycle under #58 have an independent QA PASS at `89deec3`. Personal progress, completion, ratings and notes are implemented and Engineer-tested under #59 ([handoff](mock-personal.md)), pending independent QA. The picker remains unavailable until #60. Existing production routes remain the normal default; their business operations are unchanged.
+This delivers **the foundation, synthetic accounts, group/legacy flows, saved library, manual/provider entry and personal progress/feedback**, not the full mock frontend. `/mock` exercises a real typed asynchronous context read/reset with deterministic Ready/Slow/Unavailable outcomes. It always labels itself **Synthetic demo only / not real authentication**. The #55 synthetic account journey has independent QA acceptance; #56 group/legacy flows have independent QA acceptance. #57 saved library is independently QA-closed at `1a95c60`. Manual/provider entry and metadata lifecycle under #58 have an independent QA PASS at `89deec3`. Personal progress, completion, ratings and notes under #59 ([handoff](mock-personal.md)) have an independent QA PASS at `033c656`. The picker and Pick again cycle are implemented and Engineer-tested under #60 ([handoff](mock-picker.md)), pending independent QA. Existing production routes remain the normal default; their business operations are unchanged.
 
 ## Open the preview
 
@@ -45,7 +45,7 @@ Do not enter real credentials or use normal/provider data. Domain follow-ups mus
 
 The [implemented #55 account handoff](mock-accounts.md) documents exact validation, once-only recovery, navigation lifetime and bounded evidence. It is independently QA-closed at `269abbc`; other domain increments remain planned.
 
-The [#56 group/owner/invitation/legacy handoff](mock-groups.md) documents the accepted domain and its generation/lifetime checks; independent QA closed it at `391d312`. The [#57 library handoff](mock-library.md) is independently QA-closed at `1a95c60`. The [#58 manual/provider entry handoff](mock-entry.md) documents the implemented Add, review/shared-save and metadata lifecycle increment; independent QA passed at `89deec3`. The [#59 personal progress/feedback handoff](mock-personal.md) documents the implemented P01–P05 increment; independent QA is pending. The [#60 picker/Pick again handoff](mock-picker.md) is PM-groomed; its engineering starts only after #59 independent QA PASS.
+The [#56 group/owner/invitation/legacy handoff](mock-groups.md) documents the accepted domain and its generation/lifetime checks; independent QA closed it at `391d312`. The [#57 library handoff](mock-library.md) is independently QA-closed at `1a95c60`. The [#58 manual/provider entry handoff](mock-entry.md) documents the implemented Add, review/shared-save and metadata lifecycle increment; independent QA passed at `89deec3`. The [#59 personal progress/feedback handoff](mock-personal.md) documents the implemented P01–P05 increment; independent QA passed at `033c656`. The [#60 picker/Pick again handoff](mock-picker.md) documents the implemented K01–K04 increment; independent QA is pending.
 
 | Owner | Inventory coverage |
 | --- | --- |
@@ -53,8 +53,8 @@ The [#56 group/owner/invitation/legacy handoff](mock-groups.md) documents the ac
 | #56 (QA accepted) | Account groups/owner G01–G08 and legacy L01–L04 |
 | #57 (QA accepted) | Saved library/Mine/detail/edit/archive W01–W03/W06–W08 |
 | #58 (QA PASS at `89deec3`) | Manual/provider Add and lifecycle W04–W05/M01–M06 |
-| #59 (Engineer-tested, QA pending) | Personal progress/completion/feedback P01–P05 |
-| #60 (PM-groomed; awaits #59 QA PASS) | Picker/cycle K01–K04 |
+| #59 (QA PASS at `033c656`) | Personal progress/completion/feedback P01–P05 |
+| #60 (Engineer-tested, QA pending) | Picker/cycle K01–K04 |
 | #61 | All 40 domain operations/six U groups integrated and complete phase evidence |
 
 [The full inventory](operation-inventory.md), [observed references](design-references.md) and [graded plan](graded-mvp.md) remain authoritative. A #42 PASS is not full frontend completion; #43 waits for all follow-ups/final integration. Backend/ORM issues remain outside frontend authorization.
@@ -82,3 +82,5 @@ The [group/legacy implementation](mock-groups.md) extends the same typed service
 The [implemented saved library](mock-library.md) adds W01-W03/W06-W08 and readonly M06, with actual All/Mine/archive/detail/edit/remove-own/restore and local synthetic art. Add/provider and metadata lifecycle are implemented under [#58](mock-entry.md), pending independent QA; personal/picker mutations and whole-phase integration remain #59–#61; older issue-specific counts describe their historical verification.
 
 The [personal increment](mock-personal.md) adds P01–P05 and personal U06 to the same service and library detail: own episode/watch progress, completion, rating and note panels and a group-visible attributed history. `test:mock` now also runs `mock-personal-journey.mjs` at both widths. Only the picker (#60) remains listed as not available; whole-phase integration remains #61.
+
+The [picker increment](mock-picker.md) adds K01–K04 and the picker parts of U03/U05/U06: a **Pick for me** region over the same service that calls the unchanged baseline ranking, with Pick again cycles, refresh notices and suggestion-only no-match actions. No domain is listed as not available any more; `test:mock` also runs `mock-picker-journey.mjs` at both widths. Independent QA is pending; whole-phase integration remains #61.

@@ -1,6 +1,6 @@
 # Mock picker and Pick again handoff — issue #60
 
-Status: **PM-groomed. Not implemented or QA-verified.** Engineering starts only after prerequisite [#59](https://github.com/xiaodlb/watchnext/issues/59) gets its independent QA PASS. [#60](https://github.com/xiaodlb/watchnext/issues/60) owns K01–K04 and the picker portions of U03, U05 and U06 in the [operation inventory](operation-inventory.md).
+Status: **Implemented and Engineer-tested; independent QA pending.** Engineering started after prerequisite [#59](https://github.com/xiaodlb/watchnext/issues/59) received its independent QA PASS at `033c656`. See [Engineer implementation and evidence](#engineer-implementation-and-evidence). [#60](https://github.com/xiaodlb/watchnext/issues/60) owns K01–K04 and the picker portions of U03, U05 and U06 in the [operation inventory](operation-inventory.md).
 
 Read these first:
 
@@ -265,3 +265,34 @@ It never follows the external link. Every existing check must keep passing: abse
 4. **Creation order.** D18 needs the original creation time, which mock rows lack. Resolved with the deterministic internal `createdAt` defined above.
 5. **Lifetime clock.** The baseline measures 30 minutes of real process time. The mock uses the instance's synthetic metadata clock, so expiry is testable without waiting.
 6. **Legacy profile switching.** The baseline legacy `pickerOwnerKey` excludes the active profile, so switching profiles keeps the picker. In the mock, profile selection bumps the shared context revision, consistent with #56 and #59, so the picker is discarded and announced. The invariant kept: the active profile is never substituted for the selected viewers and never changes candidates. The same inputs give the same first result before and after a switch.
+
+## Engineer implementation and evidence
+
+These are Engineer results, not an independent QA PASS.
+
+- **Contracts:** `frontend/service/contracts.ts` adds `PickerService` (`getInputs`, `pick`, `next`, `restart`) on the same `FrontendService`, the `PickerInputs`/`PickerInput`/`PickerCycleHandle`/`PickerCandidate`/`PickerOutcome` types, the `picker_access`/`picker_input` failure codes and the `viewers`/`availableMinutes`/`mood`/`rewatches`/`form` field keys.
+- **Service:** `frontend/mock/picker.ts` runs every operation through the library gate (expiry maintenance, delay, cancel, stale context), builds a fresh snapshot after the delay and calls the unchanged baseline `rankCandidates` once. It holds cycles in a per-instance map (512, oldest evicted, 30 minutes on the synthetic metadata clock from start), computes each outcome before committing index and step synchronously, and uses the D22 fingerprint above. It never writes rows. `frontend/mock/library.ts` adds the internal `createdAt` (seed order, never projected into `LibraryTitle`), a read-only rows accessor and the wiring; `frontend/mock/entry.ts` stamps new saves and exposes the metadata clock; `frontend/mock/service.ts` mounts `picker` and empties the pending-domain list.
+- **UI:** `app/mock/picker.tsx` is the **Pick for me** region with **Load picker**, the baseline labels, statuses, result, exhausted, conflict and no-match sections. `app/mock/preview.tsx` remounts it (with the context-changed announcement) only when the context revision changes or Reset starts, so library, entry and personal mutations reach it as **List changed; picks refreshed.** `app/mock/library.tsx` opens a detail by ID for **View details** and the no-match detail action.
+- **Isolation:** `tests/frontend/isolation.test.ts` keeps every earlier check and adds the exact four-file allowlist plus assertions that `cycle.ts`, `server.ts`, `server-only.ts`, `view-state.ts`, `db/` and `app/pick/` stay out of the closure. No `lib/`, `app/pick/` or `tests/picker/` file changed.
+
+Adaptations, recorded rather than silently changing criteria:
+
+1. **Numbering on records:** #59 records store no numbering style, so the projection uses the title's current numbering, as anticipated above.
+2. **Refreshing `expired-video`:** its seeded provider ID is not a refreshable fixture identity, so its refresh fails safely and changes nothing (no notice). The refresh trigger is shown with a YouTube-link provider save that is then refreshed.
+3. **Expiry during a cycle:** with the UI time controls, the 30-minute lifetime always ends before a 30-day field deadline, so in the UI an expiry shows as `conflict`, then **Start a new cycle** gives the honest fresh result. The refresh-on-expiry rule itself is proven with an injected clock that starts a cycle ten minutes before the deadline.
+4. **Zero-item results:** `pick` creates no cycle for a no-match, so it returns no handle and no advance action.
+5. **Malformed intents or handles** return `conflict`. Validation errors report the first baseline error, in the baseline order (rewatches, viewers, time, mood).
+6. **Panel actions:** **Add a title** focuses the Add panel heading; **Choose profile to add a title** and **Create a profile** focus the groups panel (the profile-name field when it is shown).
+7. **Layout fix:** the journey found that a long unbroken saved title overflowed the existing Add panel's saved-entry status at 375px. `.card` in `preview.module.css` now uses `overflow-wrap: anywhere`; no markup changed.
+8. **Documented assertion update:** the preview test and the foundation browser step now expect **zero** "Not available yet" domains, because the picker leaves the pending list. The empty "Upcoming previews" section is no longer rendered.
+
+Verification, run serially:
+
+- `pnpm test tests/frontend`: 15 files, 107 tests passed (new `picker.test.ts` 16 tests, `picker-ui.test.tsx` 9 tests, one new isolation test).
+- `pnpm exec vitest run tests/picker`: 9 files, 245 tests passed (unchanged baseline).
+- `pnpm typecheck`: passed.
+- `pnpm test`: 102 files, 1,065 tests passed.
+- `pnpm test:mock`: PASS, 18 of 18 steps, including `mock-picker-journey.mjs` at 375 and 1280 pixels, with every isolation, sentinel and cleanup flag true.
+- Spot mutations (removing the refresh rule, the step check, lifetime purge, selected-viewer filtering or eviction) each made the focused tests fail.
+
+Limits: synthetic, volatile modeling only. No production picker, route, schema, dependency or `lib/` change, no persistent history, no human testing and no screenshot inspection is claimed.
