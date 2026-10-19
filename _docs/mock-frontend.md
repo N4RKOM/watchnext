@@ -45,12 +45,12 @@ Do not enter real credentials or use normal/provider data. Domain follow-ups mus
 
 The [implemented #55 account handoff](mock-accounts.md) documents exact validation, once-only recovery, navigation lifetime and bounded evidence. It is independently QA-closed at `269abbc`; other domain increments remain planned.
 
-The [#56 group/owner/invitation/legacy handoff](mock-groups.md) defines the next synthetic domain and its generation/lifetime checks. It is PM-groomed, not implemented by this document; the live issue tracks readiness and QA.
+The [#56 group/owner/invitation/legacy handoff](mock-groups.md) documents the accepted domain and its generation/lifetime checks; independent QA closed it at `391d312`. The next [#57 library handoff](mock-library.md) is PM-groomed, not implemented by this document.
 
 | Owner | Inventory coverage |
 | --- | --- |
 | #55 (QA accepted) | Accounts/recovery A01–A05 |
-| #56 (Engineer-tested; QA pending) | Account groups/owner G01–G08 and legacy L01–L04 |
+| #56 (QA accepted) | Account groups/owner G01–G08 and legacy L01–L04 |
 | #57 | Saved library/Mine/detail/edit/archive W01–W03/W06–W08 |
 | #58 | Manual/provider Add and lifecycle W04–W05/M01–M06 |
 | #59 | Personal progress/completion/feedback P01–P05 |

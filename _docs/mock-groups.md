@@ -1,6 +1,6 @@
 # Mock groups handoff — issue #56
 
-Status: **Implemented and Engineer-tested; independent QA pending.** [#56](https://github.com/xiaodlb/watchnext/issues/56) owns G01–G08/L01–L04 and group portions of U02/U03/U06 in the [operation inventory](operation-inventory.md). Account prerequisite #55 is QA-closed at `269abbc`. Follow the existing [mock foundation](mock-frontend.md), [account handoff](mock-accounts.md), [API behavior](api.md) and [design conventions](design-system.md).
+Status: **Implemented, independently QA-passed and closed at `391d312`.** [#56](https://github.com/xiaodlb/watchnext/issues/56) owns G01–G08/L01–L04 and group portions of U02/U03/U06 in the [operation inventory](operation-inventory.md). Account prerequisite #55 is QA-closed at `269abbc`. Follow the existing [mock foundation](mock-frontend.md), [account handoff](mock-accounts.md), [API behavior](api.md) and [design conventions](design-system.md).
 
 ## Session-sized boundaries and defaults
 
