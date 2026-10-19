@@ -1,3 +1,5 @@
+import {resolve as resolveScriptPath} from "node:path";
+import {pathToFileURL as scriptURL} from "node:url";
 import{randomBytes,createHash}from"node:crypto";
 import{DatabaseSync}from"node:sqlite";
 import{readFileSync,existsSync}from"node:fs";
@@ -17,8 +19,11 @@ const card=(page,title)=>page.getByRole("article",{name:title,exact:true});
 async function removed(page,id){await page.goto(f.origin+"/watchlist/"+id);await press(page,"Remove my contribution");await press(page,"Confirm removal");await page.getByRole("status").filter({hasText:/contribution was removed/}).waitFor();}
 function business(){return JSON.stringify(["titles","contributors","members","title_moods","title_genres","metadata_fields","progress","ratings","notes","account_sessions"].map(table=>f.db.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all()));}
 async function freshBack(page,before,count){await page.goBack();await page.waitForFunction(()=>document.readyState==="complete");const until=Date.now()+15000;while(count()<=before){if(Date.now()>until)throw new Error("History did not request a fresh authorized document");await new Promise(done=>setTimeout(done,20));}await page.getByRole("heading",{name:/Your watchlist|Group access unavailable/,exact:true}).waitFor();}
+export async function runMine({build=true,onFixture,injectFailure=false}={}){
+failure=undefined;current="setup";
+
 try{
- f=await createFixture();await step("current production build and owned server",async()=>{await f.build();await f.launch();await f.start();});
+ f=await createFixture();onFixture?.(f);await step(build?"current production build and owned server":"owned server using this invocation’s current build",async()=>{await (build?f.build():f.initialize());await f.launch();await f.start();});
  for(const width of[375,1280]){
   const contexts=[await f.context(width),await f.context(width)];for(const context of contexts)await context.route("https://i.ytimg.com/**",route=>route.fulfill({status:200,contentType:"image/svg+xml",body:'<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90"><rect width="160" height="90" fill="#1d4ed8"/></svg>'}));
   const[a,b]=await Promise.all(contexts.map(context=>context.newPage())),nameA=`MineA.${width}`,nameB=`MineB.${width}`,g1=`Mine group ${width}`,g2=`Mine other ${width}`,names={own:`Own ${width}`,sole:`Other sole ${width}`,joint:`Joint ${width}`,foreign:`Foreign ${width}`},password=randomBytes(24).toString("base64url");f.secrets.push(password);let own,sole,joint,provider,foreign,memberB;
@@ -55,4 +60,7 @@ try{
  if(process.env.WATCHNEXT_VISUAL_CHECK){console.log("VISUAL "+f.root);await new Promise(done=>setTimeout(done,30000));}
  await f.audit();
 }catch(error){failure=error;}finally{try{await f?.cleanup();}catch(error){failure??=error;}}
-if(failure){console.error(`FAIL ${current}: ${safeDiagnostic(failure,f?.secrets??[],f?.root??"",f?[f.sentinelRoot]:[])}`);console.error(`Owned cleanup complete: ${f?.cleanupComplete??false}`);process.exitCode=1;}else console.log(JSON.stringify({pass:true,widths:[375,1280],twoAccountsTwoGroups:true,contributionFilterAndAttribution:true,freshHistoryRevocation:true,errorRetryAndLegacy:true,pickerAndBusinessUnchanged:true,privacyAudit:true,ownedCleanup:f.cleanupComplete}));
+if(failure)throw new Error(`FAIL ${current}: ${safeDiagnostic(failure,f?.secrets??[],f?.root??"",f?[f.sentinelRoot]:[])}; owned cleanup complete: ${f?.cleanupComplete??false}`);
+const report={pass:true,widths:[375,1280],twoAccountsTwoGroups:true,contributionFilterAndAttribution:true,freshHistoryRevocation:true,errorRetryAndLegacy:true,pickerAndBusinessUnchanged:true,privacyAudit:true,ownedCleanup:f.cleanupComplete};console.log(JSON.stringify(report));return report;
+}
+if(process.argv[1]&&scriptURL(resolveScriptPath(process.argv[1])).href===import.meta.url)runMine().catch(error=>{console.error(error.message);process.exitCode=1;});

@@ -1,3 +1,5 @@
+import {resolve as resolveScriptPath} from "node:path";
+import {pathToFileURL as scriptURL} from "node:url";
 import { randomBytes } from "node:crypto";
 import { createFixture, safeDiagnostic } from "../e2e/lifecycle.mjs";
 import { credentialHash } from "../../lib/sessions.ts";
@@ -20,8 +22,11 @@ async function recover(page, name, code, password) {
   await page.getByLabel("New password").fill(password); await page.getByLabel("Confirm password").fill(password);
   await page.getByRole("button", { name: "Reset password" }).press("Enter");
 }
+export async function runRecovery({build=true,onFixture,injectFailure=false}={}){
+failure=undefined;current="setup";
+
 try {
-  f = await createFixture(); await step("current production build and owned server", async () => { await f.build(); await f.launch(); await f.start(); });
+  f = await createFixture();onFixture?.(f); await step(build?"current production build and owned server":"owned server using this invocation’s current build", async () => { await (build?f.build():f.initialize()); await f.launch(); await f.start(); });
   for (const width of [375, 1280]) {
     const a = await f.context(width), second = await f.context(width), b = await f.context(width);
     const page = await a.newPage(), page2 = await second.newPage(), other = await b.newPage();
@@ -81,5 +86,7 @@ try {
   await f.audit();
 } catch (error) { failure = error; }
 finally { try { await f?.cleanup(); } catch (error) { failure ??= error; } }
-if (failure) { console.error(`FAIL ${current}: ${safeDiagnostic(failure, f?.secrets ?? [], f?.root ?? "", f ? [f.sentinelRoot] : [])}`); console.error(`Owned cleanup complete: ${f?.cleanupComplete ?? false}`); process.exitCode = 1; }
-else console.log(JSON.stringify({ pass: true, widths: [375, 1280], twoAccounts: true, targetTwoSessionsRevoked: true, replacementAndRestart: true, legacyPreserved: true, privacyAudit: true, ownedCleanup: f.cleanupComplete }));
+if(failure)throw new Error(`FAIL ${current}: ${safeDiagnostic(failure,f?.secrets??[],f?.root??"",f?[f.sentinelRoot]:[])}; owned cleanup complete: ${f?.cleanupComplete??false}`);
+const report={ pass: true, widths: [375, 1280], twoAccounts: true, targetTwoSessionsRevoked: true, replacementAndRestart: true, legacyPreserved: true, privacyAudit: true, ownedCleanup: f.cleanupComplete };console.log(JSON.stringify(report));return report;
+}
+if(process.argv[1]&&scriptURL(resolveScriptPath(process.argv[1])).href===import.meta.url)runRecovery().catch(error=>{console.error(error.message);process.exitCode=1;});

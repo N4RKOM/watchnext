@@ -1,3 +1,5 @@
+import {resolve as resolveScriptPath} from "node:path";
+import {pathToFileURL as scriptURL} from "node:url";
 import { randomBytes } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { createFixture, safeDiagnostic } from "../e2e/lifecycle.mjs";
@@ -14,9 +16,12 @@ async function submit(page, operation, username, password) {
   if (operation === "register") await page.getByLabel("Confirm password").fill(password);
   await page.getByRole("button", { name: operation === "register" ? "Create account" : "Sign in", exact: true }).press("Enter");
 }
+export async function runAccounts({build=true,onFixture,injectFailure=false}={}){
+failure=undefined;current="setup";
+
 try {
-  f = await createFixture();
-  await step("current production build and owned server", async () => { await f.build(); await f.launch(); await f.start(); });
+  f = await createFixture();onFixture?.(f);
+  await step(build?"current production build and owned server":"owned server using this invocation’s current build", async () => { await (build?f.build():f.initialize()); await f.launch(); await f.start(); });
   for (const width of [375, 1280]) {
     const a = await f.context(width), b = await f.context(width), third = await f.context(width);
     const pageA = await a.newPage(), pageB = await b.newPage(), pageThird = await third.newPage();
@@ -41,6 +46,7 @@ try {
       await pageB.getByRole("link", { name: /Continue/ }).press("Enter"); await pageB.getByText(nameB, { exact: true }).waitFor();
       check(f.db.prepare("SELECT * FROM account_memberships").all().length === 0, "no implicit memberships/profile claiming");
     });
+    if(injectFailure)throw new Error("Deliberate authenticated failure after private registration");
     await step(`${width}: duplicate, exact password, unknown failure, safe requests and rollback semantics`, async () => {
       await submit(pageThird, "register", nameA.toUpperCase(), passwordA); await pageThird.getByRole("alert").filter({ hasText: "already taken" }).waitFor();
       check(await pageThird.getByLabel("Password", { exact: true }).inputValue() === "", "password cleared on failure");
@@ -91,5 +97,7 @@ try {
   await f.audit();
 } catch (error) { failure = error; }
 finally { try { await f?.cleanup(); } catch (error) { failure ??= error; } }
-if (failure) { console.error(`FAIL ${current}: ${safeDiagnostic(failure, f?.secrets ?? [], f?.root ?? "", f ? [f.sentinelRoot] : [])}`); console.error(`Owned cleanup complete: ${f?.cleanupComplete ?? false}`); process.exitCode = 1; }
-else console.log(JSON.stringify({ pass: true, widths: [375, 1280], twoAccounts: true, actualCrypto: true, cookieRotationLogoutExpiryRestart: true, privacyAudit: true, ownedCleanup: f.cleanupComplete }));
+if(failure)throw new Error(`FAIL ${current}: ${safeDiagnostic(failure,f?.secrets??[],f?.root??"",f?[f.sentinelRoot]:[])}; owned cleanup complete: ${f?.cleanupComplete??false}`);
+const report={ pass: true, widths: [375, 1280], twoAccounts: true, actualCrypto: true, cookieRotationLogoutExpiryRestart: true, privacyAudit: true, ownedCleanup: f.cleanupComplete };console.log(JSON.stringify(report));return report;
+}
+if(process.argv[1]&&scriptURL(resolveScriptPath(process.argv[1])).href===import.meta.url)runAccounts().catch(error=>{console.error(error.message);process.exitCode=1;});

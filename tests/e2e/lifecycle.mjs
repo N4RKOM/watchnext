@@ -50,16 +50,21 @@ export async function createFixture() {
   const files = directory => readdirSync(directory, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? files(join(directory, entry.name)) : [join(directory, entry.name)]);
   const fixture = {
     root, path, origin, secrets, sentinelRoot, get db() { return db; }, get browser() { return browser; }, get cleanupComplete() { return cleanupComplete; },
-    async build() {
+    initialize() {
+      if(db)throw new Error("Fixture database already initialized");
       initializeDatabase({ WATCHNEXT_DATABASE_PATH: path });
       db = new DatabaseSync(path, { readOnly: true }); db.exec("PRAGMA busy_timeout=5000;");
+    },
+    async build() {
+      fixture.initialize();
       building = capture(spawn(process.execPath, [join(repo, "node_modules/next/dist/bin/next"), "build"], { cwd: repo, env: environment, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] }));
       let timer;
       try { await new Promise((done, fail) => { timer = setTimeout(() => { void stop(building).then(() => fail(new Error("Production build exceeded five minutes")), fail); }, 300000); building.once("error", fail); building.once("exit", code => code === 0 ? done() : fail(new Error(`Production build failed (exit ${code}); run pnpm build for compiler diagnostics`))); }); }
       finally { clearTimeout(timer); }
     },
-    async start(configured = true) {
-      server = capture(spawn(process.execPath, ["--import", pathToFileURL(join(repo, "scripts/framework-privacy.mjs")).href, "--import", pathToFileURL(join(repo, "tests/e2e/provider-preload.mjs")).href, join(repo, "node_modules/next/dist/bin/next"), "start", "--hostname", "127.0.0.1", "--port", String(port)], { cwd: repo, windowsHide: true, stdio: ["ignore", "pipe", "pipe"], env: { ...environment, YOUTUBE_API_KEY: configured ? secrets[0] : "", KINOPOISK_UNOFFICIAL_API_KEY: configured ? secrets[1] : "" } }));
+    async stop() { await stop(server); server = undefined; },
+    async start(configured = true, database = path) {
+      server = capture(spawn(process.execPath, ["--import", pathToFileURL(join(repo, "scripts/framework-privacy.mjs")).href, "--import", pathToFileURL(join(repo, "tests/e2e/provider-preload.mjs")).href, join(repo, "node_modules/next/dist/bin/next"), "start", "--hostname", "127.0.0.1", "--port", String(port)], { cwd: repo, windowsHide: true, stdio: ["ignore", "pipe", "pipe"], env: { ...environment, WATCHNEXT_DATABASE_PATH: database, YOUTUBE_API_KEY: configured ? secrets[0] : "", KINOPOISK_UNOFFICIAL_API_KEY: configured ? secrets[1] : "" } }));
       const deadline = Date.now() + 30000;
       while (Date.now() < deadline) {
         if (server.exitCode !== null) throw new Error(`Production server exited before readiness (${server.exitCode})`);
@@ -68,7 +73,7 @@ export async function createFixture() {
       }
       throw new Error("Production server not ready within 30 seconds");
     },
-    async restart(configured = true) { await stop(server); server = undefined; await fixture.start(configured); },
+    async restart(configured = true, database = path) { await fixture.stop(); await fixture.start(configured, database); },
     async launch() {
       if (!existsSync(chromium.executablePath())) throw new Error("Chromium is missing: run pnpm exec playwright install chromium (Linux CI: add --with-deps)");
       browser = await chromium.launch({ headless: true, args: ["--disable-background-networking", "--no-first-run"] });

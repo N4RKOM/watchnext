@@ -1,3 +1,5 @@
+import {resolve as resolveScriptPath} from "node:path";
+import {pathToFileURL as scriptURL} from "node:url";
 import {randomBytes} from "node:crypto";
 import {DatabaseSync} from "node:sqlite";
 import {existsSync,writeFileSync,unlinkSync} from "node:fs";
@@ -20,8 +22,11 @@ async function detail(page,id){await page.goto(f.origin+"/watchlist/"+id);}
 async function image(page,title){const img=page.getByRole("img",{name:`${title} cover`,exact:true});await img.scrollIntoViewIfNeeded();await page.waitForFunction(title=>{const img=[...document.images].find(item=>item.alt===title+" cover");return img?.naturalWidth>0;},title);check(await img.getAttribute("referrerpolicy")==="no-referrer","preview uses no-referrer");return img;}
 async function markers(){const ready=join(f.root,"provider-waiting"),release=join(f.root,"provider-release");for(const path of[ready,release,join(f.root,"provider-returned")])if(existsSync(path))unlinkSync(path);return{ready,release};}
 async function waitFile(path){const until=Date.now()+4000;while(!existsSync(path)){if(Date.now()>until)throw new Error("Outbound gate did not start");await new Promise(done=>setTimeout(done,20));}}
+export async function runAutofill({build=true,onFixture,injectFailure=false}={}){
+failure=undefined;current="setup";
+
 try{
- f=await createFixture();await step("current production build and isolated server",async()=>{await f.build();await f.launch();await f.start();});
+ f=await createFixture();onFixture?.(f);await step("current production build and isolated server",async()=>{await (build?f.build():f.initialize());await f.launch();await f.start();});
  for(const width of[375,1280]){
   const contexts=[await f.context(width),await f.context(width)];
   for(const context of contexts)for(const pattern of["https://i.ytimg.com/**","https://kinopoiskapiunofficial.tech/images/**","https://avatars.mds.yandex.net/**"])await context.route(pattern,async route=>{images.push({referer:Boolean(route.request().headers().referer),host:new URL(route.request().url()).hostname});if(route.request().url().includes("broken"))return route.fulfill({status:200,contentType:"image/png",body:"broken image"});return route.fulfill({status:200,contentType:"image/svg+xml",body:'<svg xmlns="http://www.w3.org/2000/svg" width="160" height="240"><rect width="160" height="240" fill="#eaf0ff"/><rect x="12" y="12" width="136" height="216" rx="8" fill="#1d4ed8"/><path d="M60 90L110 120L60 150Z" fill="white"/></svg>'});});
@@ -64,4 +69,7 @@ try{
  if(process.env.WATCHNEXT_VISUAL_CHECK){console.log("VISUAL "+f.root);await new Promise(done=>setTimeout(done,30000));}
  await f.audit();
 }catch(error){failure=error;}finally{try{await f?.cleanup();}catch(error){failure??=error;}}
-if(failure){console.error(`FAIL ${current}: ${safeDiagnostic(failure,f?.secrets??[],f?.root??"",f?[f.sentinelRoot]:[])}`);console.error(`Owned cleanup complete: ${f?.cleanupComplete??false}`);process.exitCode=1;}else console.log(JSON.stringify({pass:true,widths:[375,1280],twoAccountsTwoGroups:true,bothProviderPaths:true,realPagingAutofillDirtyRace:true,previewsDedupArchiveExpiry:true,privacyAudit:true,ownedCleanup:f.cleanupComplete}));
+if(failure)throw new Error(`FAIL ${current}: ${safeDiagnostic(failure,f?.secrets??[],f?.root??"",f?[f.sentinelRoot]:[])}; owned cleanup complete: ${f?.cleanupComplete??false}`);
+const report={pass:true,widths:[375,1280],twoAccountsTwoGroups:true,bothProviderPaths:true,realPagingAutofillDirtyRace:true,previewsDedupArchiveExpiry:true,privacyAudit:true,ownedCleanup:f.cleanupComplete};console.log(JSON.stringify(report));return report;
+}
+if(process.argv[1]&&scriptURL(resolveScriptPath(process.argv[1])).href===import.meta.url)runAutofill().catch(error=>{console.error(error.message);process.exitCode=1;});

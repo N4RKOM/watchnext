@@ -1,3 +1,6 @@
+import {resolve as resolveScriptPath} from "node:path";
+import {pathToFileURL as scriptURL} from "node:url";
+import { verifyAccountStorage } from "../e2e/account-storage.mjs";
 import { randomBytes } from "node:crypto";
 import { createFixture,safeDiagnostic } from "../e2e/lifecycle.mjs";
 import { existsSync,writeFileSync,unlinkSync } from "node:fs";
@@ -6,7 +9,7 @@ let f,failure,current="setup";
 const check=(value,label)=>{if(!value)throw new Error(`Expected ${label}; observed condition false`);};
 const step=async(name,run)=>{current=name;await run();console.log(`PASS ${name}`);};
 async function capture(context){for(const cookie of await context.cookies())if(!f.secrets.includes(cookie.value))if(cookie.name !== "watchnext_access_mode") f.secrets.push(cookie.value);}
-async function register(page,name,password,fromHere=false){if(!fromHere)await page.goto(f.origin+"/register");await page.getByLabel("Username",{exact:true}).fill(name);await page.getByLabel("Password",{exact:true}).fill(password);await page.getByLabel("Confirm password").fill(password);await page.getByRole("button",{name:"Create account",exact:true}).press("Enter");const code=page.getByLabel("Private recovery code");await code.waitFor();f.secrets.push(await code.inputValue());await capture(page.context());await page.getByRole("link",{name:/Continue/}).press("Enter");await page.waitForURL("**/account");}
+async function register(page,name,password,fromHere=false){if(!fromHere)await page.goto(f.origin+"/register");await page.getByLabel("Username",{exact:true}).fill(name);await page.getByLabel("Password",{exact:true}).fill(password);await page.getByLabel("Confirm password").fill(password);await page.getByRole("button",{name:"Create account",exact:true}).press("Enter");const code=page.getByLabel("Private recovery code");await code.waitFor();const saved=await code.inputValue();f.secrets.push(saved);await capture(page.context());await page.getByRole("link",{name:/Continue/}).press("Enter");await page.waitForURL("**/account");return saved;}
 async function login(page,name,password){await page.goto(f.origin+"/login");await page.getByLabel("Username",{exact:true}).fill(name);await page.getByLabel("Password",{exact:true}).fill(password);await page.getByRole("button",{name:"Sign in",exact:true}).press("Enter");await page.waitForURL("**/account");await capture(page.context());}
 async function create(page,name){await page.goto(f.origin+"/account");await page.getByLabel("New group name").fill(name);await page.getByRole("button",{name:"Create account group",exact:true}).press("Enter");const input=page.getByLabel("Invite link",{exact:true});await input.waitFor();const invite=await input.inputValue();f.secrets.push(invite.split("/").at(-1));await capture(page.context());return invite;}
 async function open(page,name){await page.goto(f.origin+"/account");await page.getByRole("button",{name:`Open ${name}`,exact:true}).press("Enter");await page.waitForURL("**/group");await page.getByRole("heading",{name,exact:true}).waitFor();await capture(page.context());}
@@ -15,14 +18,17 @@ async function save(page,title,type="movie",minutes="18",confirmation){await pag
 async function detail(page,id){await page.goto(f.origin+"/watchlist/"+id);}
 async function submit(region,button,message){await region.getByRole("button",{name:button,exact:true}).press("Enter");await region.getByText(message,{exact:true}).waitFor();}
 async function rotate(page){await page.goto(f.origin+"/group");await page.getByRole("button",{name:"Rotate invite",exact:true}).press("Enter");await page.getByRole("button",{name:"Confirm rotation",exact:true}).press("Enter");const field=page.getByLabel("New invite link",{exact:true});await field.waitFor();const link=await field.inputValue();f.secrets.push(link.split("/").at(-1));await page.getByRole("button",{name:"Copy new invite link",exact:true}).press("Enter");await page.getByRole("status").filter({hasText:/Invite link copied|Select the link/}).waitFor();return link;}
+export async function runAccountGroups({build=true,onFixture,injectFailure=false}={}){
+failure=undefined;current="setup";
+
 try{
-  f=await createFixture();await step("current production build and owned server",async()=>{await f.build();await f.launch();await f.start();});
+  f=await createFixture();onFixture?.(f);await step(build?"current production build and owned server":"owned server using this invocation’s current build",async()=>{await (build?f.build():f.initialize());await f.launch();await f.start();});
   for(const width of [375,1280]){
     const contexts=await Promise.all([f.context(width),f.context(width),f.context(width),f.context(width),f.context(width)]),[a,b,c,a2,b2]=await Promise.all(contexts.map(context=>context.newPage()));
     const names={a:`MemberA.${width}`,b:`MemberB.${width}`,c:`MemberC.${width}`,g1:`Account group one ${width}`,g2:`Account group two ${width}`,movie:`Shared account movie ${width}`,series:`Account series ${width}`,foreign:`Private other group ${width}`};
-    const password=randomBytes(24).toString("base64url");f.secrets.push(password);let invite,g1,g2,movie,series,foreign;
+    const password=randomBytes(24).toString("base64url");f.secrets.push(password);let invite,g1,g2,movie,series,foreign,recoveryCode;
     await step(`${width}: create, signed-out invite registration resume, three accounts and two groups`,async()=>{
-      await register(a,names.a,password);invite=await create(a,names.g1);g1=f.db.prepare("SELECT id FROM groups WHERE name=?").get(names.g1).id;
+      recoveryCode=await register(a,names.a,password);invite=await create(a,names.g1);g1=f.db.prepare("SELECT id FROM groups WHERE name=?").get(names.g1).id;
       await b.goto(invite);await b.waitForURL("**/login");await capture(contexts[1]);check(!(await b.locator("main").textContent()).includes(names.g1),"no private group disclosure before authentication");check(new URL(b.url()).search==="","no raw invite return query");
       await b.getByRole("link",{name:"Create an account",exact:true}).press("Enter");await b.waitForURL("**/register");await register(b,names.b,password,true);await b.getByRole("button",{name:`Join ${names.g1}`,exact:true}).press("Enter");await b.waitForURL("**/group");await capture(contexts[1]);
       await register(c,names.c,password);const second=await create(c,names.g2);g2=f.db.prepare("SELECT id FROM groups WHERE name=?").get(names.g2).id;foreign=await save(c,names.foreign);
@@ -83,8 +89,23 @@ try{
       await open(a,names.g1);await f.restart();await a.reload();await a.getByRole("heading",{name:names.g1,exact:true}).waitFor();await a2.reload();await a2.getByRole("heading",{name:names.g2,exact:true}).waitFor();
       for(const page of[a,b,c,a2]){check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"responsive no overflow");check(await page.evaluate(()=>localStorage.length===0&&sessionStorage.length===0),"no web storage secrets");}await a.keyboard.press("Tab");
     });
+    await step(`${width}: same owner recovery preserves memberships/history and revokes every old session`,async()=>{
+      const account=f.db.prepare("SELECT * FROM accounts WHERE username=?").get(names.a);
+      const history=JSON.stringify(f.db.prepare("SELECT * FROM progress ORDER BY title_id,member_id").all());
+      const next=randomBytes(24).toString("base64url");f.secrets.push(next);
+      await a.goto(f.origin+"/recover");await a.getByLabel("Username",{exact:true}).fill(names.a);await a.getByLabel("Saved recovery code").fill(recoveryCode);await a.getByLabel("New password").fill(next);await a.getByLabel("Confirm password").fill(next);await a.getByRole("button",{name:"Reset password",exact:true}).press("Enter");
+      await a.getByLabel("Private recovery code").waitFor();const replacement=await a.getByLabel("Private recovery code").inputValue();f.secrets.push(replacement);check(replacement!==recoveryCode,"replacement private proof differs");
+      await a2.goto(f.origin+"/account");await a2.waitForURL("**/login");
+      await login(a,names.a,next);await open(a,names.g1);
+      check(f.db.prepare("SELECT id FROM accounts WHERE username=?").get(names.a).id===account.id,"recovery preserves owner ID");check(JSON.stringify(f.db.prepare("SELECT * FROM progress ORDER BY title_id,member_id").all())===history,"recovery preserves actual personal history");
+      await a.getByRole("button",{name:`Remove ${names.b}`,exact:true}).press("Enter");await a.getByRole("button",{name:"Confirm removal",exact:true}).press("Enter");await a.getByRole("status").filter({hasText:`${names.b} is now inactive`}).waitFor();
+      await verifyAccountStorage(f,{page:a,removed:b,group:names.g1,title:movie,providerTitle:`Account provider ${width}`,width});
+    });
     for(const context of contexts)await context.close();
   }
   await f.audit();
 }catch(error){failure=error;}finally{try{await f?.cleanup();}catch(error){failure??=error;}}
-if(failure){console.error(`FAIL ${current}: ${safeDiagnostic(failure,f?.secrets??[],f?.root??"",f?[f.sentinelRoot]:[])}`);console.error(`Owned cleanup complete: ${f?.cleanupComplete??false}`);process.exitCode=1;}else console.log(JSON.stringify({pass:true,widths:[375,1280],threeAccountsTwoGroups:true,independentSelectionStaleReplay:true,allOwnHistory:true,lookupPicker:true,removalRejoinLegacyRestart:true,privacyAudit:true,ownedCleanup:f.cleanupComplete}));
+if(failure)throw new Error(`FAIL ${current}: ${safeDiagnostic(failure,f?.secrets??[],f?.root??"",f?[f.sentinelRoot]:[])}; owned cleanup complete: ${f?.cleanupComplete??false}`);
+const report={pass:true,widths:[375,1280],threeAccountsTwoGroups:true,independentSelectionStaleReplay:true,allOwnHistory:true,lookupPicker:true,removalRejoinLegacyRestart:true,sameOwnerRecoveryAndAuthenticatedWalRestore:true,privacyAudit:true,ownedCleanup:f.cleanupComplete};console.log(JSON.stringify(report));return report;
+}
+if(process.argv[1]&&scriptURL(resolveScriptPath(process.argv[1])).href===import.meta.url)runAccountGroups().catch(error=>{console.error(error.message);process.exitCode=1;});
