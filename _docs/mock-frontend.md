@@ -43,7 +43,9 @@ Do not enter real credentials or use normal/provider data. Domain follow-ups mus
 
 ## Domain handoff - accounts implemented, other domains pending
 
-The [implemented #55 account handoff](mock-accounts.md) documents exact validation, once-only recovery, navigation lifetime and bounded evidence. Its independent QA is pending; other domain increments remain planned.
+The [implemented #55 account handoff](mock-accounts.md) documents exact validation, once-only recovery, navigation lifetime and bounded evidence. It is independently QA-closed at `269abbc`; other domain increments remain planned.
+
+The [#56 group/owner/invitation/legacy handoff](mock-groups.md) defines the next synthetic domain and its generation/lifetime checks. It is PM-groomed, not implemented by this document; the live issue tracks readiness and QA.
 
 | Owner | Inventory coverage |
 | --- | --- |

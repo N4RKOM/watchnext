@@ -1,6 +1,6 @@
 # Mock accounts handoff — issue #55
 
-Status: **Implemented and Engineer-tested; independent QA pending.** [Issue #55](https://github.com/xiaodlb/watchnext/issues/55) owns A01–A05 and account portions of U02/U06 in the [operation inventory](operation-inventory.md). The prerequisite #42 foundation passed independent QA at `d6b5082`. Existing real account behavior remains the source for interactions; this increment simulates it without real authentication.
+Status: **Implemented, independently QA-passed and closed at `269abbc`.** [Issue #55](https://github.com/xiaodlb/watchnext/issues/55) owns A01–A05 and account portions of U02/U06 in the [operation inventory](operation-inventory.md). The prerequisite #42 foundation passed independent QA at `d6b5082`. Existing real account behavior remains the source for interactions; this increment simulates it without real authentication.
 
 ## Bounded design choices
 
