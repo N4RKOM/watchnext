@@ -33,7 +33,27 @@ export interface FrontendService {
   readonly accounts: AccountService;
   readonly groups: GroupService;
   readonly library: LibraryService;
+  readonly entry: EntryService;
   // Domain namespaces will be added by #55–#60, never fabricated as successful here.
+}
+
+export type EntrySource = "youtube" | "kinopoisk";
+export type ProviderOutcome = "normal" | "not-configured" | "quota" | "deadline" | "empty" | "missing-runtime" | "unavailable-item";
+export type ProviderOptions = RequestOptions & Readonly<{outcome?:ProviderOutcome}>;
+export type EntryCandidate = Readonly<{id:string;title:string;channel:string|null;year:number|null;contentType:LibraryType|null;durationSeconds:number|null;coverUrl:string|null}>;
+export type EntryPage = Readonly<{handle:string;source:EntrySource;query:string;page:number;visits:number;previous:boolean;next:boolean;candidates:readonly EntryCandidate[]}>;
+export type EntryReview = Readonly<{handle:string;source:EntrySource;providerId:string;draft:LibraryDraft;expiresAt:number;notice:string}>;
+export type EntrySaved = Readonly<{status:"saved";title:LibraryTitle}> | Readonly<{status:"confirmation";handle:string;message:string;matchId:string}>;
+export interface EntryService {
+  search(source:EntrySource,kind:"title"|"link",query:string,expected:ContextIdentity,options?:ProviderOptions):Promise<ServiceResult<EntryPage|EntryReview>>;
+  page(handle:string,direction:"next"|"previous",expected:ContextIdentity,options?:ProviderOptions):Promise<ServiceResult<EntryPage>>;
+  select(handle:string,id:string,expected:ContextIdentity,options?:ProviderOptions):Promise<ServiceResult<EntryReview>>;
+  adopt(handle:string,expected:ContextIdentity,options?:RequestOptions):Promise<ServiceResult<EntryReview>>;
+  discard(handle:string):void;
+  cancelLookup(expected:ContextIdentity):void;
+  save(draft:LibraryDraft,typicalConfirmed:boolean,reviewHandle:string|undefined,confirmation:string|undefined,expected:ContextIdentity,options?:RequestOptions):Promise<ServiceResult<EntrySaved>>;
+  refresh(id:string,expected:ContextIdentity,options?:ProviderOptions):Promise<ServiceResult<LibraryTitle>>;
+  advanceTime(amount:"ten-minutes"|"thirty-one-days",expected:ContextIdentity,options?:RequestOptions):Promise<ServiceResult<{now:number}>>;
 }
 
 export const libraryMoods = ["funny", "relaxing", "exciting", "dark", "emotional"] as const;
@@ -41,7 +61,7 @@ export type LibraryType = "movie" | "series" | "anime" | "youtube";
 export type Numbering = "none" | "season_episode" | "continuous";
 export type LibraryDraft = Readonly<{ title: string; contentType: LibraryType | ""; minutes: string; seconds: string; numberingStyle: Numbering; genres: string; moods: readonly string[]; watchUrl: string; sourceUrl: string; coverUrl: string }>;
 export type LibraryHistory = Readonly<{ id: string; memberId: string; progress: string; rating: number | null; note: string }>;
-export type LibraryTitle = Readonly<{ id: string; groupId: string; revision: number; createdBy: string; providerId: string | null; archived: boolean; title: string | null; contentType: LibraryType | null; durationSeconds: number | null; numberingStyle: Numbering; genres: readonly string[]; moods: readonly string[]; watchUrl: string | null; sourceUrl: string | null; coverUrl: string | null; origins: Readonly<Record<string, "authored" | "provider" | "unavailable">>; availability: string; contributors: readonly MemberSummary[]; history: readonly LibraryHistory[]; historyMembers: readonly MemberSummary[]; canEdit: boolean; canRemove: boolean; canRestore: boolean }>;
+export type LibraryTitle = Readonly<{ id: string; groupId: string; revision: number; createdBy: string; providerId: string | null; archived: boolean; title: string | null; contentType: LibraryType | null; durationSeconds: number | null; numberingStyle: Numbering; genres: readonly string[]; moods: readonly string[]; watchUrl: string | null; sourceUrl: string | null; coverUrl: string | null; origins: Readonly<Record<string, "authored" | "provider" | "unavailable">>; availability: string; contributors: readonly MemberSummary[]; history: readonly LibraryHistory[]; historyMembers: readonly MemberSummary[]; canEdit: boolean; canRemove: boolean; canRefresh: boolean; canRestore: boolean }>;
 export type LibraryList = Readonly<{ mode: "account" | "legacy"; filter: "all" | "mine"; notice: string | null; archived: boolean; items: readonly LibraryTitle[] }>;
 export type LibrarySave = Readonly<{ status: "saved"; title: LibraryTitle }> | Readonly<{ status: "confirmation"; handle: string; message: string }>;
 export interface LibraryService {

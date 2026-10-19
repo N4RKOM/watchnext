@@ -1,8 +1,9 @@
 import { libraryFilter, libraryMoods } from "../service/contracts";
+import { createMockEntry } from "./entry";
 import type { ContextIdentity, GroupWorkspace, LibraryDraft, LibraryHistory, LibraryList, LibrarySave, LibraryService, LibraryTitle, LibraryType, Numbering, RequestOptions, ServiceResult } from "../service/contracts";
-type Metadata = { -readonly [K in "title" | "contentType" | "durationSeconds" | "numberingStyle" | "genres" | "moods" | "watchUrl" | "sourceUrl" | "coverUrl"]: LibraryTitle[K] };
-type Row = Metadata & { id: string; groupId: string; revision: number; createdBy: string; providerId: string | null; archived: boolean; contributions: { id: string; memberId: string; active: boolean }[]; history: readonly LibraryHistory[]; origins: Record<string, "authored" | "provider" | "unavailable">; availability: string };
-type Hooks = { identity: () => ContextIdentity; workspace: () => GroupWorkspace; gate: <T>(expected: ContextIdentity, options: RequestOptions, commit: () => ServiceResult<T>) => Promise<ServiceResult<T>> };
+export type Metadata = { -readonly [K in "title" | "contentType" | "durationSeconds" | "numberingStyle" | "genres" | "moods" | "watchUrl" | "sourceUrl" | "coverUrl"]: LibraryTitle[K] };
+export type Row = Metadata & { id: string; groupId: string; revision: number; createdBy: string; providerId: string | null; archived: boolean; contributions: { id: string; memberId: string; active: boolean }[]; history: readonly LibraryHistory[]; origins: Record<string, "authored" | "provider" | "unavailable">; deadlines?:Record<string,number>; availability: string };
+type Hooks = { identity: () => ContextIdentity; workspace: () => GroupWorkspace; now:()=>number; gate: <T>(expected: ContextIdentity, options: RequestOptions, commit: () => ServiceResult<T>) => Promise<ServiceResult<T>> };
 export function safeLibraryUrl(value: string | null): string | null {
   if (!value) return null;
   try { const url = new URL(value); return (url.protocol === "https:" || url.protocol === "http:") && !url.username && !url.password ? value : null; } catch { return null; }
@@ -32,10 +33,10 @@ export function createMockLibrary(h: Hooks) {
   const contributed = (r: Row, memberId: string | null) => !!memberId && r.contributions.some(c => c.active && c.memberId === memberId);
   function project(r: Row, w: GroupWorkspace): LibraryTitle {
     const current = actor(w), contributors = r.contributions.filter(c => c.active).map(c => w.members.find(m => m.id === c.memberId)).filter(m => !!m);
-    return Object.freeze({ id: r.id, groupId: r.groupId, revision: r.revision, createdBy: r.createdBy, providerId: r.providerId, archived: r.archived, title: r.title, contentType: r.contentType, durationSeconds: r.durationSeconds, numberingStyle: r.numberingStyle, genres: Object.freeze([...r.genres]), moods: Object.freeze([...r.moods]), watchUrl: r.watchUrl, sourceUrl: r.sourceUrl, coverUrl: r.coverUrl, origins: Object.freeze({...r.origins}), availability: r.availability, contributors: Object.freeze(contributors), history: r.history, historyMembers: Object.freeze(w.members.filter(m => r.history.some(x => x.memberId === m.id))), canEdit: !r.archived && contributed(r,current), canRemove: !r.archived && contributed(r,current), canRestore: r.archived && !!current });
+    return Object.freeze({ id: r.id, groupId: r.groupId, revision: r.revision, createdBy: r.createdBy, providerId: r.providerId, archived: r.archived, title: r.title, contentType: r.contentType, durationSeconds: r.durationSeconds, numberingStyle: r.numberingStyle, genres: Object.freeze([...r.genres]), moods: Object.freeze([...r.moods]), watchUrl: r.watchUrl, sourceUrl: r.sourceUrl, coverUrl: r.coverUrl, origins: Object.freeze({...r.origins}), availability: r.availability, contributors: Object.freeze(contributors), history: r.history, historyMembers: Object.freeze(w.members.filter(m => r.history.some(x => x.memberId === m.id))), canEdit: !r.archived && contributed(r,current), canRemove: !r.archived && contributed(r,current), canRefresh: !r.archived && !!r.providerId && !!current && (w.mode === "legacy" || contributed(r,current)), canRestore: r.archived && !!current });
   }
   const result = <T>(value: T): ServiceResult<T> => ({ kind: "success", value, context: h.identity() });
-  const run = <T>(expected: ContextIdentity, options: RequestOptions | undefined, f: () => ServiceResult<T>) => h.gate(expected, options ?? {}, f);
+  const run = <T>(expected: ContextIdentity, options: RequestOptions | undefined, f: () => ServiceResult<T>) => {entry.expire();return h.gate(expected, options ?? {},()=>{entry.expire();return f();});};
   function validate(d: LibraryDraft): Metadata | string {
     const title = d.title.trim(); if (!title || [...title].length > 200 || title.includes("\0")) return "Title must contain 1-200 characters without NUL.";
     if (!["movie","series","anime","youtube"].includes(d.contentType)) return "Choose Movie, Series, Anime or YouTube.";
@@ -85,5 +86,6 @@ export function createMockLibrary(h: Hooks) {
       const c = r.contributions.find(c => c.memberId === memberId); if (c) c.active = true; else r.contributions.push({id:`contribution-${id}-${memberId}`,memberId,active:true}); r.archived = false; r.revision++; return result(project(r,w));
     }),
   });
-  return {service,reset};
+  const entry=createMockEntry({rows:()=>rows,access,actor,find,contributed,project,validate,identity:h.identity,now:h.now,clearEditConfirmations:()=>confirmations.clear(),gate:h.gate});
+  return {service,expire:entry.expire,entry:entry.service,reset:()=>{reset();entry.reset();}};
 }

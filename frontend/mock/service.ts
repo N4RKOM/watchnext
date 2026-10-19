@@ -5,7 +5,6 @@ import type { ContextIdentity, FrontendService, MockContext, MockScenario, Reque
 let instances = 0;
 export const scenarioDelays: Readonly<Record<MockScenario, number>> = Object.freeze({ ready: 80, slow: 1200, unavailable: 300 });
 export const pendingDomains = Object.freeze([
-  { key: "entry", label: "Manual entry and provider review", issue: 58 },
   { key: "personal", label: "Personal progress, ratings and notes", issue: 59 },
   { key: "picker", label: "Picker and Pick again", issue: 60 },
 ] as const);
@@ -24,6 +23,7 @@ function wait(delay: number, signal?: AbortSignal): Promise<boolean> {
 export function createMockService(options: { now?: () => number } = {}): FrontendService {
   const instance = `synthetic-preview-${++instances}`;
   let revision = 0, codeCounter = 0;
+  let maintenance=()=>{};
   type Record = { summary: AccountSummary; password: string; proof: string };
   const records = new Map<string, Record>();
   const seed = () => { records.clear(); records.set("demo.viewer", { summary: { id: "seeded-viewer", username: "Demo.Viewer", seeded: true, memberships: ["Synthetic Friday friends", "Synthetic weekend pair"] }, password: "synthetic password", proof: "SYNTHETIC-SEED-PROOF" }); };
@@ -40,6 +40,7 @@ export function createMockService(options: { now?: () => number } = {}): Fronten
     return { kind: "success", value: Object.freeze({ identity: snapshot, label: "Synthetic workspace", account: current ? { ...current, memberships: groups.memberships(current.id).map(g => g.name) } : null, group: groups.current() }), context: snapshot };
   };
   async function gate<T>(expected: ContextIdentity, options: RequestOptions, commit: () => ServiceResult<T>): Promise<ServiceResult<T>> {
+    maintenance();
     if (options.signal?.aborted) return cancelled();
     if (!sameContext(expected, identity())) return stale();
     const selected = selectDemo("mock", options.scenario);
@@ -47,7 +48,7 @@ export function createMockService(options: { now?: () => number } = {}): Fronten
     if (!await wait(scenarioDelays[selected.value.scenario], options.signal)) return cancelled();
     if (!sameContext(expected, identity())) return stale();
     if (selected.value.scenario === "unavailable") return { kind: "failure", error: { code: "demo_unavailable", message: "Synthetic accounts are unavailable. Choose Ready and retry.", retryable: true } };
-    return commit();
+    const committed=commit(); maintenance(); return committed;
   }
   const invalid = (fields: FieldErrors): ServiceResult<never> => ({ kind: "failure", error: { code: "invalid_account", message: "Check the account fields and try again.", retryable: true, fields } });
   const validate = (input: AccountInput): FieldErrors => {
@@ -59,8 +60,9 @@ export function createMockService(options: { now?: () => number } = {}): Fronten
   };
   const read = async (options: RequestOptions = {}) => gate(identity(), options, result);
   const groups = createMockGroups({ account: () => current, identity, bump: () => { revision++; }, code, now: options.now ?? Date.now, gate });
-  const library = createMockLibrary({ identity, workspace: groups.workspace, gate });
-  return Object.freeze({ mode: "mock", library: library.service, groups: groups.service, accounts: Object.freeze({
+  const library = createMockLibrary({ identity, workspace: groups.workspace, now: options.now ?? Date.now, gate });
+  maintenance=library.expire;
+  return Object.freeze({ mode: "mock", library: library.service, entry: library.entry, groups: groups.service, accounts: Object.freeze({
     read,
     async register(input: AccountInput, expected: ContextIdentity, options: RequestOptions = {}): Promise<ServiceResult<PrivateDisclosure>> {
       return gate<PrivateDisclosure>(expected, options, () => {
