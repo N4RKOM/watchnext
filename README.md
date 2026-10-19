@@ -63,6 +63,9 @@ Before upgrading existing data, follow [the stopped-writer upgrade recipe](_docs
 
 ## Project documents
 
+- [Current product and software specification](_docs/specification.md)
+- [Graded MVP plan and stages](_docs/graded-mvp.md) — planning only: full mock frontend → OpenAPI → real HTTP memory → Prisma SQLite → genuine user testing/evidence.
+
 For a separate **legacy-mode** synthetic presentation database, run `pnpm demo:prepare`. See [demo setup and exact scenarios](_docs/demo-data.md) for private invitation output, quoted startup commands and safe repeat/reset behavior. Normal user storage is not initialized or reset by this command.
 
 - [Project scope](_docs/plan.md)

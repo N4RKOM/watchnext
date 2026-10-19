@@ -4,7 +4,13 @@
 
 Planning-only requests stop after PM documents and issues. Creating a groomed issue does not start the Engineer/QA lifecycle. After that phase, the user explicitly authorized the October 18 enhancement (#31–#40): “выполни оставшиеся ишшюс на гитхабе” (implement the remaining GitHub issues). Refresh PM grooming and implement sequentially through the lifecycle below; closure requires fresh independent QA PASS. This supersedes the earlier planning pause, not the feature boundaries. See `_docs/account-discovery-enhancement.md`.
 
-## Roles
+## New graded iteration: planning boundary and scoped workflow
+
+The current first step authorizes graded plan/specification/issues/workflow documents only. [Graded MVP](graded-mvp.md) describes planned issues #41–#54; do not start them merely because they exist. Original #1–#40 are closed after final independent QA at baseline `441fcaae660e273d6fc373f8757be562d9139b78`, preserved by `graded-baseline-2026-10-19`.
+
+For new issues labeled `mvp` or `user-test-bug`, the teacher workflow supersedes the older closure rule below: PM grooms; for genuine reported bugs QA adds runnable regression cases before Engineer repair; Engineer implements/tests/comments and leaves open; QA independently posts criterion-by-criterion PASS/FAIL and **QA closes only after actual PASS**. On FAIL return to Engineer. QA may change regression tests during bug grooming, never product implementation. Orchestrator coordinates, not closes these new issues. Historical closure of #1–#40 is not rewritten. Human hands-on testing must be real; [bug template](user-test-bug-template.md), [manual checklist](manual-testing.md) and [iteration log](iteration-log.md) retain actual evidence. Optional ideas are `post-mvp`.
+
+## Roles (all work)
 
 - PM - grooms a task before anyone implements it, follows _docs/team/pm.md
 - Engineer - implements one groomed task, follows _docs/team/software-engineer.md
@@ -29,5 +35,5 @@ and QA as subagents. It does not groom, implement or test itself.
 
 - Do not skip step 2
 - The engineer does not close the issue
-- QA does not fix the code, only outputs PASS or FAIL
-- The orchestrator closes the issue only after QA outputs PASS
+- QA does not fix product code; for new graded user-test bugs it adds regression tests during grooming, then independently verifies.
+- Historical/default non-graded work uses orchestrator closure after QA PASS. New `mvp`/`user-test-bug` issues use QA closure after its actual PASS, as scoped above.

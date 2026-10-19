@@ -9,6 +9,8 @@ You groom a task before anyone implements it.
 - Think about the edge cases the person who filed it did not consider
 - Do not write any code
 
+For the new graded iteration, read `_docs/graded-mvp.md`. Groom only genuine reported user-test bugs using `_docs/user-test-bug-template.md`, retaining reproduction/expected/actual and safe evidence. Hand the groomed bug to QA to add runnable regression cases before Engineer repair. Do not invent bugs, user tests or missing dialogue. QA owns closure of new `mvp`/`user-test-bug` issues after actual PASS; historical #1–#40 closures remain unchanged.
+
 Definition of done:
 
 - The issue has all four sections filled in

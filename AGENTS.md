@@ -29,7 +29,9 @@ The user approved the initial Next.js, React, TypeScript, type definitions, Vite
 
 ## Project context
 
-The October 18 account/discovery enhancement (#31–#40) is now **authorized for sequential implementation**: after the planning-only phase, the user explicitly said “выполни оставшиеся ишшюс на гитхабе” (implement the remaining GitHub issues). This supersedes the planning pause; issues #31–#39 have since passed independent QA. #40 consolidates verification and docs; its own fresh QA verdict remains required. Read `_docs/account-discovery-enhancement.md`, then refresh the selected issue through PM → Engineer → independent QA, one issue at a time. New authenticated groups supersede the first-release no-account restriction only within this enhancement; legacy groups stay separate with no claiming/migration. Preserve the user's running dev server and existing `next-env.d.ts` changes; use a separate owned checkout/build output for verification.
+Current graded first-step authorization is **documentation/backlog/workflow only**. Read `_docs/graded-mvp.md` and `_docs/specification.md`; new issues #41–#54 are planned, not an authorized implementation run. Baseline tag `graded-baseline-2026-10-19` preserves the completed app. For new `mvp`/`user-test-bug` issues, QA adds regression cases during genuine bug grooming and closes only after actual PASS; `_docs/process.md` scopes this exception without rewriting historical closures. Preserve user M-drive runtime/data.
+
+The completed October 18 account/discovery enhancement (#31–#40) was **authorized for sequential implementation**: after the planning-only phase, the user explicitly said “выполни оставшиеся ишшюс на гитхабе” (implement the remaining GitHub issues). This supersedes the planning pause; all issues #1–#40 are now closed after independent QA; final #40 PASS is https://github.com/xiaodlb/watchnext/issues/40#issuecomment-6263933927. The completed baseline is 441fcaae660e273d6fc373f8757be562d9139b78. That earlier run is finished and does not authorize new graded implementation. Read `_docs/account-discovery-enhancement.md`, then refresh the selected issue through PM → Engineer → independent QA, one issue at a time. New authenticated groups supersede the first-release no-account restriction only within this enhancement; legacy groups stay separate with no claiming/migration. Preserve the user's running dev server and existing `next-env.d.ts` changes; use a separate owned checkout/build output for verification.
 
 WatchNext is an academic web app that helps couples and friends choose something from their shared saved watchlist. The stack is Next.js, TypeScript and SQLite, served locally at configured `http://127.0.0.1:3000` by default. First-release feature implementation and verification are mapped in `_docs/completion-audit.md`; live issue QA/closure remains authoritative. Do not treat old task delivery boundaries as unimplemented features or reopen resolved delegated decisions.
 
@@ -40,6 +42,10 @@ WatchNext is an academic web app that helps couples and friends choose something
 - Task descriptions and live task state: GitHub issues linked from the backlog index.
 
 ## Documents
+
+- `_docs/specification.md` - consolidated current requirements and baseline limits.
+- `_docs/graded-mvp.md` - planned graded stages and scoped QA workflow; not implemented architecture.
+- `_docs/submission-matrix.md` - living evidence checklist; planned/tested/user-confirmed are distinct.
 
 - `_docs/account-discovery-enhancement.md` - authorized account/multi-group/autofill/preview requirements, explicit answers versus engineering defaults and preservation constraints.
 - `_docs/enhancement-audit.md` - current twelve-answer/source/verification map; independent issue QA remains authoritative.
@@ -73,7 +79,7 @@ The design system, API guide and testing guidelines are available at `_docs/desi
 - The main session orchestrates issue work according to `_docs/process.md`; it delegates grooming, implementation, and verification to PM, Engineer, and QA subagents rather than doing those roles itself.
 - For an authorized backlog run, select the next open issue in backlog order and launch the PM first, even if the issue was groomed previously. Pass the issue and relevant document links to each role.
 - Launch the Engineer after PM grooming, then QA after implementation. If QA returns FAIL, send the QA comment to the Engineer and repeat implementation and verification.
-- Close an issue only after QA posts PASS for the current implementation. An older verdict does not cover later implementation changes. The Engineer and QA leave issue closure to the orchestrator.
+- Close an issue only after QA posts PASS for the current implementation. An older verdict does not cover later changes. Historical/default issues use orchestrator closure; new graded `mvp`/`user-test-bug` issues use QA closure after its actual PASS. Engineer always leaves open. For genuine new user-test bugs, QA adds runnable regression cases after PM grooming and before Engineer repair; it never fixes product implementation.
 - Continue to the next issue until the authorized backlog run is complete. Workflow documentation alone does not start a backlog run. The current run and suitable remaining product/dependency choices are explicitly authorized as recorded in `_docs/plan.md`; record reasoned delegated decisions before using them.
 
 ## Identify the intended task

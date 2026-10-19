@@ -1,6 +1,25 @@
 # WatchNext backlog
 
-## Authorized enhancement — sequential implementation
+## Planned graded iteration — implementation not started
+
+Read [graded-mvp.md](graded-mvp.md), [specification](specification.md) and scoped QA-owned closure rules. Labels: `mvp`, `post-mvp`, `user-test-bug`. This first step creates plan/issues only; baseline #1–#40 remains closed.
+
+1. [#41 Operation inventory/reference pack](https://github.com/xiaodlb/watchnext/issues/41)
+2. [#42 Complete typed mock frontend](https://github.com/xiaodlb/watchnext/issues/42)
+3. [#43 Root openapi.yml](https://github.com/xiaodlb/watchnext/issues/43)
+4. [#44 Real memory identity/group HTTP](https://github.com/xiaodlb/watchnext/issues/44)
+5. [#45 Real memory library/provider HTTP](https://github.com/xiaodlb/watchnext/issues/45)
+6. [#46 Real memory personal/picker HTTP](https://github.com/xiaodlb/watchnext/issues/46)
+7. [#47 All graded UI operations over HTTP](https://github.com/xiaodlb/watchnext/issues/47)
+8. [#48 Prisma mappings/safe baseline](https://github.com/xiaodlb/watchnext/issues/48)
+9. [#49 Prisma identity/group repositories](https://github.com/xiaodlb/watchnext/issues/49)
+10. [#50 Prisma library/history repositories](https://github.com/xiaodlb/watchnext/issues/50)
+11. [#51 Full durable SQLite integration/upgrade](https://github.com/xiaodlb/watchnext/issues/51)
+12. [#52 Optional post-MVP PostgreSQL portability](https://github.com/xiaodlb/watchnext/issues/52)
+13. [#53 Genuine user testing/bugs](https://github.com/xiaodlb/watchnext/issues/53)
+14. [#54 Submission evidence](https://github.com/xiaodlb/watchnext/issues/54)
+
+## Completed account/discovery enhancement — historical sequence
 
 After the planning-only phase the user explicitly requested implementation of the remaining GitHub issues. Read [the scope/explicit choices/defaults and authorization](account-discovery-enhancement.md). Refresh PM grooming, then Engineer/independent QA one issue at a time; live issue state is authoritative. [Current evidence](enhancement-audit.md) maps delivery; this remains an issue index. Follow this order and each issue's dependencies:
 

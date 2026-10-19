@@ -1,5 +1,9 @@
 # WatchNext — Project Scope
 
+## Graded iteration — first-step planning only
+
+The current app is complete through closed issues #1–#40 and [final independent QA](https://github.com/xiaodlb/watchnext/issues/40#issuecomment-6263933927), baseline `441fcaae660e273d6fc373f8757be562d9139b78` / tag `graded-baseline-2026-10-19`. [Specification](specification.md) consolidates its current requirements. The user authorized the first graded step: [plan and staged backlog](graded-mvp.md), reference/evidence/workflow documents and issues only. Thirteen `mvp` issues plus optional `post-mvp` #52 are planned; no implementation is started. The new teacher workflow gives QA regression augmentation and PASS-only closure for new `mvp`/`user-test-bug` issues, scoped in [process](process.md). Earlier run authorization below is historical and does not start this new backlog.
+
 ## Authorized enhancement — October 18, 2026
 
 Original issues #1–#30 are complete. After clarification and creation of issues #31–#40, the user explicitly said “выполни оставшиеся ишшюс на гитхабе” (implement the remaining GitHub issues). This new authorization supersedes the planning-only pause and starts sequential PM → Engineer → independent QA work; the authorization itself was not a completion claim. #31–#39 have now passed independent QA; [the enhancement audit](enhancement-audit.md) records current source/evidence, with #40 awaiting its own QA. The authoritative scope is [account-discovery-enhancement.md](account-discovery-enhancement.md), indexed in [tasks.md](tasks.md). Twelve explicit answers remain separate from delegated defaults. New account groups start fresh without claiming/migrating legacy profiles/history. Preserve the user's running dev server, existing next-env.d.ts changes and normal data; use isolated verification. The historical scope/completion audit below cover only the legacy release.
