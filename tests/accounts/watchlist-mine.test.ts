@@ -53,7 +53,7 @@ it("switch/revisit uses only current membership and rejects stale bound context 
 it("URL claims are ignored and missing/forged/duplicate/expired sessions never return misleading empty Mine",()=>{
  const request=req(a,origin+`/watchlist?filter=mine&memberId=${member(b)}&groupId=${other}&accountId=forged`);expect(readWatchlist(db,request,false,"mine").items.map(item=>item.id).sort()).toEqual(ids());
  for(const cookie of["",`${accountCookieName}=forged; watchnext_access_mode=account`,`${accountCookieName}=${a}; ${accountCookieName}=${b}; watchnext_access_mode=account`,`${accountCookieName}=${a}; watchnext_access_mode=account; watchnext_access_mode=legacy`])expect(()=>readWatchlist(db,new Request(origin,{headers:{cookie}}),false,"mine")).toThrow();
- db.prepare("UPDATE account_sessions SET expires_at=created_at+1 WHERE token_hash=?").run(credentialHash(a));expect(()=>readWatchlist(db,req(),false,"mine")).toThrow();
+ db.prepare("UPDATE account_sessions SET created_at=0,expires_at=1 WHERE token_hash=?").run(credentialHash(a));expect(()=>readWatchlist(db,req(),false,"mine")).toThrow();
 });
 it("unsupported filters show safe All, while legacy Mine shows shared All without account controls",()=>{
  for(const value of["unknown",["mine","mine"],"mine' OR 1=1--"]){const view=readWatchlist(db,req(),false,value);expect(view.filter).toBe("all");expect(view.filterNotice).toContain("not supported");expect(view.items.map(item=>item.id).sort()).toEqual(ids(a,"all"));}

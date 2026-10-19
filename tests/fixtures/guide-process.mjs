@@ -23,7 +23,10 @@ function safeCommandFailure(args, output) {
   if(args[0]==="test"){
     const failures=[...clean.matchAll(/^\s*FAIL\s+(tests\/[A-Za-z0-9_./-]+\.test\.tsx?)(?:\s|$)/gm)].map(match=>match[1]);
     const summary=clean.match(/Test Files\s+[0-9|() passedfail]+/i)?.[0]?.trim();
-    if(failures.length||summary)return [...new Set(failures),summary].filter(Boolean).join("; ");
+    const locations=[...clean.matchAll(/(?:❯|>)\s+(tests\/[A-Za-z0-9_./-]+\.test\.tsx?:[0-9]+:[0-9]+)/g)].map(match=>match[1]);
+    const timeout=clean.match(/(?:Test|Hook) timed out in [0-9]+ms\.?/)?.[0];
+    const classification=timeout??(/AssertionError:/.test(clean)?"AssertionError (values omitted)":/SQLITE/.test(clean)?"SQLiteError (details omitted)":undefined);
+    if(failures.length||summary)return [...new Set(failures),...new Set(locations),classification,summary].filter(Boolean).join("; ");
   }
   if(/VirtualAlloc.*failed|fatal error: out of memory|heap out of memory/i.test(clean))return "native worker reported resource exhaustion; inspect ordinary command diagnostics";
   return "inspect the documented isolated check";
