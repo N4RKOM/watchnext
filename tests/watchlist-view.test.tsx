@@ -35,5 +35,11 @@ it("distinguishes honest empty, loading and failed states, with a real refresh a
 it("never renders unsafe image URLs and replaces a failed cover with the stable fallback", () => {
   const { rerender } = render(<Cover url="javascript:alert(1)" title="Fixture" />); expect(screen.queryByRole("img")).toBeNull(); expect(screen.getByText("No cover")).toBeTruthy();
   rerender(<Cover url="https://name:password@example.com/cover.png" title="Fixture" />); expect(screen.queryByRole("img")).toBeNull();
-  rerender(<Cover url="https://example.com/local-mocked.png" title="Fixture" />); fireEvent.error(screen.getByRole("img", { name: "Fixture cover" })); expect(screen.queryByRole("img")).toBeNull(); expect(screen.getByText("No cover")).toBeTruthy();
+  rerender(<Cover url="https://i.ytimg.com/vi/YtFixture01/default.jpg" title="Fixture" />); fireEvent.error(screen.getByRole("img", { name: "Fixture cover" })); expect(screen.queryByRole("img")).toBeNull(); expect(screen.getByText("No cover")).toBeTruthy();
+});
+
+it("unsupported authored URLs render fallback; a changed safe URL resets failed-image state and aspect ratio",()=>{
+ const {rerender}=render(<Cover url="https://example.com/authored-cover.jpg" title="Authored"/>);expect(screen.queryByRole("img")).toBeNull();
+ rerender(<Cover url="https://i.ytimg.com/vi/YtFixture01/default.jpg" title="Video"/>);const image=screen.getByRole("img");expect(image.getAttribute("referrerpolicy")).toBe("no-referrer");expect(image.parentElement?.className).toContain("video-cover");fireEvent.error(image);expect(screen.queryByRole("img")).toBeNull();
+ rerender(<Cover url="https://kinopoiskapiunofficial.tech/images/posters/kp/301.jpg" title="Poster"/>);expect(screen.getByRole("img").getAttribute("src")).toContain("/301.jpg");expect(screen.getByRole("img").parentElement?.className).not.toContain("video-cover");
 });

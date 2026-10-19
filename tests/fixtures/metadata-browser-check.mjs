@@ -43,9 +43,9 @@ try {
     await page.getByLabel("Title", { exact: true }).fill("Manual draft preserved"); await page.getByLabel("Entry method").selectOption("youtube");
     await page.getByLabel("YouTube video link or ID").fill("YtQuota0001"); await page.getByRole("button", { name: "Look up video" }).press("Enter"); await page.getByRole("alert").filter({ hasText: "quota" }).waitFor();
     check(await page.getByLabel("Title", { exact: true }).inputValue() === "Manual draft preserved", "Failure must preserve manual input");
-    await page.getByLabel("YouTube video link or ID").fill("https://youtu.be/YtFixture01?t=30"); await page.getByRole("button", { name: "Look up video" }).press("Enter"); await page.getByRole("button", { name: "Apply proposal and replace details" }).waitFor();
+    await page.getByLabel("YouTube video link or ID").fill("https://youtu.be/YtFixture01?t=30"); await page.getByRole("button", { name: "Look up video" }).press("Enter"); await page.getByRole("button", { name: "Replace details" }).waitFor();
     check(await page.getByLabel("Title", { exact: true }).inputValue() === "Manual draft preserved", "Proposal must be staged");
-    await page.getByRole("button", { name: "Apply proposal and replace details" }).press("Enter");
+    await page.getByRole("button", { name: "Replace details" }).press("Enter");
     secrets.push(await page.locator('input[name="reviewHandle"]').inputValue());
     await page.getByLabel("Funny", { exact: true }).check(); await page.getByRole("button", { name: "Save title", exact: true }).press("Enter"); await page.waitForURL("**/watchlist/add?saved=*");
     await page.getByRole("heading", { name: "Title saved", exact: true }).waitFor(); check((await page.locator(".saved-summary").innerText()).includes("Browser YouTube video"), "Real YouTube save/readback");
@@ -61,7 +61,7 @@ try {
     await page.goto(origin + "/watchlist/add"); await page.getByLabel("Entry method").selectOption("kinopoisk_unofficial"); await page.getByLabel("Title to search").fill("ambiguous"); await page.getByRole("button", { name: "Search titles" }).press("Enter");
     await page.getByRole("button", { name: "Review Browser shared title (2020)", exact: true }).waitFor();
     check(await page.getByLabel("Title", { exact: true }).inputValue() === "", "Candidates must not fill or auto-save");
-    await page.getByRole("button", { name: "Review Browser shared title (2020)", exact: true }).press("Enter"); await page.getByRole("button", { name: "Apply proposal and replace details" }).press("Enter");
+    await page.getByRole("button", { name: "Review Browser shared title (2020)", exact: true }).press("Enter"); await page.locator('input[name="reviewHandle"]').waitFor({state:"attached"});
     secrets.push(await page.locator('input[name="reviewHandle"]').inputValue());
     check(await page.getByLabel("Minutes", { exact: true }).inputValue() === "", "Never invent typical episode runtime");
     await page.getByLabel("Minutes", { exact: true }).fill("24"); await page.getByLabel("Episode numbering", { exact: true }).selectOption("continuous"); await page.getByLabel("I confirm this is a typical episode duration").check(); await page.getByLabel("Funny", { exact: true }).check();

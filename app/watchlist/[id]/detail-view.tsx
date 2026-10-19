@@ -33,7 +33,7 @@ export function DetailView({ detail, contributionAction, contributionSaved = fal
     {contributionSaved && editable && <p role="status">Your contribution is saved. This title is on the watchlist.</p>}
     {detail.archived && <div className="archive-notice"><strong>Archived</strong><p>This title is outside the active watchlist. Restore it before editing. Your group’s history is preserved.</p></div>}
   </div>
-    <section className="placeholder detail-metadata" aria-labelledby="metadata-heading"><Cover key={detail.coverUrl} url={detail.coverUrl} title={detail.title} /><div><h2 id="metadata-heading">Title information</h2><dl>
+    <section className="placeholder detail-metadata" aria-labelledby="metadata-heading"><Cover key={detail.coverUrl} url={detail.coverUrl} title={detail.title} video={detail.contentType === "youtube"} /><div><h2 id="metadata-heading">Title information</h2><dl>
       <dt>Content type</dt><dd>{contentTypes.find((type) => type.value === detail.contentType)?.label ?? "Content type unavailable"}</dd><dt>{episodic ? "Typical episode duration" : "Full duration"}</dt><dd>{durationLabel(detail.durationSeconds)}</dd>
       {episodic && <><dt>Episode numbering</dt><dd>{detail.numberingStyle === "continuous" ? "Continuous numbering" : "Season + episode"}</dd></>}
       <dt>Genres</dt><dd>{detail.genres.join(", ") || "Not specified"}</dd><dt>Moods</dt><dd>{detail.moods.join(", ") || "Not specified"}</dd>

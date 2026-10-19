@@ -5,64 +5,43 @@ import { lookupMetadata } from "../lib/metadata/lookup";
 import type { ReviewResult } from "../lib/metadata/reviews";
 import type { TitleFormState } from "../lib/title-state";
 afterEach(cleanup);
-async function proposal(title = "Provider video"): Promise<ReviewResult> {
-  return { ...await lookupMetadata({ namespace: "youtube", lookup: async () => ({ kind: "item", item: { externalId: "YtFixture01", title, contentType: "youtube", duration: { seconds: 120, meaning: "full_item", verified: true } } }) }, { kind: "detail", externalId: "YtFixture01" }), handle: "synthetic-review" };
-}
-const save = async (): Promise<TitleFormState> => ({ kind: "error", message: "Synthetic storage failure; details kept." });
-function source(value: string) { fireEvent.change(screen.getByLabelText("Entry method"), { target: { value } }); }
-it("changing an imported full duration to episodes clears it and requires an explicit typical-duration choice", async () => {
-  render(<TitleForm action={save} lookup={() => proposal()} select={vi.fn()} />);
-  source("youtube"); fireEvent.click(screen.getByText("Look up video"));
-  await screen.findByText("Apply proposal and replace details"); fireEvent.click(screen.getByText("Apply proposal and replace details"));
-  fireEvent.change(screen.getByLabelText("Content type"), { target: { value: "series" } });
-  expect((screen.getByLabelText("Minutes") as HTMLInputElement).value).toBe("");
-  const confirmation = screen.getByLabelText("I confirm this is a typical episode duration") as HTMLInputElement;
-  expect(confirmation.checked).toBe(false); fireEvent.click(confirmation); expect(confirmation.checked).toBe(true);
-  fireEvent.change(screen.getByLabelText("Minutes"), { target: { value: "24" } }); expect(confirmation.checked).toBe(false);
+async function proposal(title="Provider video",handle="synthetic-review"):Promise<ReviewResult>{return{...await lookupMetadata({namespace:"youtube",lookup:async()=>({kind:"item",item:{externalId:"YtFixture01",title,contentType:"youtube",channelTitle:"Actual channel",coverUrl:"https://i.ytimg.com/vi/YtFixture01/default.jpg",sourceUrl:"https://www.youtube.com/watch?v=YtFixture01",watchUrl:"https://www.youtube.com/watch?v=YtFixture01",genres:["Comedy"],duration:{seconds:125,meaning:"full_item",verified:true}}})},{kind:"detail",externalId:"YtFixture01"}),handle};}
+const save=async():Promise<TitleFormState>=>({kind:"error",message:"Synthetic storage failure; details kept."});
+function source(value="youtube"){fireEvent.change(screen.getByLabelText("Entry method"),{target:{value}});}
+const input=(name:string)=>screen.getByLabelText(name,{exact:true}) as HTMLInputElement;
+const click=(name:string)=>fireEvent.click(screen.getByRole("button",{name,exact:true}));
+const edit=(name:string,value:string)=>fireEvent.change(input(name),{target:{value}});
+const lookup=()=>click("Look up video");
+const handle=()=>document.querySelector<HTMLInputElement>('input[name="reviewHandle"]')?.value;
+it("clean direct link fills all supported fields immediately, keeps manually selected moods and never saves",async()=>{
+ const action=vi.fn(save);render(<TitleForm action={action} lookup={()=>proposal()} select={vi.fn()}/>);fireEvent.click(input("Funny"));source();lookup();await waitFor(()=>expect(input("Title").value).toBe("Provider video"));
+ expect(input("Minutes").value).toBe("2");expect(input("Seconds (optional)").value).toBe("5");expect(input("Genres (optional)").value).toBe("Comedy");expect(input("External watch link (optional)").value).toContain("YtFixture01");expect(input("Source link (optional)").value).toContain("YtFixture01");expect(input("Cover image link (optional)").value).toContain("i.ytimg.com");expect(input("Funny").checked).toBe(true);expect(handle()).toBe("synthetic-review");expect(screen.queryByRole("button",{name:/Apply proposal|Replace details/})).toBeNull();expect(action).not.toHaveBeenCalled();expect(screen.getByText("Actual channel")).toBeTruthy();
 });
-it("stages lookup until explicit replacement and preserves edits/moods made while waiting", async () => {
-  let resolve!: (result: ReviewResult) => void;
-  render(<TitleForm action={save} lookup={() => new Promise(done => { resolve = done; })} select={vi.fn()} />);
-  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "My existing draft" } }); fireEvent.click(screen.getByLabelText("Funny"));
-  source("youtube"); fireEvent.change(screen.getByLabelText("YouTube video link or ID"), { target: { value: "YtFixture01" } }); fireEvent.click(screen.getByText("Look up video"));
-  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Edited while waiting" } });
-  await act(async () => resolve(await proposal()));
-  expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Edited while waiting");
-  fireEvent.click(screen.getByText("Apply proposal and replace details"));
-  expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Provider video");
-  expect((screen.getByLabelText("Funny") as HTMLInputElement).checked).toBe(true);
-  expect((screen.getByLabelText("Minutes") as HTMLInputElement).value).toBe("2");
-  fireEvent.click(screen.getByText("Save title"));
-  await screen.findByText("Synthetic storage failure; details kept.");
-  expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Provider video");
+it("dirty metadata offers explicit decline/replace without changing identity or moods until accepted",async()=>{
+ render(<TitleForm action={save} lookup={()=>proposal()} select={vi.fn()}/>);edit("Title","My draft");fireEvent.click(input("Funny"));source();lookup();await screen.findByText("Replace your edited details?");expect(input("Title").value).toBe("My draft");expect(handle()).toBeUndefined();click("Keep my details");expect(handle()).toBeUndefined();lookup();await screen.findByText("Replace your edited details?");click("Replace details");expect(input("Title").value).toBe("Provider video");expect(input("Funny").checked).toBe(true);click("Save title");await screen.findByText("Synthetic storage failure; details kept.");expect(input("Title").value).toBe("Provider video");expect(handle()).toBe("synthetic-review");
 });
-it("cancelled/older lookup responses cannot replace a newer proposal or manual fields", async () => {
-  const resolvers: ((result: ReviewResult) => void)[] = [];
-  render(<TitleForm action={save} lookup={() => new Promise(done => { resolvers.push(done); })} select={vi.fn()} />);
-  source("youtube"); fireEvent.change(screen.getByLabelText("YouTube video link or ID"), { target: { value: "first" } }); fireEvent.click(screen.getByText("Look up video"));
-  fireEvent.click(screen.getByText("Cancel lookup"));
-  fireEvent.change(screen.getByLabelText("YouTube video link or ID"), { target: { value: "second" } }); fireEvent.click(screen.getByText("Look up video"));
-  await act(async () => resolvers[1](await proposal("Newest proposal")));
-  await act(async () => resolvers[0](await proposal("Old ignored proposal")));
-  expect(screen.queryByText(/Old ignored proposal/)).toBeNull(); fireEvent.click(screen.getByText("Apply proposal and replace details"));
-  expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("Newest proposal");
+it("edits while detail is pending require new consent and editing a staged replacement invalidates it",async()=>{
+ let finish!:(value:ReviewResult)=>void;render(<TitleForm action={save} lookup={()=>new Promise(done=>{finish=done;})} select={vi.fn()}/>);source();lookup();edit("Title","While waiting");await act(async()=>finish(await proposal()));expect(input("Title").value).toBe("While waiting");expect(handle()).toBeUndefined();await screen.findByRole("button",{name:"Replace details"});edit("Title","Newer still");expect(screen.queryByRole("button",{name:"Replace details"})).toBeNull();expect(handle()).toBeUndefined();
 });
-it("failure/source switching preserves manual input and usable save controls", async () => {
-  render(<TitleForm action={save} lookup={async () => ({ kind: "failure", code: "not_configured", message: "Provider not configured; continue manually.", retry: "after_configuration", retryAfterSeconds: null, manualFallback: true })} select={vi.fn()} />);
-  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "My manual title" } }); source("youtube"); fireEvent.click(screen.getByText("Look up video"));
-  await screen.findByText("Provider not configured; continue manually.");
-  source("kinopoisk_unofficial"); source("manual");
-  expect((screen.getByLabelText("Title") as HTMLInputElement).value).toBe("My manual title");
-  expect((screen.getByText("Save title") as HTMLButtonElement).disabled).toBe(false);
+it("reverting to the baseline during the await still cannot grant stale replacement consent",async()=>{
+ let finish!:(value:ReviewResult)=>void;render(<TitleForm action={save} lookup={()=>new Promise(done=>{finish=done;})} select={vi.fn()}/>);source();lookup();edit("Title","Changed");edit("Title","");await act(async()=>finish(await proposal()));await screen.findByRole("button",{name:"Replace details"});expect(handle()).toBeUndefined();click("Keep my details");expect(input("Title").value).toBe("");
 });
-it("ambiguous candidates require explicit selection; no automatic detail call or mood assignment", async () => {
-  const select = vi.fn(async (_form: FormData) => proposal("Chosen candidate"));
-  render(<TitleForm action={save} lookup={async () => ({ kind: "candidates", handle: "synthetic-search", requiresSelection: true, omittedInvalidCandidates: false, candidates: [{ identity: { namespace: "kinopoisk_unofficial", externalId: "1001" }, title: "Same name", year: 2001, contentType: "movie", coverUrl: null }, { identity: { namespace: "kinopoisk_unofficial", externalId: "1002" }, title: "Same name", year: 2020, contentType: "series", coverUrl: null }] })} select={select} />);
-  source("kinopoisk_unofficial"); fireEvent.click(screen.getByText("Search titles"));
-  await screen.findByText("Review Same name (2020)"); expect(select).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByText("Review Same name (2020)"));
-  await waitFor(() => expect(select).toHaveBeenCalledTimes(1));
-  const form = select.mock.calls[0][0] as FormData; expect(form.get("candidateId")).toBe("1002");
-  await screen.findByText("Apply proposal and replace details");
-  expect((screen.getByLabelText("Funny") as HTMLInputElement).checked).toBe(false);
+it.each(["cancel","query","source"])("%s invalidates held success and failure without clearing manual edits",async change=>{
+ let finish!:(value:ReviewResult)=>void;render(<TitleForm action={save} lookup={()=>new Promise(done=>{finish=done;})} select={vi.fn()}/>);source();lookup();if(change==="cancel")click("Cancel lookup");if(change==="query")edit("YouTube video link or ID","new query");if(change==="source")source("manual");edit("Title","Kept");await act(async()=>finish(await proposal("Old ignored")));expect(input("Title").value).toBe("Kept");expect(handle()).toBeUndefined();expect(screen.queryByText(/Old ignored/)).toBeNull();
+});
+it("newer response wins; selector switching never drops an accepted imported identity",async()=>{
+ const finishes:((value:ReviewResult)=>void)[]=[];render(<TitleForm action={save} lookup={()=>new Promise(done=>{finishes.push(done);})} select={vi.fn()}/>);source();lookup();click("Cancel lookup");lookup();await act(async()=>finishes[1](await proposal("Newest","new-handle")));await act(async()=>finishes[0](await proposal("Ignored","old-handle")));expect(input("Title").value).toBe("Newest");expect(handle()).toBe("new-handle");source("manual");expect(handle()).toBe("new-handle");expect(input("Title").value).toBe("Newest");
+});
+it("fresh manual reset confirms edited data loss and retains it on cancel",async()=>{
+ render(<TitleForm action={save} lookup={()=>proposal()} select={vi.fn()}/>);source();lookup();await waitFor(()=>expect(handle()).toBe("synthetic-review"));edit("Title","My correction");click("Start a fresh manual entry (clear details)");click("Keep editing");expect(input("Title").value).toBe("My correction");expect(handle()).toBe("synthetic-review");click("Start a fresh manual entry (clear details)");click("Clear details and start manually");expect(input("Title").value).toBe("");expect(handle()).toBeUndefined();
+});
+it("imported full duration cannot become an inferred episode duration; changing it resets confirmation",async()=>{
+ render(<TitleForm action={save} lookup={()=>proposal()} select={vi.fn()}/>);source();lookup();await waitFor(()=>expect(handle()).toBe("synthetic-review"));edit("Content type","series");expect(input("Minutes").value).toBe("");const confirmation=input("I confirm this is a typical episode duration");expect(confirmation.checked).toBe(false);fireEvent.click(confirmation);edit("Minutes","24");expect(confirmation.checked).toBe(false);expect(input("Episode numbering").value).toBe("");
+});
+it("YouTube title intent and both providers use explicit candidate and opaque page actions",async()=>{
+ const candidates:ReviewResult={kind:"candidates",handle:"opaque-search",requiresSelection:true,omittedInvalidCandidates:false,candidates:[{identity:{namespace:"youtube",externalId:"YtFixture01"},title:"One title",year:null,contentType:"youtube",channelTitle:"Real channel",duration:{seconds:125,meaning:"full_item"},coverUrl:"https://i.ytimg.com/vi/YtFixture01/default.jpg"}],page:{number:1,next:"opaque-search",limitReached:false}};
+ const find=vi.fn(async(_form:FormData)=>candidates),select=vi.fn(async()=>proposal()),page=vi.fn(async(_form:FormData)=>({...candidates,kind:"no_match",candidates:[],manualFallback:true,page:{number:2,previous:"opaque-empty",next:"opaque-empty",limitReached:false}} as ReviewResult));render(<TitleForm action={save} lookup={find} select={select} page={page}/>);source();edit("YouTube lookup","title");edit("YouTube title","A title");click("Search titles");await screen.findByText("Real channel · 2 min 5 sec");expect(find.mock.calls[0][0].get("queryKind")).toBe("title");expect(find.mock.calls[0][0].get("query")).toBe("A title");expect(select).not.toHaveBeenCalled();expect(handle()).toBeUndefined();click("Next page");await screen.findByText(/No matching titles on this page/);expect((page.mock.calls[0]?.[0] as FormData).get("handle")).toBe("opaque-search");expect((page.mock.calls[0]?.[0] as FormData).get("direction")).toBe("next");expect(screen.getByRole("button",{name:"Previous page"})).toBeTruthy();
+});
+it("explicit candidate selection fills clean form without assigning moods",async()=>{
+ const find=vi.fn(async()=>({kind:"candidates",handle:"search",requiresSelection:true,omittedInvalidCandidates:false,candidates:[{identity:{namespace:"kinopoisk_unofficial",externalId:"1001"},title:"Same",year:2001,contentType:"movie",coverUrl:null}]} as ReviewResult));const select=vi.fn(async(_form:FormData)=>proposal("Chosen"));render(<TitleForm action={save} lookup={find} select={select}/>);source("kinopoisk_unofficial");click("Search titles");await screen.findByRole("button",{name:"Review Same (2001)"});expect(select).not.toHaveBeenCalled();click("Review Same (2001)");await waitFor(()=>expect(input("Title").value).toBe("Chosen"));expect(select.mock.calls[0][0].get("candidateId")).toBe("1001");expect(input("Funny").checked).toBe(false);
 });

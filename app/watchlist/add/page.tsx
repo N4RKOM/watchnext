@@ -7,7 +7,7 @@ import { AccessErrorMessage } from "../../components/access-error";
 import { saveTitleAction } from "./actions";
 import { TitleForm } from "./title-form";
 import { authorizeRequest } from "../../../lib/request-access";
-import { lookupTitleAction, selectCandidateAction } from "./lookup-actions";
+import { lookupTitleAction, selectCandidateAction, pageCandidatesAction } from "./lookup-actions";
 export const dynamic = "force-dynamic";
 
 export default async function AddTitlePage({ searchParams }: { searchParams: Promise<{ saved?: string | string[] }> }) {
@@ -35,6 +35,6 @@ export default async function AddTitlePage({ searchParams }: { searchParams: Pro
         <dt>Watch link</dt><dd>{saved.watchUrl ? <a href={saved.watchUrl} rel="noreferrer">{saved.watchUrl}</a> : "Not provided"}</dd>
         <dt>Added by</dt><dd>{saved.contributors.join(", ")}</dd></dl><Link href={`/watchlist/add?saved=${encodeURIComponent(saved.id)}`}>Reopen saved summary</Link>{" · "}<Link href={`/watchlist/${encodeURIComponent(saved.id)}`}>Open details, refresh or correct metadata</Link>
     </section>}
-    <section className="placeholder" aria-labelledby="details-heading"><h2 id="details-heading">{saved ? "Add another title" : "Title details"}</h2><TitleForm key={contextKey+(saved?.id ?? "new")} action={saveTitleAction.bind(null,contextKey)} lookup={lookupTitleAction.bind(null,contextKey)} select={selectCandidateAction.bind(null,contextKey)} /></section>
+    <section className="placeholder" aria-labelledby="details-heading"><h2 id="details-heading">{saved ? "Add another title" : "Title details"}</h2><TitleForm key={contextKey+(saved?.id ?? "new")} action={saveTitleAction.bind(null,contextKey)} lookup={lookupTitleAction.bind(null,contextKey)} select={selectCandidateAction.bind(null,contextKey)} page={pageCandidatesAction.bind(null,contextKey)} /></section>
   </div>;
 }

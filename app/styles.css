@@ -142,3 +142,13 @@ h2 { font-size: clamp(1.4rem, 3vw, 1.8rem); font-weight: 700; }
 .picker-feedback { overflow-wrap: anywhere; }
 .picker-page > .group-result { margin-top: var(--space-6); }
 .picker-page .eyebrow { overflow-wrap: anywhere; }
+
+/* Shared provider previews keep their space through missing/broken-image states. */
+.title-cover.video-cover { aspect-ratio: 16 / 9; }
+.lookup-results { list-style: none; padding: 0; display: grid; gap: var(--space-4); }
+.lookup-card, .lookup-review { display: grid; grid-template-columns: 8rem minmax(0,1fr); gap: var(--space-4); align-items: start; }
+.lookup-card { padding: var(--space-4); border: 1px solid var(--color-border); border-radius: 0.5rem; }
+.lookup-card h5 { font-size: 1rem; margin: 0; overflow-wrap: anywhere; }
+.lookup-card .button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.lookup-review { margin-block: var(--space-4); }
+@media (max-width: 30rem) { .lookup-card, .lookup-review { grid-template-columns: 5rem minmax(0,1fr); gap: var(--space-3); } }

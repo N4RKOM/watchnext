@@ -13,7 +13,7 @@ export function WatchlistContent({ view, archived = false, contributionAction }:
   </div>
   {view.items.length === 0 ? <section className="placeholder"><h2>{archived ? "Your archive is empty" : "Your watchlist is empty"}</h2><p>{archived ? "Titles appear here when their last contribution is removed." : "Add the first thing your group wants to watch."}</p></section> : <ul className="watchlist-items">
     {view.items.map((item) => <li key={item.id}><article className="watchlist-card" aria-labelledby={`title-${item.id}`}>
-      <Cover key={`${item.id}:${item.coverUrl}`} url={item.coverUrl} title={item.title} />
+      <Cover key={`${item.id}:${item.coverUrl}`} url={item.coverUrl} title={item.title} video={item.contentType === "youtube"} />
       <div className="watchlist-metadata"><h2 id={`title-${item.id}`}>{item.title ?? "Metadata unavailable"}</h2><p>{contentTypes.find((type) => type.value === item.contentType)?.label ?? "Content type unavailable"}</p>
         <p>{item.numberingStyle === "none" ? "Full duration" : "Typical episode duration"}: {durationLabel(item.durationSeconds)}</p>
         <p>Moods: {item.moods.join(", ") || "Not specified"}</p>
