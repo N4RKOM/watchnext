@@ -143,3 +143,7 @@ QA independently checks this inventory/reference issue and owns actual PASS/clos
 ## #41 documentation verification
 
 Engineer checked 362 local Markdown file targets, every FR01-FR17 and NFR01-NFR05, 40 unique domain-operation rows plus six client-only interactions, five original PNG byte/checksum/dimension labels and the exact preserved baseline tag. Current/baseline diff whitespace and UTF-8 checks passed. No app/test/schema/dependency/runtime files changed and no application tests/build/server or normal-data operations ran for this documentation issue. This records Engineer checks, not independent QA PASS.
+
+## Implemented foundation boundary after #42 split
+
+Only the context/result/scenario/read-reset and explicit isolated `/mock` entry are implemented by #42; [exact behavior/commands](mock-frontend.md). The 40 domain rows and six U groups above remain the full phase target, distributed across #55–#60 and final #61. Proposed domain methods above are not implemented merely because this foundation exists. #43 waits for all of those owners. Native production routes remain unchanged and must not be mistaken for mock-service phase completion.
