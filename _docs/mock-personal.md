@@ -1,6 +1,6 @@
 # Mock personal progress and feedback handoff — issue #59
 
-Status: **PM-groomed, not implemented or QA-verified.** Engineering starts only after prerequisite [#58](https://github.com/xiaodlb/watchnext/issues/58) receives its independent QA PASS. [#59](https://github.com/xiaodlb/watchnext/issues/59) owns P01–P05 and the personal portions of U06 in the [operation inventory](operation-inventory.md). Read the [mock library](mock-library.md), [mock entry](mock-entry.md), [mock frontend](mock-frontend.md), [API](api.md) sections for issues #20–#23, [decisions](decisions.md) D03–D07, D10–D13 and D23–D25, [specification](specification.md) FR09–FR11, [design system](design-system.md) and [testing guidelines](testing-guidelines.md).
+Status: **Implemented and Engineer-tested; independent QA pending.** Engineering started after prerequisite [#58](https://github.com/xiaodlb/watchnext/issues/58) received its independent QA PASS at `89deec3`. See [Engineer implementation and evidence](#engineer-implementation-and-evidence). [#59](https://github.com/xiaodlb/watchnext/issues/59) owns P01–P05 and the personal portions of U06 in the [operation inventory](operation-inventory.md). Read the [mock library](mock-library.md), [mock entry](mock-entry.md), [mock frontend](mock-frontend.md), [API](api.md) sections for issues #20–#23, [decisions](decisions.md) D03–D07, D10–D13 and D23–D25, [specification](specification.md) FR09–FR11, [design system](design-system.md) and [testing guidelines](testing-guidelines.md).
 
 Every rule below is an **engineering default derived from the completed baseline**: `lib/episode-progress.ts`, `lib/watch-progress.ts`, `lib/ratings.ts`, `lib/notes.ts`, their `*-state.ts` helpers and `app/watchlist/[id]/detail-view.tsx` at baseline tag `graded-baseline-2026-10-19`. These defaults are **not new user answers**. Where the inventory wording differs from the baseline source, the source decides. The one known case is P01's "NULL type denied". The baseline allows own episode progress on a NULL-type title whose retained numbering is episodic, and shows an unavailable-metadata notice. It denies a structure mismatch.
 
@@ -71,3 +71,34 @@ Pending and error injection uses only the existing Ready (80 ms), Slow (1200 ms)
 **Preserved checks:** the absent database, empty keys, import isolation, local-only traffic, sentinels and owned cleanup. Existing #55–#58 assertions stay unchanged, except a minimal documented update where the history shape changes from summary strings to structured fields. Identity, attribution and preservation checks are never weakened.
 
 **Scope limits:** this is synthetic volatile modeling, not real authorization, persistence or human testing. The picker and its use of these records belong to [#60](https://github.com/xiaodlb/watchnext/issues/60). Whole-phase evidence belongs to [#61](https://github.com/xiaodlb/watchnext/issues/61), then [#43](https://github.com/xiaodlb/watchnext/issues/43).
+
+## Engineer implementation and evidence
+
+Implemented in commit `63b661c` (code and tests). These are Engineer results, not an independent QA PASS.
+
+- **Contracts:** `frontend/service/contracts.ts` adds `ProgressService`/`FeedbackService` with the eight named operations, the structured `LibraryHistory` record (`progress` episode/watch or null, `rating`, `note`), `OwnPersonal`, `PersonalEntry`, `PersonalPanel` (on every `LibraryTitle` as `personal`), `PersonalClaim` and `PersonalCommit` (`record`, `own`, `history`), plus the `personal_access`/`personal_input` failure codes and field keys.
+- **Service:** `frontend/mock/personal.ts` mutates the existing library rows through the library's gate (expiry, scenario delay, cancel, stale context). Each commit rechecks the live actor (account membership or selected legacy profile), the member and numbering claims, same-group title, archive, structure and current runtime, then replaces only the actor's frozen record and the row's history array. Unchanged writes and absent clears keep the same record and array references; a fully cleared record is kept with its ID. `frontend/mock/library.ts` seeds structured records with the unchanged IDs, adds the three new seeds, projects `personal` and applies the D10 guard to blocking records only. `frontend/mock/service.ts` wires the namespaces and removes the personal pending domain.
+- **Pure helpers:** client-safe copies of `parseWatchTimestamp`, `formatWatchTimestamp`, `usableRuntime`, `parseRating`, coordinate parsing and `inspectNoteDraft`/`noteLimit`. They are copies rather than imports because the existing isolation test only allows `frontend/` and `app/mock/` in the mock import closure. `tests/frontend/personal.test.ts` asserts equality with the production `lib/` helpers over boundary corpora. No `lib/` file changed.
+- **UI:** `app/mock/personal.tsx`, mounted in library detail, renders the own episode or watch, rating and note panels (or the honest Choose profile / archived explanation) and the group-visible history with member order, You/Inactive labels, record IDs and the baseline absent wording. Pending disables the panel operations, moves focus to the reachable **Cancel personal request** and keeps library navigation available. Field errors are associated and focused; a failure keeps every draft. Back to titles and opening another title announce that unsaved personal drafts were discarded; account, group, profile and mode changes keep the existing library reset announcement.
+
+Engineering interpretations, recorded rather than silently changing criteria:
+
+- The member **and** numbering claims are checked for all eight operations, including rating and note. A rating or note never requires a type, runtime or completion, but a form opened for a numbering that has since changed is treated as stale.
+- "Changed runtime" at commit time means a timestamp is validated against the runtime current at commit; a runtime change does not invalidate rating, note, clear or completion.
+- "Synthetic-time expiry" fails a held write only when the expiry removes what that write depends on (for example, an imported runtime). Expiry never changes numbering.
+- Wrapping labels were replaced by `htmlFor` labels on the note textarea and position select, so their accessible names stay exact.
+
+Minimal documented adaptations of earlier assertions (identity, attribution and preservation checks are unchanged):
+
+- `tests/frontend/preview.test.tsx` and the foundation browser step now expect **one** "Not available yet" domain (the picker), because #59 removes the personal pending domain as the issue requires.
+- `tests/frontend/library-ui.test.tsx` and `tests/fixtures/mock-library-journey.mjs` count the two seeded notes inside the **Group-visible personal history** list. The own note textarea now also contains the actor's note, so a page-wide count would be three.
+
+Verification on `63b661c`, run serially:
+
+- `pnpm test tests/frontend`: 13 files, 81 tests passed (new `personal.test.ts` 12 tests, `personal-ui.test.tsx` 5 tests).
+- `pnpm typecheck`: passed.
+- `pnpm test`: 100 files, 1,039 tests passed on the first run.
+- `pnpm test:mock`: PASS, 16 of 16 steps, including the new personal journey at 375 and 1280 pixels, with all isolation, sentinel and cleanup flags true.
+- `git diff --check`: passed.
+
+Limits: synthetic volatile modeling only. No real authorization, persistence, database, provider or production change, no picker logic, no human testing and no screenshot inspection is claimed.
