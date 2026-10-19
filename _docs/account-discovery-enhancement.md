@@ -131,6 +131,8 @@ Provider keys remain optional for manual operation, server-only and never inspec
 
 ## Planned interaction and server contracts
 
+The [#39 Added by me contract](added-by-me.md) defines live account-derived contribution filtering, All default, URL/back/reload behavior, legacy/archive separation and unchanged shared attribution/history/picker scope. It records delegated filter defaults, not a claim of delivery.
+
 - Signed-out account landing offers Register/Sign in and separately labeled legacy access. Signed-in account home shows its groups/create/join/switch; no arbitrary legacy profile claim.
 - Account-group own writes derive account/member server-side. Existing member-selection actions cannot impersonate members in account groups. Reads, lookup reviews, picker cycles, metadata refresh and mutations recheck current access, not just cookie existence.
 - Recovery form submits secrets only in protected body; replacement code/private invitation reveal appears only in the explicit success view. Routine URL/request/error logs, traces and retained test artifacts must not capture credentials.
