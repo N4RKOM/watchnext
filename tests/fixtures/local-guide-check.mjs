@@ -55,4 +55,3 @@ try {
 } catch (error) { failure = error; }
 finally { try { await browser?.close(); } catch { failure ??= new Error("Owned guide browser could not close"); } try { await stopOwned(server); } catch { failure ??= new Error("Owned guide server could not stop"); } }
 if (failure) { let message = failure instanceof Error ? failure.message.split("\n")[0] : "Unknown verification failure"; for (const secret of secrets) message = message.split(secret).join("<redacted>"); message = message.split(root).join("<fixture>").replace(/\/invite\/[^\s]+/g, "/invite/<redacted>"); console.error(`FAIL guide ${phase}: ${message.slice(0, 400)}`); process.exitCode = 1; }
-

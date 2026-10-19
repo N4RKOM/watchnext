@@ -14,7 +14,7 @@ try {
     phase = `fresh checkout: pnpm ${command.join(" ")}`; const output = await pnpmRun(command, checkout, { ...process.env, NEXT_TELEMETRY_DISABLED: "1" }); results.push({ command: `pnpm ${command.join(" ")}`, pass: true, ...(command[0] === "test" ? { summary: output.match(/Tests\s+\d+ passed[^\r\n]*/)?.[0] } : {}) }); console.log(`PASS ${phase}`);
   }
   console.log(JSON.stringify({ pass: true, sourceRevision: revision, results, allDataIsolated: true, noLiveProviderCalls: true, ownedCheckoutWillBeRemoved: true }));
-} catch (error) { console.error(`FAIL ${phase}: ${error instanceof Error && (!root || /^Command verify:guide/.test(error.message)) ? error.message : "Documented isolated command failed; no normal data was selected. Inspect the named recipe/check."}`); process.exitCode = 1; }
+} catch (error) { console.error(`FAIL ${phase}: ${error instanceof Error && (!root || /^Command [A-Za-z:]+ failed \(exit /.test(error.message)) ? error.message : "Documented isolated command failed; no normal data was selected. Inspect the named recipe/check."}`); process.exitCode = 1; }
 finally {
   if (root) { if (dirname(resolve(root)) !== realpathSync.native(tmpdir()) || !/^watchnext-guide-test-[A-Za-z0-9]+$/.test(basename(root)) || lstatSync(root).isSymbolicLink() || realpathSync.native(root) !== root) throw new Error("Unsafe fresh-checkout cleanup refused"); rmSync(root, { recursive: true, force: true }); }
 }

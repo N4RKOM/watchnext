@@ -4,7 +4,7 @@ Dated **October 19, 2026**. This maps all twelve explicit [user answers](account
 
 ## Direct observable answer coverage
 
-All browser modules below are mandatory in ordinary `pnpm test:e2e`, serially after a fresh current-source build, at **375px and1280px**. Native app routes/actions, guards, adapters, normalized reviews, SQLite writes and sessions are real. Only outbound provider HTTP/image responses are synthetic. Read-only snapshots supplement screen assertions; SQL fixture writes simulate deadlines, read errors and legacy schema data, never implement the expected user journey outcome.
+All browser modules below are mandatory in ordinary `pnpm test:e2e`, serially after a fresh current-source build, at **375px and 1280px**. Native app routes/actions, guards, adapters, normalized reviews, SQLite writes and sessions are real. Only outbound provider HTTP/image responses are synthetic. Read-only snapshots supplement screen assertions; SQL fixture writes simulate deadlines, read errors and legacy schema data, never implement the expected user journey outcome.
 
 | Answer | Owning issue and current source | Observable verification |
 | --- | --- | --- |
@@ -56,5 +56,5 @@ Each suite captures private generated password/recovery/invite/session/review/pr
 - Providers use synthetic outbound contracts. No real keys inspected, live entitlement/quota/image licensing verified or purchase performed. Manual operation remains key-free. YouTube deadlines and app-chosen Kinopoisk local30-day policy remain enforced.
 - Kinopoisk FILM filmLength minutes are an **editable app interpretation**, not units confirmed by the inspected OpenAPI; episodic/unknown/invalid runtime remains manual. Mood is always manual; no fabricated duration/episode count/anime inference.
 - Backups capture security state at snapshot time. Later reset/revocation/removal cannot be reconstructed from an older copy. No automatic global logout/lost-code recovery is promised. Offline expiry requires deliberately maintaining/deleting retained copies; no powered-off erasure or SSD/cloud snapshot cleanup is claimed.
-- Existing bounded Next migration tracing warning remains. Build worker cap is two; ordinary Vitest discovery/coverage is unchanged. No dependencies/schema/product behavior were changed for #40.
+- Existing bounded Next migration tracing warning remains. Build and Vitest concurrent-worker caps are two; test discovery/assertions/default timeouts/native crypto remain unchanged. PM authorized the bounded #40 concurrency repair after a reproducible 957pass/1timeout versus958pass controlled comparison. No dependencies/schema/product behavior were changed for #40.
 - Email/social login, legacy claiming/conversion, ownership transfer, hard deletion, hosting, playback and preference learning remain outside the explicit scope. The existing synthetic demo intentionally remains legacy mode.
