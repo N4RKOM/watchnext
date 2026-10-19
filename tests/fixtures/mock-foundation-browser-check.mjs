@@ -1,3 +1,4 @@
+import { mockLibraryJourney } from "./mock-library-journey.mjs";
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
 import { mkdtempSync, realpathSync, lstatSync, readFileSync, writeFileSync, existsSync, rmSync } from "node:fs";
@@ -49,11 +50,11 @@ try {
     const context = await browser.newContext({ viewport: { width, height: 900 }, serviceWorkers: "block" }); context.setDefaultTimeout(10000);
     let mockPhase = true; const unexpected = [], external = [];
     await context.route("**/*", route => { const url = new URL(route.request().url()); if (url.origin !== origin) { external.push(url.hostname); return route.abort(); } return route.continue(); });
-    context.on("request", request => { const url = new URL(request.url()); if (mockPhase && (!(["/mock", "/favicon.ico"].includes(url.pathname) || url.pathname.startsWith("/_next/")) || request.method() !== "GET")) unexpected.push(url.pathname); });
+    context.on("request", request => { const url = new URL(request.url()); if (mockPhase && (!(["/mock", "/favicon.ico", "/mock-cover.svg"].includes(url.pathname) || url.pathname.startsWith("/_next/")) || request.method() !== "GET")) unexpected.push(url.pathname); });
     const page = await context.newPage();
     await step(`${width}: explicit shell, real service pending/failure/retry/cancel/reset and tab isolation`, async () => {
       await page.goto(origin + "/mock?memberId=forged&scenario=slow"); await page.getByRole("heading", { name: "WatchNext preview", exact: true }).waitFor();
-      await page.getByLabel("Synthetic demo notice").waitFor(); check(await page.getByText("Not available yet", { exact: true }).count() === 4, "four pending domains, no pretend working forms");
+      await page.getByLabel("Synthetic demo notice").waitFor(); check(await page.getByText("Not available yet", { exact: true }).count() === 3, "three pending domains, no pretend working forms");
       await page.keyboard.press("Tab"); check((await page.locator(":focus").textContent()) === "Skip to main content", "keyboard skip link"); await page.keyboard.press("Enter");
       await page.getByRole("button", { name: "Load preview", exact: true }).press("Enter"); await page.getByRole("status").filter({ hasText: "Loading" }).waitFor();
       await page.getByRole("button", { name: "Cancel request", exact: true }).press("Enter"); await page.getByRole("status").filter({ hasText: "canceled" }).waitFor();
@@ -121,6 +122,7 @@ try {
       if (process.env.WATCHNEXT_VISUAL_CHECK === "1") { const path = join(root, `groups-${width}.png`); await page.screenshot({path,fullPage:true}); screenshots.push(path); }
       for (const invite of [createdInvite,rotatedInvite,legacyInvite]) check(!output.includes(invite) && !page.url().includes(invite),"private synthetic invite absent from output/URL"); check(unexpected.length === 0 && external.length === 0,"groups use no production API/action/external request"); check((await context.cookies()).length === 0 && await page.evaluate(()=>localStorage.length === 0 && sessionStorage.length === 0),"groups have no durable credentials/storage"); unchanged();
     });
+    await step(`${width}: real synthetic library/Mine/detail/edit/archive/restore and legacy journey`, async () => { await mockLibraryJourney({page,origin,width,check}); check(unexpected.length === 0 && external.length === 0, "library uses local assets only, no production or external requests"); unchanged(); });
     mockPhase = false;
     await step(`${width}: production default and forged query stay production, without initialization`, async () => {
       await page.goto(origin); await page.getByRole("heading", { name: "Your private account", exact: true }).waitFor(); const home = await page.locator("main").innerText();

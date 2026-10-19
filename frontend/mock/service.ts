@@ -1,10 +1,10 @@
+import { createMockLibrary } from "./library";
 import { createMockGroups } from "./groups";
 import { sameContext, selectDemo } from "../service/contracts";
 import type { ContextIdentity, FrontendService, MockContext, MockScenario, RequestOptions, ServiceResult, AccountInput, AccountSummary, PrivateDisclosure, FieldErrors } from "../service/contracts";
 let instances = 0;
 export const scenarioDelays: Readonly<Record<MockScenario, number>> = Object.freeze({ ready: 80, slow: 1200, unavailable: 300 });
 export const pendingDomains = Object.freeze([
-  { key: "library", label: "Shared library, details and archive", issue: 57 },
   { key: "entry", label: "Manual entry and provider review", issue: 58 },
   { key: "personal", label: "Personal progress, ratings and notes", issue: 59 },
   { key: "picker", label: "Picker and Pick again", issue: 60 },
@@ -59,7 +59,8 @@ export function createMockService(options: { now?: () => number } = {}): Fronten
   };
   const read = async (options: RequestOptions = {}) => gate(identity(), options, result);
   const groups = createMockGroups({ account: () => current, identity, bump: () => { revision++; }, code, now: options.now ?? Date.now, gate });
-  return Object.freeze({ mode: "mock", groups: groups.service, accounts: Object.freeze({
+  const library = createMockLibrary({ identity, workspace: groups.workspace, gate });
+  return Object.freeze({ mode: "mock", library: library.service, groups: groups.service, accounts: Object.freeze({
     read,
     async register(input: AccountInput, expected: ContextIdentity, options: RequestOptions = {}): Promise<ServiceResult<PrivateDisclosure>> {
       return gate<PrivateDisclosure>(expected, options, () => {
@@ -110,7 +111,7 @@ export function createMockService(options: { now?: () => number } = {}): Fronten
       if (!sameContext(expected, before)) return stale();
       if (!await wait(scenarioDelays.ready, options.signal)) return cancelled();
       if (!sameContext(before, identity())) return stale();
-      seed(); seedOwner(); groups.reset(); current = null; revision++;
+      seed(); seedOwner(); groups.reset(); library.reset(); current = null; revision++;
       return result();
     },
   }) });

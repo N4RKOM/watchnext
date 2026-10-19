@@ -19,7 +19,7 @@ export function createMockGroups(h: Hooks) {
   function reset() {
     groups = [
       { id: "friday", name: "Synthetic Friday friends", kind: "account", owner: "seeded-owner", generation: 1, invite: "SYNTHETIC-FRIDAY-INITIAL", members: [member("friday-owner", "seeded-owner", "Demo.Owner", "purple", true), member("friday-viewer", "seeded-viewer", "Demo.Viewer", "blue", true)] },
-      { id: "weekend", name: "Synthetic weekend pair", kind: "account", owner: "seeded-viewer", generation: 1, invite: "SYNTHETIC-WEEKEND-INITIAL", members: [member("weekend-viewer", "seeded-viewer", "Demo.Viewer", "blue", true)] },
+      { id: "weekend", name: "Synthetic weekend pair", kind: "account", owner: "seeded-viewer", generation: 1, invite: "SYNTHETIC-WEEKEND-INITIAL", members: [member("weekend-viewer", "seeded-viewer", "Demo.Viewer", "blue", true), { ...member("weekend-retired", "seeded-retired", "Past participant", "slate", true), active: false, generation: 2, removedAtGeneration: 1 }] },
       { id: "legacy-sample", name: "Separate legacy sample", kind: "legacy", owner: null, generation: 1, invite: "SYNTHETIC-LEGACY-INITIAL", members: [member("legacy-sample-profile", null, "Legacy sample", "teal", true)] },
     ]; selected = null; profileId = null; mode = "account"; counter = 0; pending = null;
   }
@@ -103,5 +103,5 @@ export function createMockGroups(h: Hooks) {
       profileId = m.id; changed(); return result();
     }),
   });
-  return { service, reset, accountChanged, memberships, current: () => { const g = accessible(); return g ? summary(g) : null; } };
+  return { service, reset, accountChanged, memberships, workspace, current: () => { const g = accessible(); return g ? summary(g) : null; } };
 }

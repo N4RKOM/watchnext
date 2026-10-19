@@ -3,7 +3,7 @@ export type FieldErrors = Readonly<Partial<Record<"mode" | "scenario" | "context
 export type ServiceFailure = Readonly<{
   kind: "failure";
   error: Readonly<{
-    code: "invalid_selection" | "demo_unavailable" | "invalid_account" | "invalid_credentials" | "invalid_proof" | "group_access" | "group_input" | "invite_invalid";
+    code: "invalid_selection" | "demo_unavailable" | "invalid_account" | "invalid_credentials" | "invalid_proof" | "group_access" | "group_input" | "invite_invalid" | "library_access" | "library_input" | "library_conflict";
     message: string;
     retryable: boolean;
     fields?: FieldErrors;
@@ -32,7 +32,28 @@ export interface FrontendService {
   readonly context: ContextService;
   readonly accounts: AccountService;
   readonly groups: GroupService;
+  readonly library: LibraryService;
   // Domain namespaces will be added by #55–#60, never fabricated as successful here.
+}
+
+export const libraryMoods = ["funny", "relaxing", "exciting", "dark", "emotional"] as const;
+export type LibraryType = "movie" | "series" | "anime" | "youtube";
+export type Numbering = "none" | "season_episode" | "continuous";
+export type LibraryDraft = Readonly<{ title: string; contentType: LibraryType | ""; minutes: string; seconds: string; numberingStyle: Numbering; genres: string; moods: readonly string[]; watchUrl: string; sourceUrl: string; coverUrl: string }>;
+export type LibraryHistory = Readonly<{ id: string; memberId: string; progress: string; rating: number | null; note: string }>;
+export type LibraryTitle = Readonly<{ id: string; groupId: string; revision: number; createdBy: string; providerId: string | null; archived: boolean; title: string | null; contentType: LibraryType | null; durationSeconds: number | null; numberingStyle: Numbering; genres: readonly string[]; moods: readonly string[]; watchUrl: string | null; sourceUrl: string | null; coverUrl: string | null; origins: Readonly<Record<string, "authored" | "provider" | "unavailable">>; availability: string; contributors: readonly MemberSummary[]; history: readonly LibraryHistory[]; historyMembers: readonly MemberSummary[]; canEdit: boolean; canRemove: boolean; canRestore: boolean }>;
+export type LibraryList = Readonly<{ mode: "account" | "legacy"; filter: "all" | "mine"; notice: string | null; archived: boolean; items: readonly LibraryTitle[] }>;
+export type LibrarySave = Readonly<{ status: "saved"; title: LibraryTitle }> | Readonly<{ status: "confirmation"; handle: string; message: string }>;
+export interface LibraryService {
+  list(filter: unknown, archived: boolean, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<LibraryList>>;
+  detail(id: string, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<LibraryTitle>>;
+  editDraft(id: string, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<LibraryTitle>>;
+  save(id: string, revision: number, draft: LibraryDraft, confirmation: string | undefined, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<LibrarySave>>;
+  removeOwn(id: string, revision: number, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<LibraryTitle>>;
+  restore(id: string, revision: number, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<LibraryTitle>>;
+}
+export function libraryFilter(value: unknown): { filter: "all" | "mine"; notice: string | null } {
+  return value === undefined || value === null || value === "all" ? { filter: "all", notice: null } : value === "mine" ? { filter: "mine", notice: null } : { filter: "all", notice: "Unsupported or repeated library filter. Showing All." };
 }
 
 export const avatarColors = ["blue", "purple", "teal", "rose", "amber", "slate"] as const;
