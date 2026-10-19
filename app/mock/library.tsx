@@ -12,7 +12,7 @@ export function MockCover({ source }: { source: string | null }) {
 function Attribution({ title }: { title: LibraryTitle }) { return <ul aria-label="All contributors">{title.contributors.map(m=><li key={m.id}><span className={styles.member} style={{backgroundColor:`var(--avatar-${m.color})`}}>{m.name}</span>{!m.active && " Inactive participant"}</li>)}</ul>; }
 const duration=(t:LibraryTitle)=>t.durationSeconds===null ? "Duration unavailable" : `${t.contentType === "series" || t.contentType === "anime" ? "Typical episode" : "Full duration"}: ${Math.floor(t.durationSeconds/60)}m ${t.durationSeconds%60}s`;
 type Intent = { kind:"remove"|"restore"; title: LibraryTitle; context:ContextIdentity };
-export function MockLibrary({ service, identity, scenario, initialFilter, invalidated }: {service:FrontendService;identity:{current:ContextIdentity};scenario:MockScenario;initialFilter?:unknown;invalidated:boolean}) {
+export function MockLibrary({ service, identity, scenario, initialFilter, invalidated, openTitle }: {service:FrontendService;identity:{current:ContextIdentity};scenario:MockScenario;initialFilter?:unknown;invalidated:boolean;openTitle?:{id:string;nonce:number}}) {
   const [refreshOutcome,setRefreshOutcome]=useState<ProviderOutcome>("normal");
   const [libraryMode,setLibraryMode]=useState<"account"|"legacy">();
   const [filter,setFilter]=useState<unknown>(initialFilter), [list,setList]=useState<LibraryList>(), [detail,setDetail]=useState<LibraryTitle>(), [draft,setDraft]=useState<LibraryDraft>(), [editing,setEditing]=useState<LibraryTitle>(), [confirmation,setConfirmation]=useState<string>(), [intent,setIntent]=useState<Intent>(), [archived,setArchived]=useState(false), [pending,setPending]=useState(false);
@@ -37,7 +37,10 @@ export function MockLibrary({ service, identity, scenario, initialFilter, invali
   const left=()=>detail?"Synthetic library ready. The previous title view and any unsaved personal drafts were discarded; nothing was saved.":undefined;
   function load(next:unknown=filter,archive=archived){const done=left();clearViews();setArchived(archive);void run((expected,options)=>service.library.list(next,archive,expected,options),value=>{setList(value);setLibraryMode(value.mode);},undefined,done);}
   function choose(next:"all"|"mine"){cancel();setFilter(next);const url=new URL(window.location.href);url.searchParams.set("filter",next);window.history.pushState(null,"",url);load(next,false);}
-  function open(id:string){const done=left();clearViews();void run((expected,options)=>service.library.detail(id,expected,options),setDetail,undefined,done);}
+  function open(id:string,done=left()){clearViews();void run((expected,options)=>service.library.detail(id,expected,options),setDetail,undefined,done);}
+  // #60: the picker's View details / no-match action opens this mounted detail by ID (a read; never a production route). A request present at mount is ignored.
+  const handledOpen=useRef(openTitle?.nonce);
+  useEffect(()=>{if(!openTitle||openTitle.nonce===handledOpen.current)return;handledOpen.current=openTitle.nonce;if(running.current)cancel();open(openTitle.id,left()??"Title details opened from the picker.");},[openTitle]);
   function save(handle?:string){if(!editing||!draft)return;void run<LibrarySave>((expected,options)=>service.library.save(editing.id,editing.revision,draft,handle,expected,options),value=>{if(value.status==="confirmation")setConfirmation(value.handle);else{setDetail(value.title);setEditing(undefined);setDraft(undefined);setConfirmation(undefined);setList(undefined);}},editContext.current);}
   const draftField=(name:keyof LibraryDraft,value:string|readonly string[])=>{if(running.current)cancel();setDraft(d=>d?{...d,[name]:value}:d);setConfirmation(undefined);};
   const chosen=libraryFilter(filter), legacy=libraryMode === "legacy";

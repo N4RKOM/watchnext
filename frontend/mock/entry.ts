@@ -15,6 +15,8 @@ export function createMockEntry(h:Hooks){
  const failure=(message:string):ServiceResult<never>=>({kind:"failure",error:{code:"library_input",message,retryable:true}});
  const result=<T>(value:T):ServiceResult<T>=>({kind:"success",value,context:h.identity()});
  const token=(prefix:string)=>`${prefix}-${++serial}`;
+ /** #60: a new save is created at max(metadata clock, newest existing creation + 1 ms), so creation order always follows save order. */
+ const createdAt=()=>new Date(Math.max(now(),...h.rows().map(r=>Date.parse(r.createdAt)+1))).toISOString();
  function expire(){
    for(const [id,r]of reviews)if(r.value.expiresAt<=now()||!sameContext(r.context,h.identity()))reviews.delete(id);
    for(const [id,p]of pages)if(p.expiresAt<=now()||!sameContext(p.context,h.identity()))pages.delete(id);
@@ -68,7 +70,7 @@ export function createMockEntry(h:Hooks){
      const match=providerMatch??named,signature=JSON.stringify([expected,metadata,reviewHandle,match?.id,match?.revision]);
      if(match&&(!providerMatch||match.archived)&&(!confirmation||confirms.get(confirmation)?.signature!==signature)){const handle=token("save-confirmation");confirms.set(handle,{signature,expiresAt:Math.min(r?.value.expiresAt??Infinity,now()+600000),context:h.identity()});while(confirms.size>20)confirms.delete(confirms.keys().next().value!);return result({status:"confirmation",handle,matchId:match.id,message:match.archived?"Restore this same archived title and retained history?":"Save your contribution to this existing title without replacing its metadata/history?"});}
      let row=match;
-     if(!row){row={...metadata,id:token("saved-title"),groupId:w.selected!.id,revision:1,createdBy:member,providerId:identity,archived:false,contributions:[],history:Object.freeze([]),origins:{},deadlines:{},availability:r?r.value.notice:"Manually authored synthetic entry."};for(const[field,value]of Object.entries(metadata)){const imported=r&&metadataFields.includes(field as typeof metadataFields[number])&&r.original[field as keyof Metadata]!==null&&JSON.stringify(value)===JSON.stringify(r.original[field as keyof Metadata]);row.origins[field]=imported?"provider":"authored";if(imported)row.deadlines![field]=deadline();}h.rows().push(row);}
+     if(!row){row={...metadata,id:token("saved-title"),groupId:w.selected!.id,revision:1,createdBy:member,providerId:identity,archived:false,contributions:[],history:Object.freeze([]),origins:{},deadlines:{},availability:r?r.value.notice:"Manually authored synthetic entry.",createdAt:createdAt()};for(const[field,value]of Object.entries(metadata)){const imported=r&&metadataFields.includes(field as typeof metadataFields[number])&&r.original[field as keyof Metadata]!==null&&JSON.stringify(value)===JSON.stringify(r.original[field as keyof Metadata]);row.origins[field]=imported?"provider":"authored";if(imported)row.deadlines![field]=deadline();}h.rows().push(row);}
      let changed=false;
      if(match&&identity&&!row.providerId){row.providerId=identity;changed=true;}
      const existing=row.contributions.find(c=>c.memberId===member);if(existing){if(!existing.active)changed=true;existing.active=true;}else{row.contributions.push({id:`contribution-${row.id}-${member}`,memberId:member,active:true});changed=true;}if(row.archived){row.archived=false;changed=true;}if(match&&changed)row.revision++;
@@ -80,5 +82,5 @@ export function createMockEntry(h:Hooks){
    },
    advanceTime(amount,expected,options){return run(expected,options,()=>{if(amount!=="ten-minutes"&&amount!=="thirty-one-days")return failure("Choose a bounded synthetic-time step.");offset+=amount==="ten-minutes"?600000:31*86400000;request++;expire();return result({now:now()});});},
  });
- return {service,expire,reset};
+ return {service,expire,reset,now};
 }

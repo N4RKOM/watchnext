@@ -4,9 +4,8 @@ import { sameContext, selectDemo } from "../service/contracts";
 import type { ContextIdentity, FrontendService, MockContext, MockScenario, RequestOptions, ServiceResult, AccountInput, AccountSummary, PrivateDisclosure, FieldErrors } from "../service/contracts";
 let instances = 0;
 export const scenarioDelays: Readonly<Record<MockScenario, number>> = Object.freeze({ ready: 80, slow: 1200, unavailable: 300 });
-export const pendingDomains = Object.freeze([
-  { key: "picker", label: "Picker and Pick again", issue: 60 },
-] as const);
+/** Domains still listed as not available in the preview. #60 removed the last one (picker). */
+export const pendingDomains: readonly Readonly<{ key: string; label: string; issue: number }>[] = Object.freeze([]);
 function cancelled(): ServiceResult<never> { return { kind: "cancelled", message: "Preview request canceled. No demo state was changed." }; }
 function stale(): ServiceResult<never> { return { kind: "stale", message: "The demo context changed. Load the current preview before trying again." }; }
 function wait(delay: number, signal?: AbortSignal): Promise<boolean> {
@@ -61,7 +60,7 @@ export function createMockService(options: { now?: () => number } = {}): Fronten
   const groups = createMockGroups({ account: () => current, identity, bump: () => { revision++; }, code, now: options.now ?? Date.now, gate });
   const library = createMockLibrary({ identity, workspace: groups.workspace, now: options.now ?? Date.now, gate });
   maintenance=library.expire;
-  return Object.freeze({ mode: "mock", library: library.service, entry: library.entry, progress: library.progress, feedback: library.feedback, groups: groups.service, accounts: Object.freeze({
+  return Object.freeze({ mode: "mock", library: library.service, entry: library.entry, progress: library.progress, feedback: library.feedback, picker: library.picker, groups: groups.service, accounts: Object.freeze({
     read,
     async register(input: AccountInput, expected: ContextIdentity, options: RequestOptions = {}): Promise<ServiceResult<PrivateDisclosure>> {
       return gate<PrivateDisclosure>(expected, options, () => {

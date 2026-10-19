@@ -1,9 +1,10 @@
 import { libraryFilter, libraryMoods } from "../service/contracts";
 import { createMockEntry } from "./entry";
 import { blocksStructureChange, createMockPersonal, personalPanel, seededHistory, seedPersonal } from "./personal";
+import { createMockPicker } from "./picker";
 import type { ContextIdentity, GroupWorkspace, LibraryDraft, LibraryHistory, LibraryList, LibrarySave, LibraryService, LibraryTitle, LibraryType, Numbering, RequestOptions, ServiceResult } from "../service/contracts";
 export type Metadata = { -readonly [K in "title" | "contentType" | "durationSeconds" | "numberingStyle" | "genres" | "moods" | "watchUrl" | "sourceUrl" | "coverUrl"]: LibraryTitle[K] };
-export type Row = Metadata & { id: string; groupId: string; revision: number; createdBy: string; providerId: string | null; archived: boolean; contributions: { id: string; memberId: string; active: boolean }[]; history: readonly LibraryHistory[]; origins: Record<string, "authored" | "provider" | "unavailable">; deadlines?:Record<string,number>; availability: string };
+export type Row = Metadata & { id: string; groupId: string; revision: number; createdBy: string; providerId: string | null; archived: boolean; contributions: { id: string; memberId: string; active: boolean }[]; history: readonly LibraryHistory[]; origins: Record<string, "authored" | "provider" | "unavailable">; deadlines?:Record<string,number>; availability: string; /** Internal original creation instant (canonical UTC ISO, ms) for D18 ordering; never projected into LibraryTitle. */ createdAt: string };
 type Hooks = { identity: () => ContextIdentity; workspace: () => GroupWorkspace; now:()=>number; gate: <T>(expected: ContextIdentity, options: RequestOptions, commit: () => ServiceResult<T>) => Promise<ServiceResult<T>> };
 export function safeLibraryUrl(value: string | null): string | null {
   if (!value) return null;
@@ -13,11 +14,12 @@ const normalized = (value: string) => value.normalize("NFKC").trim().replace(/\s
 export function titleDraft(t: LibraryTitle): LibraryDraft {
   return { title: t.title ?? "", contentType: t.contentType ?? "", minutes: t.durationSeconds === null ? "" : String(Math.floor(t.durationSeconds / 60)), seconds: t.durationSeconds === null ? "" : String(t.durationSeconds % 60), numberingStyle: t.numberingStyle, genres: t.genres.join(", "), moods: [...t.moods], watchUrl: t.watchUrl ?? "", sourceUrl: t.sourceUrl ?? "", coverUrl: t.coverUrl ?? "" };
 }
+const seedCreatedAt = Date.parse("2026-10-01T00:00:00.000Z");
 export function createMockLibrary(h: Hooks) {
   let rows: Row[] = [], confirmations = new Map<string, string>(), sequence = 0;
   const failure = (message: string, code: "library_access" | "library_input" | "library_conflict" = "library_access"): ServiceResult<never> => ({ kind: "failure", error: { code, message, retryable: true } });
   function reset() {
-    const create = (id: string, groupId: string, title: string, type: LibraryType, contributors: string[], duration = 1500, numbering: Numbering = "none"): Row => ({ id, groupId, revision: 1, createdBy: contributors[0] ?? "friday-owner", providerId: null, archived: false, title, contentType: type, durationSeconds: duration, numberingStyle: numbering, genres: ["Synthetic comedy"], moods: ["funny"], watchUrl: "https://example.test/watch/sample", sourceUrl: "https://example.test/source/sample", coverUrl: "/mock-cover.svg", contributions: contributors.map(memberId => ({ id: ["joint-movie","weekend-movie","legacy-movie"].includes(id) ? `contribution-${memberId}` : `contribution-${id}-${memberId}`, memberId, active: true })), history: Object.freeze(contributors.map(memberId => seededHistory(["joint-movie","weekend-movie","legacy-movie"].includes(id) ? `history-${memberId}` : `history-${id}-${memberId}`, memberId, numbering))), origins: { title: "authored", contentType: "authored", durationSeconds: "provider", genres: "provider", moods: "authored", watchUrl: "authored", sourceUrl: "provider", coverUrl: "provider", numberingStyle: "authored" }, availability: "Synthetic saved metadata; no live provider lookup." });
+    const create = (id: string, groupId: string, title: string, type: LibraryType, contributors: string[], duration = 1500, numbering: Numbering = "none"): Row => ({ id, groupId, revision: 1, createdBy: contributors[0] ?? "friday-owner", providerId: null, archived: false, title, contentType: type, durationSeconds: duration, numberingStyle: numbering, genres: ["Synthetic comedy"], moods: ["funny"], watchUrl: "https://example.test/watch/sample", sourceUrl: "https://example.test/source/sample", coverUrl: "/mock-cover.svg", contributions: contributors.map(memberId => ({ id: ["joint-movie","weekend-movie","legacy-movie"].includes(id) ? `contribution-${memberId}` : `contribution-${id}-${memberId}`, memberId, active: true })), history: Object.freeze(contributors.map(memberId => seededHistory(["joint-movie","weekend-movie","legacy-movie"].includes(id) ? `history-${memberId}` : `history-${id}-${memberId}`, memberId, numbering))), origins: { title: "authored", contentType: "authored", durationSeconds: "provider", genres: "provider", moods: "authored", watchUrl: "authored", sourceUrl: "provider", coverUrl: "provider", numberingStyle: "authored" }, availability: "Synthetic saved metadata; no live provider lookup.", createdAt: "" });
     rows = [create("joint-movie", "friday", "Together Tonight", "movie", ["friday-owner", "friday-viewer"], 5400), create("saved-series", "friday", "Short Laughs", "series", ["friday-viewer"], 1440, "season_episode"), create("saved-anime", "friday", "Paper Stars", "anime", ["friday-viewer"], 1380, "continuous"), create("saved-video", "friday", "A Small Good Idea", "youtube", ["friday-owner"], 900), create("archived-movie", "friday", "Saved for Another Day", "movie", ["friday-owner"]), create("expired-video", "friday", "My retained title correction", "youtube", ["friday-viewer"]), create("weekend-movie", "weekend", "Past participant's film", "movie", ["weekend-retired"]), create("legacy-movie", "legacy-sample", "Legacy sample film", "movie", ["legacy-sample-profile"])];
     rows[4].archived = true; rows[4].contributions.forEach(c => { c.active = false; });
     Object.assign(rows[5], { providerId: "synthetic-youtube-expired", contentType: null, durationSeconds: null, genres: [], sourceUrl: null, coverUrl: null, availability: "Imported metadata unavailable: synthetic provider deadline expired. Your authored title and history remain.", origins: { ...rows[5].origins, contentType: "unavailable", durationSeconds: "unavailable", genres: "unavailable", sourceUrl: "unavailable", coverUrl: "unavailable" } });
@@ -25,6 +27,8 @@ export function createMockLibrary(h: Hooks) {
     const weekendArchive = create("weekend-archive", "weekend", "Weekend retained history", "movie", ["weekend-viewer"]);
     weekendArchive.archived = true; weekendArchive.contributions[0].id = "contribution-weekend-viewer"; weekendArchive.contributions[0].active = false;
     weekendArchive.history = Object.freeze([Object.freeze({...weekendArchive.history[0],id:"history-weekend-viewer"})]); rows.push(weekendArchive);
+    // #60: fixed seed creation instants in reset() order (joint-movie 0 ... weekend-archive 8).
+    rows.forEach((row, k) => { row.createdAt = new Date(seedCreatedAt + k * 1000).toISOString(); });
     seedPersonal(rows); confirmations.clear(); sequence = 0;
   }
   reset();
@@ -89,5 +93,7 @@ export function createMockLibrary(h: Hooks) {
   });
   const entry=createMockEntry({rows:()=>rows,access,actor,find,contributed,project,validate,identity:h.identity,now:h.now,clearEditConfirmations:()=>confirmations.clear(),gate:h.gate});
   const personal=createMockPersonal({access,actor,find,identity:h.identity,run});
-  return {service,expire:entry.expire,entry:entry.service,progress:personal.progress,feedback:personal.feedback,reset:()=>{reset();entry.reset();}};
+  // Read-only snapshot accessor and the synthetic metadata clock for the picker; it never writes rows.
+  const picker=createMockPicker({access,actor,rows:():readonly Readonly<Row>[]=>rows,clock:entry.now,safeUrl:safeLibraryUrl,identity:h.identity,run});
+  return {service,expire:entry.expire,entry:entry.service,progress:personal.progress,feedback:personal.feedback,picker:picker.service,reset:()=>{reset();entry.reset();picker.reset();}};
 }

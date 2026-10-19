@@ -1,9 +1,9 @@
 export type ContextIdentity = Readonly<{ mode: "mock"; instance: string; revision: number }>;
-export type FieldErrors = Readonly<Partial<Record<"mode" | "scenario" | "context" | "username" | "password" | "confirmation" | "proof" | PersonalField, string>>>;
+export type FieldErrors = Readonly<Partial<Record<"mode" | "scenario" | "context" | "username" | "password" | "confirmation" | "proof" | PersonalField | PickerField, string>>>;
 export type ServiceFailure = Readonly<{
   kind: "failure";
   error: Readonly<{
-    code: "invalid_selection" | "demo_unavailable" | "invalid_account" | "invalid_credentials" | "invalid_proof" | "group_access" | "group_input" | "invite_invalid" | "library_access" | "library_input" | "library_conflict" | "personal_access" | "personal_input";
+    code: "invalid_selection" | "demo_unavailable" | "invalid_account" | "invalid_credentials" | "invalid_proof" | "group_access" | "group_input" | "invite_invalid" | "library_access" | "library_input" | "library_conflict" | "personal_access" | "personal_input" | "picker_access" | "picker_input";
     message: string;
     retryable: boolean;
     fields?: FieldErrors;
@@ -36,7 +36,7 @@ export interface FrontendService {
   readonly entry: EntryService;
   readonly progress: ProgressService;
   readonly feedback: FeedbackService;
-  // The picker namespace is added by #60, never fabricated as successful here.
+  readonly picker: PickerService;
 }
 
 export type EntrySource = "youtube" | "kinopoisk";
@@ -103,6 +103,31 @@ export interface FeedbackService {
   clearRating(id: string, claim: PersonalClaim, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PersonalCommit>>;
   saveNote(id: string, body: string, claim: PersonalClaim, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PersonalCommit>>;
   clearNote(id: string, claim: PersonalClaim, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PersonalCommit>>;
+}
+export type PickerField = "viewers" | "availableMinutes" | "mood" | "rewatches" | "form";
+export type PickerViewer = Readonly<{ id: string; name: string; color: AvatarColor }>;
+/** K01: the selected group's eligible viewers in member order (account: active members only; legacy: every profile). */
+export type PickerInputs = Readonly<{ groupId: string; groupName: string; mode: "account" | "legacy"; viewers: readonly PickerViewer[]; canAddTitle: boolean }>;
+/** Explicit picker inputs. `availableMinutes` is the raw whole-minute text; `rewatches` must be a real boolean. */
+export type PickerInput = Readonly<{ viewerIds: readonly string[]; availableMinutes: string; mood: string; rewatches: boolean }>;
+/** Synthetic coordination tag held only in UI memory. It grants no authority and is not a credential. */
+export type PickerCycleHandle = Readonly<{ cycleId: string; step: string }>;
+export type PickerTier = "exact" | "over_budget" | "different_mood";
+export type PickerTarget = Readonly<{ kind: "item" }> | Readonly<{ kind: "episode"; numberingStyle: "continuous" | "season_episode"; nextSeason: number | null; nextEpisode: number; restart: boolean; catchUp: boolean }>;
+/** Display model of the current candidate only; ratings and notes are never part of it. */
+export type PickerCandidate = Readonly<{ id: string; title: string; contentType: LibraryType; durationSeconds: number; tier: PickerTier; message: string; target: PickerTarget; rewatchers: readonly PickerViewer[]; viewers: readonly PickerViewer[]; availableMinutes: string; requestedMood: string; rewatches: boolean; watchUrl: string | null }>;
+export type PickerNoMatchReason = "no_active_titles" | "progress_required" | "viewer_ineligible" | "metadata_incomplete" | "time_mood_excluded";
+export type PickerSuggestion = Readonly<{ kind: "add_title"; label: string }> | Readonly<{ kind: "open_title"; titleId: string; label: string }>;
+export type PickerOutcome =
+  | Readonly<{ kind: "picked"; refreshed: boolean; candidate: PickerCandidate; cycle: PickerCycleHandle }>
+  | Readonly<{ kind: "exhausted"; refreshed: boolean; cycle: PickerCycleHandle }>
+  | Readonly<{ kind: "no_match"; refreshed: boolean; message: string; reasons: readonly Readonly<{ code: PickerNoMatchReason; label: string }>[]; suggestions: readonly PickerSuggestion[] }>
+  | Readonly<{ kind: "conflict"; refreshed: false; message: string }>;
+export interface PickerService {
+  getInputs(expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PickerInputs>>;
+  pick(input: PickerInput, intentId: string, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PickerOutcome>>;
+  next(cycle: PickerCycleHandle, intentId: string, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PickerOutcome>>;
+  restart(input: PickerInput, cycle: PickerCycleHandle, intentId: string, expected: ContextIdentity, options?: RequestOptions): Promise<ServiceResult<PickerOutcome>>;
 }
 export function libraryFilter(value: unknown): { filter: "all" | "mine"; notice: string | null } {
   return value === undefined || value === null || value === "all" ? { filter: "all", notice: null } : value === "mine" ? { filter: "mine", notice: null } : { filter: "all", notice: "Unsupported or repeated library filter. Showing All." };

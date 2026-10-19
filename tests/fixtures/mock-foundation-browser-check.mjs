@@ -1,6 +1,7 @@
 import { mockEntryJourney } from "./mock-entry-journey.mjs";
 import { mockLibraryJourney } from "./mock-library-journey.mjs";
 import { mockPersonalJourney } from "./mock-personal-journey.mjs";
+import { mockPickerJourney } from "./mock-picker-journey.mjs";
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
 import { mkdtempSync, realpathSync, lstatSync, readFileSync, writeFileSync, existsSync, rmSync } from "node:fs";
@@ -56,7 +57,7 @@ try {
     const page = await context.newPage();
     await step(`${width}: explicit shell, real service pending/failure/retry/cancel/reset and tab isolation`, async () => {
       await page.goto(origin + "/mock?memberId=forged&scenario=slow"); await page.getByRole("heading", { name: "WatchNext preview", exact: true }).waitFor();
-      await page.getByLabel("Synthetic demo notice").waitFor(); check(await page.getByText("Not available yet", { exact: true }).count() === 1, "one pending picker domain, no pretend working forms");
+      await page.getByLabel("Synthetic demo notice").waitFor(); check(await page.getByText("Not available yet", { exact: true }).count() === 0, "no pending domain remains after the picker (#60), no pretend working forms");
       await page.keyboard.press("Tab"); check((await page.locator(":focus").textContent()) === "Skip to main content", "keyboard skip link"); await page.keyboard.press("Enter");
       await page.getByRole("button", { name: "Load preview", exact: true }).press("Enter"); await page.getByRole("status").filter({ hasText: "Loading" }).waitFor();
       await page.getByRole("button", { name: "Cancel request", exact: true }).press("Enter"); await page.getByRole("status").filter({ hasText: "canceled" }).waitFor();
@@ -127,6 +128,7 @@ try {
     await step(`${width}: real synthetic library/Mine/detail/edit/archive/restore and legacy journey`, async () => { await mockLibraryJourney({page,origin,width,check,onAction:name=>{phase=`${width}: library action ${name}`;}}); check(unexpected.length === 0 && external.length === 0, "library uses local assets only, no production or external requests"); if (process.env.WATCHNEXT_VISUAL_CHECK === "1") { const path = join(root,`library-${width}.png`); await page.getByRole("region",{name:"Saved synthetic library"}).screenshot({path}); screenshots.push(path); } unchanged(); });
     await step(`${width}: actual manual/provider entry, review, shared save, refresh and expiry`, async()=>{await mockEntryJourney({page,origin,width,check,onAction:name=>{phase=`${width}: entry ${name}`;},snapshot:async panel=>{if(process.env.WATCHNEXT_VISUAL_CHECK === "1"){const path=join(root,`entry-${width}.png`);await panel.screenshot({path});screenshots.push(path);}}});check(unexpected.length===0&&external.length===0,"entry has no production/provider/external traffic");unchanged();});
     await step(`${width}: actual personal progress, completion, rating, note and group-visible history`, async()=>{await mockPersonalJourney({page,origin,width,check,onAction:name=>{phase=`${width}: personal ${name}`;}});check(unexpected.length===0&&external.length===0,"personal records have no production/provider/external traffic");check((await context.cookies()).length===0&&await page.evaluate(()=>localStorage.length===0&&sessionStorage.length===0),"personal records have no cookies or browser storage");unchanged();});
+    await step(`${width}: actual picker, Pick again cycle, refresh/no-refresh, failures, conflict and weekend/legacy picks`, async()=>{await mockPickerJourney({page,origin,width,check,onAction:name=>{phase=`${width}: picker ${name}`;}});check(unexpected.length===0&&external.length===0,"picker has no production/provider/external traffic and never follows the external link");check((await context.cookies()).length===0&&await page.evaluate(()=>localStorage.length===0&&sessionStorage.length===0),"picker cycles have no cookies or browser storage");unchanged();});
     mockPhase = false;
     await step(`${width}: production default and forged query stay production, without initialization`, async () => {
       await page.goto(origin); await page.getByRole("heading", { name: "Your private account", exact: true }).waitFor(); const home = await page.locator("main").innerText();

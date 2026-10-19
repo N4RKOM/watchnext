@@ -34,3 +34,10 @@
 .history { display: grid; gap: var(--space-4); list-style: none; margin: 0; padding: 0; }
 .history li { display: grid; gap: var(--space-1); min-width: 0; border: 1px solid var(--color-border); border-radius: var(--radius); padding: var(--space-4); }
 .muted { color: var(--color-muted); font-size: .875rem; }
+
+.pickerForm { display: grid; gap: var(--space-2); min-width: 0; }
+.pickerForm fieldset { min-width: 0; }
+.pickerForm .field { width: 100%; min-width: 0; }
+.pickResult { min-width: 0; overflow-wrap: anywhere; }
+/* #60: long unbroken synthetic titles/names (e.g. the Add panel's saved-entry status) wrap inside every card at 375px. */
+.card { overflow-wrap: anywhere; }
