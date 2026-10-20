@@ -2,6 +2,8 @@
 
 October 19, 2026 · **Frontend request now authorizes #41 reference/inventory and #42 full typed mock UI after prerequisites. Later architecture stages remain planned, not implemented/authorized by this plan.**
 
+**October 20, 2026 update:** the user separately authorized #43–#47 (another agent, upstream `codex/backend-preparation`) and #48–#54 (this run). See [process.md](process.md#authorization-for-issues-43-54-october-20-2026). #48 is groomed in [prisma-baseline.md](prisma-baseline.md). The phase order and evidence rules below are unchanged.
+
 ## Baseline and goal
 
 The complete current WatchNext feature set is described in [specification.md](specification.md). All original issues 1–40 are closed after independent QA; [final verdict](https://github.com/xiaodlb/watchnext/issues/40#issuecomment-6263933927). Preserve exact baseline 441fcaae660e273d6fc373f8757be562d9139b78 and annotated tag **graded-baseline-2026-10-19**.

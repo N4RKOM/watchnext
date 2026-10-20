@@ -2,7 +2,7 @@
 
 ## Graded iteration — staged issue index
 
-Read [graded-mvp.md](graded-mvp.md), [specification](specification.md) and scoped QA-owned closure rules. Labels: `mvp`, `post-mvp`, `user-test-bug`. The initial step created plan/issues only; the subsequent frontend request authorizes #41 then #42 through their prerequisites/roles. Later stages remain planned, not authorized by reference access or issue creation. [Operation inventory](operation-inventory.md) maps complete coverage; baseline #1–#40 remains closed.
+Read [graded-mvp.md](graded-mvp.md), [specification](specification.md) and scoped QA-owned closure rules. Labels: `mvp`, `post-mvp`, `user-test-bug`. The initial step created plan/issues only; the subsequent frontend request authorizes #41 then #42 through their prerequisites/roles. Later stages were not authorized by reference access or issue creation; on 2026-10-20 the user authorized #43–#47 (another agent) and #48–#54 (this run), recorded in [process](process.md#authorization-for-issues-43-54-october-20-2026). [Operation inventory](operation-inventory.md) maps complete coverage; baseline #1–#40 remains closed.
 
 1. [#41 Operation inventory/reference pack](https://github.com/xiaodlb/watchnext/issues/41)
 2. [#42 Typed mock service/mode foundation](https://github.com/xiaodlb/watchnext/issues/42)
