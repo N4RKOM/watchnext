@@ -1,6 +1,6 @@
 # Prisma mapping and data-preserving SQLite baseline — issue #48
 
-October 20, 2026 · **PM-groomed plan for authorized [#48](https://github.com/xiaodlb/watchnext/issues/48), implemented by the Engineer in commits `ef7f38e` (toolchain, schema, baseline) and `7c811a1` (ports, evidence test); awaiting independent QA.** Rows marked *executed* were run by `tests/db/prisma-baseline.test.ts` at those commits (see [§12](#12-engineer-execution-record)). Rows still marked *PM probe* record a feasibility probe the PM ran in a throwaway scratch directory outside the repository, on synthetic files, so the defaults below are not guesses. A probe is **not** repository evidence and does not replace the test below.
+October 20, 2026 · **PM-groomed plan for authorized [#48](https://github.com/xiaodlb/watchnext/issues/48), implemented by the Engineer in commits `ef7f38e` (toolchain, schema, baseline) and `7c811a1` (ports, evidence test); independent QA PASS at `69b0bc8`.** Rows marked *executed* were run by `tests/db/prisma-baseline.test.ts` at those commits (see [§12](#12-engineer-execution-record)). Rows still marked *PM probe* record a feasibility probe the PM ran in a throwaway scratch directory outside the repository, on synthetic files, so the defaults below are not guesses. A probe is **not** repository evidence and does not replace the test below.
 
 ## 1. Authority, scope and the missing prerequisite
 
@@ -250,6 +250,8 @@ Type-only declarations go in **`lib/persistence/ports.ts`**. The module has no r
 3. #48 ports and invariants not covered by #44 are added to that module; duplicate #48 declarations are then deleted.
 4. Two parallel interface sets must never remain.
 5. If #44 has not landed when #49 starts, #49 consumes `lib/persistence/ports.ts`, and #44 aligns with it on merge under the same rule.
+
+**Applied by the #49 PM (October 20, 2026).** The #44 seam on `codex/http-phase` (`IdentityGroupRepository<State>`: synchronous `read()`/`reset()` of a mutable whole state) is not an operation-level persistence interface, and a durable adapter cannot implement it. `lib/persistence/ports.ts` therefore stays the one persistence port module. Clause 2 applies only to operation-level asynchronous interfaces. The exact rule and the #44 integration path are in [prisma-identity.md §2](prisma-identity.md#2-seam-decision-option-b-libpersistenceportsts-stays-canonical).
 
 ## 11. Open hazards handed to #49–#52
 

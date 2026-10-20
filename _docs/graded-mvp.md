@@ -2,7 +2,7 @@
 
 October 19, 2026 · **Frontend request now authorizes #41 reference/inventory and #42 full typed mock UI after prerequisites. Later architecture stages remain planned, not implemented/authorized by this plan.**
 
-**October 20, 2026 update:** the user separately authorized #43–#47 (another agent, upstream `codex/backend-preparation`) and #48–#54 (this run). See [process.md](process.md#authorization-for-issues-43-54-october-20-2026). #48 is groomed in [prisma-baseline.md](prisma-baseline.md). The phase order and evidence rules below are unchanged.
+**October 20, 2026 update:** the user separately authorized #43–#47 (another agent, upstream `codex/backend-preparation`) and #48–#54 (this run). See [process.md](process.md#authorization-for-issues-43-54-october-20-2026). #48 is groomed in [prisma-baseline.md](prisma-baseline.md) and has independent QA PASS at `69b0bc8`. #49 is groomed in [prisma-identity.md](prisma-identity.md); its HTTP parity part waits for a QA-passed #44 that uses the shared ports. The phase order and evidence rules below are unchanged.
 
 ## Baseline and goal
 
