@@ -1,6 +1,6 @@
 # Prisma mapping and data-preserving SQLite baseline — issue #48
 
-October 20, 2026 · **PM-groomed plan for authorized [#48](https://github.com/xiaodlb/watchnext/issues/48). Nothing in this page is implemented yet.** Rows marked *planned* need Engineer execution and independent QA. Rows marked *PM probe* record a feasibility probe the PM ran in a throwaway scratch directory outside the repository, on synthetic files, so the defaults below are not guesses. A probe is **not** repository evidence and does not replace the test below.
+October 20, 2026 · **PM-groomed plan for authorized [#48](https://github.com/xiaodlb/watchnext/issues/48), implemented by the Engineer in commits `ef7f38e` (toolchain, schema, baseline) and `7c811a1` (ports, evidence test); awaiting independent QA.** Rows marked *executed* were run by `tests/db/prisma-baseline.test.ts` at those commits (see [§12](#12-engineer-execution-record)). Rows still marked *PM probe* record a feasibility probe the PM ran in a throwaway scratch directory outside the repository, on synthetic files, so the defaults below are not guesses. A probe is **not** repository evidence and does not replace the test below.
 
 ## 1. Authority, scope and the missing prerequisite
 
@@ -39,7 +39,7 @@ The official better-sqlite3 adapter brings these obligations:
     better-sqlite3: true
     prisma: true
   ```
-  `@prisma/engines` downloads the schema-engine binary from `binaries.prisma.sh`. It is needed for `db pull`, `migrate diff`, `migrate status`, `migrate resolve` and `migrate deploy`. `better-sqlite3` installs a prebuilt binary or compiles one. *PM probe:* both succeeded in this Linux container. The Windows prebuild is **not verified** here.
+  `@prisma/engines` downloads the schema-engine binary from `binaries.prisma.sh`. It is needed for `db pull`, `migrate diff`, `migrate status`, `migrate resolve` and `migrate deploy`. `better-sqlite3` installs a prebuilt binary or compiles one. *Executed:* after deleting `node_modules`, `pnpm install --frozen-lockfile` finished in this Linux container (Node 24.22.0, pnpm 11.25.0) without `ERR_PNPM_IGNORED_BUILDS`; the schema-engine binary and the `better_sqlite3.node` build were present. The Windows prebuild is **not verified** here.
 - **Two SQLite library copies.** `node:sqlite` and better-sqlite3 each link their own SQLite. If two copies open the **same database file at the same time in one process**, closing one copy's handle can drop the other's POSIX locks ([SQLite: multiple copies](https://www.sqlite.org/howtocorrupt.html)). Rule for #48–#51: in one process, never keep a native and a Prisma connection open on the same file at once. Close one before opening the other. Separate processes are fine, including the Prisma CLI and the snapshot/maintenance CLIs. #51 removes the overlap by switching the whole runtime.
 - **The adapter creates missing files.** It calls `new Database(path)`, which silently creates an empty file. Every adapter construction must pass `{ url, fileMustExist: true }`.
 
@@ -47,10 +47,10 @@ The official better-sqlite3 adapter brings these obligations:
 
 | Path | Content |
 | --- | --- |
-| `prisma.config.ts` | `defineConfig({ schema: "prisma/schema.prisma", migrations: { path: "prisma/migrations" }, datasource? })`. Include `datasource: { url, shadowDatabaseUrl? }` **only** when `WATCHNEXT_PRISMA_DATABASE_URL` / `WATCHNEXT_PRISMA_SHADOW_DATABASE_URL` are set. No fallback URL. It never reads `WATCHNEXT_DATABASE_PATH`, never calls `resolveDatabasePath()`, never loads `.env*` (Prisma 7 does not load them automatically). *PM probe:* `validate`/`generate` work without a URL, and `migrate status` fails clearly with "datasource.url property is required". |
-| `prisma/schema.prisma` | `generator client { provider = "prisma-client"; output = "../generated/prisma"; runtime = "nodejs"; moduleFormat = "esm" }` with the default extensionless imports. *PM probe:* the generated client typechecks under TypeScript 7.0.2 with `moduleResolution: bundler`. Also `datasource db { provider = "sqlite" }` and the 19 models below. |
+| `prisma.config.ts` | `defineConfig({ schema: "prisma/schema.prisma", migrations: { path: "prisma/migrations" }, datasource? })`. Include `datasource: { url, shadowDatabaseUrl? }` **only** when `WATCHNEXT_PRISMA_DATABASE_URL` / `WATCHNEXT_PRISMA_SHADOW_DATABASE_URL` are set. No fallback URL. It never reads `WATCHNEXT_DATABASE_PATH`, never calls `resolveDatabasePath()`, never loads `.env*` (Prisma 7 does not load them automatically). *Executed (V1/S1):* `validate`/`generate` work without a URL and create no file in the owned root; `migrate status` fails with "The datasource.url property is required in your Prisma config file when using prisma migrate status". |
+| `prisma/schema.prisma` | `generator client { provider = "prisma-client"; output = "../generated/prisma"; runtime = "nodejs"; moduleFormat = "esm" }` with the default extensionless imports. *Executed:* `pnpm typecheck` passes with and without `generated/` present; the test loads the client by a computed path so a fresh checkout typechecks before `prisma generate`. Also `datasource db { provider = "sqlite" }` and the 19 models below. |
 | `prisma/migrations/migration_lock.toml` | `provider = "sqlite"`. This is the SQLite-specific history. A future PostgreSQL schema and migrations (#52) live in their own path. |
-| `prisma/migrations/0_native_0005_baseline/migration.sql` | The canonical dump of a native-migrated 0001–0005 database (§6). |
+| `prisma/migrations/0_native_0005_baseline/migration.sql` | The canonical dump of a native-migrated 0001–0005 database (§6). 265 lines; byte-equal to the regenerated dump (B4). |
 | `generated/` | Added to `.gitignore`; output of `prisma generate`. Nothing in `app/lib/db/frontend/scripts` imports it in #48. |
 | `package.json` scripts | Only `prisma:generate` (`prisma generate`) and `prisma:validate` (`prisma validate`). Neither touches a database. No migrate/push/reset scripts before #51. |
 
@@ -83,7 +83,7 @@ Model names are PascalCase with `@@map("<table>")`. Fields are camelCase with `@
 **Mapping rules.**
 
 1. **Account membership is a list relation on `Member`.** Prisma rejects a one-to-one relation whose composite FK `(member_id, group_id)` is not itself unique (P1012). Adding `@@unique([memberId, groupId])` would create a new index, which is drift. Keep `accountMemberships AccountMembership[]` on `Member`. The native `UNIQUE(member_id)` still guarantees at most one membership per member.
-2. **Expression defaults must use `dbgenerated`.** Write the nine `strftime` defaults (`created_at` on groups, invitations, members, titles, contributors, group_sessions, accounts and account_memberships, plus `schema_migrations.applied_at`) as `@default(dbgenerated("(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))"))`. Introspection prints them as a string literal, `@default("strftime(...)")`. *PM probe:* with the literal form, the Prisma client **wrote the literal text `strftime('%Y-%m-%dT%H:%M:%fZ', 'now')` into `created_at`**, which would corrupt D18 creation-order tie-breaks. With `dbgenerated`, SQLite stored a real `2026-…Z` value. The cost is a known representational diff, handled exactly in §7 check D3.
+2. **Expression defaults must use `dbgenerated`.** Write the nine `strftime` defaults (`created_at` on groups, invitations, members, titles, contributors, group_sessions, accounts and account_memberships, plus `schema_migrations.applied_at`) as `@default(dbgenerated("(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))"))`. Introspection prints them as a string literal, `@default("strftime(...)")`. *PM probe:* with the literal form, the Prisma client **wrote the literal text `strftime('%Y-%m-%dT%H:%M:%fZ', 'now')` into `created_at`**, which would corrupt D18 creation-order tie-breaks. With `dbgenerated`, SQLite stored a real `2026-…Z` value. *Executed (P2):* Prisma creates omitting `createdAt`/`appliedAt` stored ISO `…Z` values in all nine columns (11 rows on a throwaway copy). The cost is a known representational diff, handled exactly in §7 check D3 (*executed*).
 3. **Inline-UNIQUE names stay.** Keep every introspected `map: "sqlite_autoindex_*"`. *PM probe:* dropping one makes `migrate diff` propose `DROP INDEX` / `CREATE UNIQUE INDEX`.
 4. **0/1 flags stay `Int`.** This covers `archived`, `metadata_unavailable`, `cleared` and `completed`. Prisma `Boolean` declares `BOOLEAN`, which a STRICT table cannot hold. *PM probe:* `Boolean` makes diff rebuild `titles`. Repositories convert to booleans at the port boundary.
 5. **Integers stay `Int`; time keeps its two forms.** Use `Int` for every INTEGER column, including Unix-second session times and `context_revision` (up to 9007199254740990). *PM probe:* the adapter read 4000000000 and wrote 5000000000 through `Int`. `BigInt` makes diff rebuild `account_sessions`. ISO text timestamps remain `String`; Unix seconds remain `Int`.
@@ -106,12 +106,12 @@ Model names are PascalCase with `@@map("<table>")`. Fields are camelCase with `@
 | Expression defaults | 9 `strftime` columns | `dbgenerated` (§4 rule 2) | D3, P2 |
 | Seed data | 5 `moods` rows | Native 0001 and baseline dump `INSERT` | I1 |
 | Native ledger | 5 rows with SHA-256 checksums | Untouched; baseline dump inserts the identical rows for the deploy-onto-empty path | I1, B4 |
-| `PRAGMA foreign_keys=ON` | per connection | Native sets it explicitly. *PM probe:* the better-sqlite3 build reports 1. The adapter must assert it. | C1 |
+| `PRAGMA foreign_keys=ON` | per connection | Native sets it explicitly. *Executed (C1):* a Prisma adapter connection reads `PRAGMA foreign_keys` = 1. The #49 adapter must assert it. | C1 |
 | `PRAGMA busy_timeout=5000` | per connection | Native sets it explicitly; better-sqlite3 defaults to 5000 ms | — (#49) |
 | `PRAGMA secure_delete=ON` | per connection, before expiry deletes | Native `expireMetadata` sets it. *PM probe:* a Prisma connection reports 0. #50's SQLite adapter must run `PRAGMA secure_delete=ON` after connecting, before expiry/review deletes, and keep the existing physical-byte regression. | — (#50) |
 | `PRAGMA defer_foreign_keys` | migration 0003 only | Historical rebuild step; not needed at runtime | — |
 | Transactions | `BEGIN IMMEDIATE` in 16 native modules | Adapter uses **deferred** `BEGIN` plus an in-process mutex. Cross-process write races can hit `SQLITE_BUSY` on lock upgrade. #49/#50 must prove race/rollback parity with conditional writes, using immediate locking or an equivalent, and must not weaken existing concurrency tests. | — (#49/#50) |
-| Error classes | — | *PM probe:* a trigger `RAISE(ABORT)` surfaces as Prisma **`P2003` "Foreign key constraint violated"**. The real `meta.driverAdapterError.cause.originalCode = "SQLITE_CONSTRAINT_TRIGGER"` and `originalMessage` are in the error metadata. Adapters must translate using `originalCode`/`originalMessage`, never `P2003` alone. | C1 records observed codes |
+| Error classes | — | *Executed (C1):* every trigger `RAISE(ABORT)` surfaced as Prisma **`P2003` "Foreign key constraint violated"** (observed codes in §12). The real `meta.driverAdapterError.cause.originalCode = "SQLITE_CONSTRAINT_TRIGGER"` and `originalMessage` are in the error metadata. Adapters must translate using `originalCode`/`originalMessage`, never `P2003` alone. | C1 records observed codes |
 | Demo `demo_ownership` table | demo files only | Not part of the normal schema. Demo databases are never baselined in #48; the inventory treats the extra table as drift (#51 decides). | — |
 
 ## 6. Baseline procedure (owned copies only in #48)
@@ -130,8 +130,8 @@ The test regenerates this dump and requires byte equality.
 | Path | Steps | Notes |
 | --- | --- | --- |
 | **A. New file (supported)** | Native `migrate()` (as `db:init` does) on an empty owned file → `prisma migrate resolve --applied 0_native_0005_baseline` | Native ledger authoritative |
-| **B. Deploy onto empty (proof only)** | `prisma migrate deploy` on an empty owned file | Must produce the same inventory as A: `sqlite_master`, STRICT flags, ledger rows, moods. Native `assertCurrentSchema` passes. *PM probe:* identical. Not a supported operator command before #51. |
-| **C. Upgrade a populated 0005 copy** | 1. Stop writers (operator). 2. `pnpm db:snapshot <src> <new backup>`. 3. `assertCurrentSchema`, `integrity_check`, `foreign_key_check` are clean. 4. Canonical inventory equals path A, **and** `migrate diff --from-migrations prisma/migrations --to-config-datasource --exit-code` is empty. 5. `migrate status` shows the baseline not applied; if already applied, stop as a no-op. 6. `migrate resolve --applied 0_native_0005_baseline`. 7. Re-verify the logical snapshot and inventory (only `_prisma_migrations` added). | *PM probe:* diff empty, resolve marked applied, status "up to date", native guard still passes with `_prisma_migrations` present. |
+| **B. Deploy onto empty (proof only)** | `prisma migrate deploy` on an empty owned file | Must produce the same inventory as A: `sqlite_master`, STRICT flags, ledger rows, moods. Native `assertCurrentSchema` passes. *Executed (I1):* identical inventory, native guard passes. Not a supported operator command before #51. |
+| **C. Upgrade a populated 0005 copy** | 1. Stop writers (operator). 2. `pnpm db:snapshot <src> <new backup>`. 3. `assertCurrentSchema`, `integrity_check`, `foreign_key_check` are clean. 4. Canonical inventory equals path A, **and** `migrate diff --from-migrations prisma/migrations --to-config-datasource --exit-code` is empty. 5. `migrate status` shows the baseline not applied; if already applied, stop as a no-op. 6. `migrate resolve --applied 0_native_0005_baseline`. 7. Re-verify the logical snapshot and inventory (only `_prisma_migrations` added). | *Executed (F1, F2, path A):* diff empty, resolve marked applied, status "up to date", native guard still passes with `_prisma_migrations` present; only `_prisma_migrations` and its autoindex were added. |
 | **D. Upgrade an older populated copy (0001–0003 / 0004)** | Native `migrate()` to 0005 first (the existing delivered upgrade), then path C | Older native ledgers are never resolved directly |
 | **Refusals** | Ledger missing or mismatched → stop before step 6. Inventory drift (for example a trigger removed on an owned copy, or an extra demo table) → stop, **even though Prisma diff is empty**. A second resolve is never attempted. | Shows Prisma's own diff is not enough |
 
@@ -142,26 +142,26 @@ Test file: `tests/db/prisma-baseline.test.ts` (`// @vitest-environment node`). O
 **Isolation rules for the test:**
 
 - One `mkdtempSync(join(tmpdir(), "watchnext-prisma-baseline-"))` root, with the existing containment check before cleanup.
-- Prisma CLI runs as a child process via `pnpm exec prisma` with an explicit environment: owned `file:` URLs only; `WATCHNEXT_DATABASE_PATH` removed; `HOME`, `XDG_DATA_HOME` and `LOCALAPPDATA` pointed into the owned root; `CHECKPOINT_DISABLE=1`.
+- Prisma CLI runs as a child process with an explicit environment: owned `file:` URLs only; `WATCHNEXT_DATABASE_PATH` (every `WATCHNEXT_*`, `PRISMA_*` and `DATABASE_URL` variable) removed; `HOME`, `XDG_DATA_HOME`, `LOCALAPPDATA` (plus `USERPROFILE`, `APPDATA`, `XDG_CACHE_HOME`, `XDG_CONFIG_HOME`) pointed into the owned root; `CHECKPOINT_DISABLE=1`. *As executed:* the test starts the pinned CLI as `node node_modules/prisma/build/index.js` (the binary `pnpm exec prisma` runs) so pnpm itself never reads the redirected home.
 - No normal or demo path is ever named. Native and Prisma connections are opened one after the other, never both at once (§2).
 
 | ID | Check | Status |
 | --- | --- | --- |
-| F1 | Populated fixture, current: every one of the 19 tables has at least one row. Covers both group modes, removed+rejoined memberships, revoked/expired/live sessions, `context_revision` 9007199254740990, all four title types incl. archived and `metadata_unavailable` NULL fields, 10 genres on one title, every progress state, a timestamp kept above a later-corrected duration, ratings, a multiline Unicode note, provider/user/cleared provenance, a review, a pending intent and a legacy session. | planned |
-| F2 | Populated fixture, older ledger: legacy data at 0001–0003 → native upgrade → path C | planned |
-| V1 | `prisma validate` and `prisma generate` succeed | planned |
-| D1 | `db pull --print` on F1 yields exactly the 19 tables and the same column set as the committed schema (compared programmatically) | PM probe ok (unrenamed) |
-| D2 | `migrate diff --from-migrations prisma/migrations --to-config-datasource --exit-code` on F1, F2 and path A → empty | PM probe ok |
-| D3 | `migrate diff --from-config-datasource --to-schema <temp copy> --exit-code` → empty, where the temp copy replaces **exactly nine** `dbgenerated("(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))")` with the introspected literal and changes nothing else | PM probe ok |
-| I1 | Canonical inventory equal across native, path A, path B and post-resolve F1/F2: normalized `sqlite_master` incl. 18 triggers / 8 indexes / 0 partial, STRICT flags, ledger, moods. A copy with one trigger dropped is caught by I1 while D2 stays empty. | PM probe ok (A/B) |
-| B1 | The real `scripts/db/snapshot.mjs` creates a new backup before resolve | planned |
-| B2 | After resolve, the full logical snapshot of all 19 tables is identical: IDs, password/recovery/session hashes, scrypt tuples, expiries, revocations, context revisions, generations, membership status, history, provenance, deadlines. `integrity_check` is ok, `foreign_key_check` is empty, native `assertCurrentSchema` passes. Exactly one finished `_prisma_migrations` row. | planned |
-| B3 | Rollback: restoring the backup to a new file gives a pre-baseline snapshot with no `_prisma_migrations`. On another owned copy, `DROP TABLE _prisma_migrations` gives the pre-baseline inventory (the baseline is purely additive). | planned |
-| B4 | The baseline SQL equals the regenerated canonical dump; its checksums equal those of the committed native files | planned |
-| P1 | With the generated client and `PrismaBetterSqlite3({ url, fileMustExist: true })`, every row of every model on F1 equals the native read | planned |
-| P2 | A Prisma `create` that omits `createdAt` stores an ISO `…Z` timestamp, not the text `strftime` | PM probe ok |
-| C1 | Through Prisma on the baselined copy, each class is rejected with the logical snapshot unchanged and the observed `originalCode` recorded: CHECK, STRICT type, composite cross-group FK, uniqueness, and the triggers (11th genre, membership delete, mode change, generation decrease, non-increasing revision, legacy session into an account group, timestamp above duration, type change with history). Also asserts `PRAGMA foreign_keys = 1`. | partial PM probe |
-| S1 | Safety: commands that need a datasource fail without `WATCHNEXT_PRISMA_DATABASE_URL`. No package script contains `migrate dev`, `migrate reset`, `db push`, `db execute`, `--force-reset` or `--accept-data-loss`. The isolated default database path does not exist after the run. `lib/persistence/ports.ts` has no runtime exports and is not imported, and neither are `@prisma/client` or `generated/`, anywhere in `app/ lib/ db/ frontend/ scripts/`. | planned |
+| F1 | Populated fixture, current: every one of the 19 tables has at least one row. Covers both group modes, removed+rejoined memberships, revoked/expired/live sessions, `context_revision` 9007199254740990, all four title types incl. archived and `metadata_unavailable` NULL fields, 10 genres on one title, every progress state, a timestamp kept above a later-corrected duration, ratings, a multiline Unicode note, provider/user/cleared provenance, a review, a pending intent and a legacy session. | **executed**: all 19 tables populated; coverage assertions pass; path C preserved every value |
+| F2 | Populated fixture, older ledger: legacy data at 0001–0003 → native upgrade → path C | **executed**: 0001–0003 data, native 0004/0005 upgrade, path C preserved every value |
+| V1 | `prisma validate` and `prisma generate` succeed | **executed**: both exit 0 without a URL; no file created in the owned root |
+| D1 | `db pull --print` on F1 yields exactly the 19 tables and the same column set as the committed schema (compared programmatically) | **executed**: raw introspection with a bare datasource-only schema; 19 tables, identical column names, scalar types, optionality and index `map` names |
+| D2 | `migrate diff --from-migrations prisma/migrations --to-config-datasource --exit-code` on F1, F2 and path A → empty | **executed**: exit 0, "No difference detected" for path A, F1, F2 (and, deliberately, the dropped-trigger copy) |
+| D3 | `migrate diff --from-config-datasource --to-schema <temp copy> --exit-code` → empty, where the temp copy replaces **exactly nine** `dbgenerated("(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))")` with the introspected literal and changes nothing else | **executed**: exactly 9 replacements asserted and reversible; exit 0, "No difference detected" on F1 |
+| I1 | Canonical inventory equal across native, path A, path B and post-resolve F1/F2: normalized `sqlite_master` incl. 18 triggers / 8 indexes / 0 partial, STRICT flags, ledger, moods. A copy with one trigger dropped is caught by I1 while D2 stays empty. | **executed**: 19 STRICT tables, 18 triggers, 8 explicit + 29 automatic indexes, 0 partial, 27 FK edges (13 composite), 5 moods, 5 ledger rows; equal for native, A, B, F1, F2; dropped trigger refused |
+| B1 | The real `scripts/db/snapshot.mjs` creates a new backup before resolve | **executed**: `node scripts/db/snapshot.mjs` child process before every resolve |
+| B2 | After resolve, the full logical snapshot of all 19 tables is identical: IDs, password/recovery/session hashes, scrypt tuples, expiries, revocations, context revisions, generations, membership status, history, provenance, deadlines. `integrity_check` is ok, `foreign_key_check` is empty, native `assertCurrentSchema` passes. Exactly one finished `_prisma_migrations` row. | **executed**: snapshots equal; integrity ok, 0 FK violations, native guard passes, one finished row with `applied_steps_count` 0 |
+| B3 | Rollback: restoring the backup to a new file gives a pre-baseline snapshot with no `_prisma_migrations`. On another owned copy, `DROP TABLE _prisma_migrations` gives the pre-baseline inventory (the baseline is purely additive). | **executed**: restored file equals the pre-baseline snapshot and `sqlite_master`; dropped-ledger copy equals the pre-baseline `sqlite_master` exactly |
+| B4 | The baseline SQL equals the regenerated canonical dump; its checksums equal those of the committed native files | **executed**: equal (LF); the five checksums equal the committed files |
+| P1 | With the generated client and `PrismaBetterSqlite3({ url, fileMustExist: true })`, every row of every model on F1 equals the native read | **executed**: every row of all 19 models equal, including `context_revision` 9007199254740990 |
+| P2 | A Prisma `create` that omits `createdAt` stores an ISO `…Z` timestamp, not the text `strftime` | **executed**: 11 rows across all nine `dbgenerated` columns store ISO `…Z` |
+| C1 | Through Prisma on the baselined copy, each class is rejected with the logical snapshot unchanged and the observed `originalCode` recorded: CHECK, STRICT type, composite cross-group FK, uniqueness, and the triggers (11th genre, membership delete, mode change, generation decrease, non-increasing revision, legacy session into an account group, timestamp above duration, type change with history). Also asserts `PRAGMA foreign_keys = 1`. | **executed**: all 12 rejected, snapshot unchanged, codes in §12; `PRAGMA foreign_keys` = 1 |
+| S1 | Safety: commands that need a datasource fail without `WATCHNEXT_PRISMA_DATABASE_URL`. No package script contains `migrate dev`, `migrate reset`, `db push`, `db execute`, `--force-reset` or `--accept-data-loss`. The isolated default database path does not exist after the run. `lib/persistence/ports.ts` has no runtime exports and is not imported, and neither are `@prisma/client` or `generated/`, anywhere in `app/ lib/ db/ frontend/ scripts/`. | **executed**: all assertions pass (see §12) |
 
 **Required commands for Engineer and QA, run serially:**
 
@@ -262,3 +262,28 @@ Type-only declarations go in **`lib/persistence/ports.ts`**. The module has no r
 - `_prisma_migrations` will appear in normal databases only after #51's explicit operator upgrade. Whole-table comparisons in existing backup/E2E fixtures must then account for it deliberately.
 - Next bundling of the native `better-sqlite3` module is untested until #51.
 - The Windows better-sqlite3 prebuild is unverified.
+
+## 12. Engineer execution record
+
+Commits `ef7f38e` and `7c811a1` on `claude/trusting-meitner-longv2`, Linux container, Node 24.22.0, pnpm 11.25.0. Run serially:
+
+| Command | Result |
+| --- | --- |
+| `rm -rf node_modules && pnpm install --frozen-lockfile` | exit 0, no `ERR_PNPM_IGNORED_BUILDS`; schema engine and `better_sqlite3.node` present |
+| `pnpm prisma:validate` / `pnpm prisma:generate` | exit 0 / exit 0 (client written to git-ignored `generated/prisma`) |
+| `pnpm test tests/db/prisma-baseline.test.ts` | 16/16 passed, about 19 s |
+| `pnpm typecheck` | exit 0, with and without `generated/` |
+| `pnpm test` | first run 1099/1100: `tests/e2e-lifecycle.test.ts` "cleans a partially initialized fixture…" hit its 5 s default timeout under load (passes alone in under 1 s); one unchanged rerun 1100/1100 (105 files) |
+| `pnpm build` | exit 0, only the known `db/migrate.ts` tracing warning |
+| `pnpm db:verify`, `pnpm db:verify:persistence`, `pnpm db:verify:backup` | all PASS |
+| `git diff --check` (staged) | clean |
+
+**C1 observed codes** (Prisma code / `originalCode`): CHECK `P2039` / `SQLITE_CONSTRAINT_CHECK`; STRICT type (raw update) `P2010` / `SQLITE_CONSTRAINT_DATATYPE`; composite cross-group FK `P2003` / `SQLITE_CONSTRAINT_FOREIGNKEY`; duplicate title key `P2002` / `SQLITE_CONSTRAINT_UNIQUE`; 11th genre, membership delete, group mode change, invite-generation decrease, non-increasing context revision, legacy session in an account group, timestamp above duration and type change with history all `P2003` / `SQLITE_CONSTRAINT_TRIGGER`, each with its own native `RAISE` message asserted in `originalMessage`.
+
+**Execution notes.**
+
+- Path C, the refusals and the rollback recipe are executed as test code on owned copies. The operator baseline command, `_prisma_migrations` in normal databases and runtime use of the client remain #51.
+- The canonical dump writes the five mood rows as five single-row `INSERT` statements. B4 compares bytes; a CRLF working copy (Windows `core.autocrlf`) is CRLF-normalized first, exactly like native migration checksums.
+- D1 introspects with a bare datasource-only schema, so the committed schema cannot enrich the output.
+- Every Prisma connection in the test passes `fileMustExist: true`, and a per-file guard refuses a native open while a Prisma handle is open on the same file (and the reverse).
+- Still *PM probe* only, not re-executed: `Boolean`/`BigInt`/missing `sqlite_autoindex_*` map drift (§4 rules 3–5), `secure_delete` = 0 on Prisma connections and deferred `BEGIN` (#50), Prisma writes above 2³¹ beyond the C1 revision attempt. Not verified: the Windows better-sqlite3 prebuild, Next bundling of better-sqlite3, any PostgreSQL behaviour. Nothing here claims runtime ORM use or portability.
