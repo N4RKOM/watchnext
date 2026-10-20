@@ -157,7 +157,7 @@ Install matching Chromium through the standard command above. Fixture temp/home/
 
 ## Synthetic account increment #55
 
-`pnpm test tests/frontend` exercises concrete in-memory account validation/identity/proof rotation, safe unknown/wrong errors, revision/duplicate/reset races, abort/unavailable non-commit, readonly seeded summaries and real account forms/private disclosure/departure/copy fallback. `pnpm test:mock` extends its existing current-source build and isolated browser checks with account registration, once-only reveal, sign-out/sign-in, recovery, consumed-proof rejection, replacement/fresh login, cancel/retry/reset and persisted-departure clearing at 375px and 1280px. No native account/database/provider operation, cookie or browser storage is used. No code-bearing screenshots/traces are retained. All other domains/full frontend evidence remain #56-#61.
+`pnpm test tests/frontend` exercises concrete in-memory account validation/identity/proof rotation, safe unknown/wrong errors, revision/duplicate/reset races, abort/unavailable non-commit, readonly seeded summaries and real account forms/private disclosure/departure/copy fallback. `pnpm test:mock` extends its existing current-source build and isolated browser checks with account registration, once-only reveal, sign-out/sign-in, recovery, consumed-proof rejection, replacement/fresh login, cancel/retry/reset and persisted-departure clearing at 375px and 1280px. No native account/database/provider operation, cookie or browser storage is used. No code-bearing screenshots/traces are retained. At #55 time all other domains/full frontend evidence remained #56-#61 (since delivered; see the sections below).
 
 ## Synthetic groups and legacy increment #56
 
